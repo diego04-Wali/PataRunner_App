@@ -1294,7 +1294,8 @@ async function aceptarPedido(id_pedido) {
         const respuesta = await fetch(`https://unopposed-cosmetics-sudden.ngrok-free.dev/api/pedidos/${id_pedido}`, {
             method: 'PUT',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'ngrok-skip-browser-warning': 'true'
             },
             body: JSON.stringify({
                 id_runner: userData.id_usuario, // Aquí está la magia dinámica
