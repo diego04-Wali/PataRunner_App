@@ -662,7 +662,7 @@ cart.push({ id: "favor_personalizado", category: "otro", name: text, price, qty:
     submitRatingBtn.textContent = "Enviando...";
 
     try {
-        const respuesta = await fetch(`http://localhost:3000/api/pedidos/${window.pedidoCalificarActual.id_pedido}/calificar`, {
+        const respuesta = await fetch(`https://unopposed-cosmetics-sudden.ngrok-free.dev/api/pedidos/${window.pedidoCalificarActual.id_pedido}/calificar`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -1120,7 +1120,7 @@ try {
         const textoFavor = favorPersonalizado ? favorPersonalizado.name : null;
         const precioFavor = favorPersonalizado ? favorPersonalizado.price : null;
 
-        const respuesta = await fetch('http://localhost:3000/api/pedidos', {
+        const respuesta = await fetch('https://unopposed-cosmetics-sudden.ngrok-free.dev/api/pedidos', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -1174,7 +1174,7 @@ async function cargarPedidosDisponibles() {
 
     try {
         // Consultamos la ruta GET que creaste en tu backend
-        const respuesta = await fetch('http://localhost:3000/api/pedidos');
+        const respuesta = await fetch('https://unopposed-cosmetics-sudden.ngrok-free.dev/api/pedidos');
         const pedidos = await respuesta.json();
 
         // Limpiamos el contenedor (quitamos las tarjetas estáticas de prueba)
@@ -1291,7 +1291,7 @@ async function aceptarPedido(id_pedido) {
         const userData = JSON.parse(userStr);
 
         // 2. Hacemos el PUT usando tu ID real (userData.id_usuario)
-        const respuesta = await fetch(`http://localhost:3000/api/pedidos/${id_pedido}`, {
+        const respuesta = await fetch(`https://unopposed-cosmetics-sudden.ngrok-free.dev/api/pedidos/${id_pedido}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'
@@ -1335,7 +1335,7 @@ async function cargarMisPedidos() {
         const userData = JSON.parse(userStr);
 
         // 2. Consultamos usando tu ID real
-        const respuesta = await fetch(`http://localhost:3000/api/pedidos/cliente/${userData.id_usuario}`);
+        const respuesta = await fetch(`https://unopposed-cosmetics-sudden.ngrok-free.dev/api/pedidos/cliente/${userData.id_usuario}`);
         const misPedidos = await respuesta.json();
 
         // Filtramos para mostrar solo los que están "Pendiente" o "En Camino"
@@ -1421,7 +1421,7 @@ async function cargarEntregasActivas() {
         const userData = JSON.parse(userStr);
 
         // 2. Consultamos las entregas de TU usuario real usando backticks (`)
-        const respuesta = await fetch(`http://localhost:3000/api/pedidos/runner/${userData.id_usuario}`);
+        const respuesta = await fetch(`https://unopposed-cosmetics-sudden.ngrok-free.dev/api/pedidos/runner/${userData.id_usuario}`);
         const entregas = await respuesta.json();
 
         contenedor.innerHTML = '';
@@ -1478,7 +1478,7 @@ async function marcarEntregado(id_pedido) {
         const userData = JSON.parse(userStr);
 
         // 2. Reutilizamos tu ruta PUT para actualizar el estado
-        const respuesta = await fetch(`http://localhost:3000/api/pedidos/${id_pedido}`, {
+        const respuesta = await fetch(`https://unopposed-cosmetics-sudden.ngrok-free.dev/api/pedidos/${id_pedido}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -1584,7 +1584,7 @@ async function cargarMensajes(id_pedido) {
         
         const token = sessionStorage.getItem('token'); 
         
-        const respuesta = await fetch(`http://localhost:3000/api/chat/${id_pedido}`, {
+        const respuesta = await fetch(`https://unopposed-cosmetics-sudden.ngrok-free.dev/api/chat/${id_pedido}`, {
             method: 'GET',
             headers: { 'Authorization': `Bearer ${token}` },
             cache: 'no-store'
@@ -1654,7 +1654,7 @@ const input = document.getElementById('caja-chat-verdadera');
         // 2. Recuperamos el token de sesión guardado en el navegador
         const token = sessionStorage.getItem('token');
 
-        const respuesta = await fetch('http://localhost:3000/api/chat', {
+        const respuesta = await fetch('https://unopposed-cosmetics-sudden.ngrok-free.dev/api/chat', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -1685,7 +1685,7 @@ async function cargarPedidosPendientes() {
 
     try {
         // 1. Pedimos los datos a tu backend
-        const respuesta = await fetch('http://localhost:3000/api/pedidos');
+        const respuesta = await fetch('https://unopposed-cosmetics-sudden.ngrok-free.dev/api/pedidos');
         const pedidos = await respuesta.json();
 
         // 2. Limpiamos el contenedor
@@ -1846,7 +1846,7 @@ async function cargarCatalogo() {
 
     try {
         // 1. Llamamos a tu backend para traer los productos
-        const respuesta = await fetch('http://localhost:3000/api/productos');
+        const respuesta = await fetch('https://unopposed-cosmetics-sudden.ngrok-free.dev/api/productos');
         const productos = await respuesta.json();
 
         // 2. Limpiamos el contenedor por si había algo antes
@@ -1924,7 +1924,7 @@ async function cargarCatalogo() {
     if (!contenedorLista) return;
 
     try {
-        const respuesta = await fetch('http://localhost:3000/api/productos');
+        const respuesta = await fetch('https://unopposed-cosmetics-sudden.ngrok-free.dev/api/productos');
         const productos = await respuesta.json();
 
         // Parche: Traducir ID a Nombre de Tienda
@@ -2067,7 +2067,7 @@ window.anularPedido = async function(id_pedido) {
 
     try {
         // 2. Si acepta, enviamos la orden de anulación al backend
-        const respuesta = await fetch(`http://localhost:3000/api/pedidos/${id_pedido}/anular`, {
+        const respuesta = await fetch(`https://unopposed-cosmetics-sudden.ngrok-free.dev/api/pedidos/${id_pedido}/anular`, {
             method: 'PUT'
         });
         const resultado = await respuesta.json();
@@ -2108,7 +2108,7 @@ window.republicarPedido = async function() {
 
     try {
         // Llamamos a la ruta clonadora de tu servidor (backend)
-        const respuesta = await fetch(`http://localhost:3000/api/pedidos/${window.pedidoCanceladoTemporal}/republicar`, {
+        const respuesta = await fetch(`https://unopposed-cosmetics-sudden.ngrok-free.dev/api/pedidos/${window.pedidoCanceladoTemporal}/republicar`, {
             method: 'POST'
         });
         
@@ -2211,7 +2211,7 @@ setInterval(async () => {
     if (typeof activeRole !== 'undefined' && activeRole === 'runner') {
         try {
             // Revisamos silenciosamente si hay pedidos nuevos en la base de datos
-            const resPedidos = await fetch('http://localhost:3000/api/pedidos');
+            const resPedidos = await fetch('https://unopposed-cosmetics-sudden.ngrok-free.dev/api/pedidos');
             if (resPedidos.ok) {
                 const pedidosNuevos = await resPedidos.json();
                 
@@ -2234,7 +2234,7 @@ setInterval(async () => {
     if (typeof activeRole !== 'undefined' && activeRole !== 'alumno') return;
 
     try {
-        const respuesta = await fetch(`http://localhost:3000/api/pedidos/cliente/${userData.id_usuario}`);
+        const respuesta = await fetch(`https://unopposed-cosmetics-sudden.ngrok-free.dev/api/pedidos/cliente/${userData.id_usuario}`);
         if (!respuesta.ok) return;
         const pedidosActuales = await respuesta.json();
 
@@ -2356,7 +2356,7 @@ async function cargarDirectorioTiendas() {
     if (contenedor.innerHTML.trim() !== '') return; 
     
     try {
-        const respuesta = await fetch('http://localhost:3000/api/tiendas');
+        const respuesta = await fetch('https://unopposed-cosmetics-sudden.ngrok-free.dev/api/tiendas');
         const tiendas = await respuesta.json();
         
         contenedor.innerHTML = ''; 
@@ -2442,7 +2442,7 @@ async function cancelarPedidoAlumno(idPedido) {
     }
 
     try {
-        const respuesta = await fetch(`http://localhost:3000/api/pedidos/${idPedido}/cancelar`, {
+        const respuesta = await fetch(`https://unopposed-cosmetics-sudden.ngrok-free.dev/api/pedidos/${idPedido}/cancelar`, {
             method: 'PUT'
         });
 
@@ -2542,7 +2542,7 @@ if (runnerCheckbox && activateRunnerBtn) {
         activateRunnerBtn.textContent = "Activando...";
 
         try {
-            const respuesta = await fetch(`http://localhost:3000/api/usuarios/activar-runner`, {
+            const respuesta = await fetch(`https://unopposed-cosmetics-sudden.ngrok-free.dev/api/usuarios/activar-runner`, {
                 method: 'PUT',
                 headers: { 
                     'Content-Type': 'application/json',
@@ -2606,7 +2606,7 @@ async function cargarHistorialRunner() {
     if (!usuario) return;
 
     try {
-        const response = await fetch(`http://localhost:3000/api/pedidos/historial-runner/${usuario.id_usuario}`);
+        const response = await fetch(`https://unopposed-cosmetics-sudden.ngrok-free.dev/api/pedidos/historial-runner/${usuario.id_usuario}`);
         const pedidos = await response.json();
 
         contenedor.innerHTML = ''; 
@@ -2663,7 +2663,7 @@ async function cargarHistorial() {
     if (!usuario) return;
 
     try {
- const response = await fetch(`http://localhost:3000/api/pedidos/historial/${usuario.id_usuario}`);
+ const response = await fetch(`https://unopposed-cosmetics-sudden.ngrok-free.dev/api/pedidos/historial/${usuario.id_usuario}`);
         const pedidos = await response.json();
 
         contenedor.innerHTML = ''; // Limpiamos el contenedor antes de dibujar
