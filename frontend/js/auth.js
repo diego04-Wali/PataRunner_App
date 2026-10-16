@@ -3,7 +3,12 @@ const originalFetch = window.fetch.bind(window);
 window.fetch = function(...args) {
     let [url, config] = args;
     config = config || {};
-    config.headers = Object.assign({ 'ngrok-skip-browser-warning': 'true' }, config.headers || {});
+    
+    // Solo agregar la cabecera si la petición va hacia Ngrok
+    if (url && url.toString().includes('ngrok-free.dev')) {
+        config.headers = Object.assign({ 'ngrok-skip-browser-warning': 'true' }, config.headers || {});
+    }
+    
     return originalFetch(url, config);
 };
   // Importamos Firebase desde su CDN oficial
