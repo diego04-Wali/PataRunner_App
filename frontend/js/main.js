@@ -1685,7 +1685,7 @@ async function cargarPedidosPendientes() {
 
     try {
         // 1. Pedimos los datos a tu backend
-        const respuesta = await fetch('https://unopposed-cosmetics-sudden.ngrok-free.dev/api/pedidos');
+        const respuesta = await fetch('https://unopposed-cosmetics-sudden.ngrok-free.dev/api/pedidos', { headers: { 'ngrok-skip-browser-warning': 'true' } });
         const pedidos = await respuesta.json();
 
         // 2. Limpiamos el contenedor
