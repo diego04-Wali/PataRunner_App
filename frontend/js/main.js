@@ -1846,7 +1846,7 @@ async function cargarCatalogo() {
 
     try {
         // 1. Llamamos a tu backend para traer los productos
-        const respuesta = await fetch('https://unopposed-cosmetics-sudden.ngrok-free.dev/api/productos');
+    const respuesta = await fetch('https://unopposed-cosmetics-sudden.ngrok-free.dev/api/productos', { headers: { 'ngrok-skip-browser-warning': 'true' } });
         const productos = await respuesta.json();
 
         // 2. Limpiamos el contenedor por si había algo antes
@@ -1924,7 +1924,7 @@ async function cargarCatalogo() {
     if (!contenedorLista) return;
 
     try {
-        const respuesta = await fetch('https://unopposed-cosmetics-sudden.ngrok-free.dev/api/productos');
+    const respuesta = await fetch('https://unopposed-cosmetics-sudden.ngrok-free.dev/api/productos', { headers: { 'ngrok-skip-browser-warning': 'true' } });
         const productos = await respuesta.json();
 
         // Parche: Traducir ID a Nombre de Tienda
@@ -2356,7 +2356,7 @@ async function cargarDirectorioTiendas() {
     if (contenedor.innerHTML.trim() !== '') return; 
     
     try {
-        const respuesta = await fetch('https://unopposed-cosmetics-sudden.ngrok-free.dev/api/tiendas');
+      const respuesta = await fetch('https://unopposed-cosmetics-sudden.ngrok-free.dev/api/tiendas', { headers: { 'ngrok-skip-browser-warning': 'true' } });
         const tiendas = await respuesta.json();
         
         contenedor.innerHTML = ''; 
