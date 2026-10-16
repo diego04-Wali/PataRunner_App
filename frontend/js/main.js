@@ -1,3 +1,14 @@
+  // --- INTERCEPTADOR GLOBAL DE NGROK ---
+const originalFetch = window.fetch;
+window.fetch = async function (...args) {
+    let [resource, config] = args;
+    config = config || {};
+    config.headers = {
+        'ngrok-skip-browser-warning': 'true',
+        ...(config.headers || {})
+    };
+    return originalFetch(resource, config);
+};
   lucide.createIcons();
 
   // ===================== ESTADO GENERAL =====================

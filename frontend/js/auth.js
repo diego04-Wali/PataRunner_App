@@ -1,3 +1,14 @@
+  // --- INTERCEPTADOR GLOBAL DE NGROK ---
+const originalFetch = window.fetch;
+window.fetch = async function (...args) {
+    let [resource, config] = args;
+    config = config || {};
+    config.headers = {
+        'ngrok-skip-browser-warning': 'true',
+        ...(config.headers || {})
+    };
+    return originalFetch(resource, config);
+};
   // Importamos Firebase desde su CDN oficial
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendEmailVerification } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
