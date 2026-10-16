@@ -1,13 +1,10 @@
-  // --- INTERCEPTADOR GLOBAL DE NGROK ---
-const originalFetch = window.fetch;
-window.fetch = async function (...args) {
-    let [resource, config] = args;
+// --- INTERCEPTADOR NGROK GLOBAL ---
+const originalFetch = window.fetch.bind(window);
+window.fetch = function(...args) {
+    let [url, config] = args;
     config = config || {};
-    config.headers = {
-        'ngrok-skip-browser-warning': 'true',
-        ...(config.headers || {})
-    };
-    return originalFetch(resource, config);
+    config.headers = Object.assign({ 'ngrok-skip-browser-warning': 'true' }, config.headers || {});
+    return originalFetch(url, config);
 };
   lucide.createIcons();
 
