@@ -754,20 +754,37 @@ app.patch('/api/admin/usuarios/:codigo/bloquear', async (req, res) => {
     }
 });
 
-// 2. Quitar el rol de Runner (Cambia id_rol a 1 = Alumno)
+// 2. Quitar o Asignar el rol de Runner (Cambia id_rol a 1 = Alumno)
 app.patch('/api/admin/usuarios/:codigo/runner', async (req, res) => {
     const { codigo } = req.params;
     const { isRunner } = req.body;
 
     try {
-        // Asignamos id_rol = 1 (Alumno) si isRunner es false
         const nuevoRol = isRunner ? 2 : 1;
 
+        // Si se le quita el rol de Runner (isRunner = false), liberamos sus pedidos en curso
+        if (!isRunner) {
+            await pool.query(
+                `UPDATE pedidos 
+                 SET estado = 'Pendiente', id_runner = NULL 
+                 WHERE id_runner = (SELECT id_usuario FROM usuarios WHERE codigo_alumno = $1) 
+                 AND estado = 'En Camino'`,
+                [codigo]
+            );
+        }
+
+        // Actualizamos el rol del usuario
         await pool.query(
             'UPDATE usuarios SET id_rol = $1 WHERE codigo_alumno = $2',
             [nuevoRol, codigo]
         );
-        res.json({ success: true, message: 'Rol de usuario actualizado a Alumno correctamente.' });
+
+        res.json({ 
+            success: true, 
+            message: isRunner 
+                ? 'Rol de Runner asignado correctamente.' 
+                : 'Rol retirado y pedidos en curso liberados a Pendiente correctamente.' 
+        });
     } catch (err) {
         console.error('Error al cambiar rol de Runner:', err);
         res.status(500).json({ error: 'Error interno al actualizar rol de Runner' });
