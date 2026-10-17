@@ -128,8 +128,25 @@ sessionStorage.setItem('usuario', JSON.stringify(data.usuario));
                     screenLogin.classList.add("hidden");
                 }
 
-                // Asignamos rol de Runner si la base de datos lo indica
-                if (data.usuario && data.usuario.id_rol === 2) {
+                // --- NUEVA LÓGICA DE ROLES (INCLUYE REDIRECCIÓN DEL ADMIN) ---
+                if (data.usuario && data.usuario.id_rol === 3) {
+                    // 1. Encendemos su botón secreto en la barra inferior al instante
+                    const btnAdmin = document.getElementById('nav-btn-admin');
+                    if (btnAdmin) {
+                        btnAdmin.classList.remove('hidden');
+                        btnAdmin.classList.add('flex', 'nav-btn');
+                    }
+                    
+                    // 2. Lo mandamos directo a su Panel de Control
+                    if (typeof showTab === 'function') {
+                        showTab('tab-admin');
+                    }
+                    // 3. Cargamos la base de datos automáticamente
+                    if (typeof cargarUsuariosAdmin === 'function') {
+                        cargarUsuariosAdmin();
+                    }
+
+                } else if (data.usuario && data.usuario.id_rol === 2) {
                     sessionStorage.setItem('isRunnerStatus', 'true');
                     // Usamos window.isRunner si la variable está global en otro lado, sino omitimos. 
                     if (typeof isRunner !== 'undefined') { isRunner = true; } 
