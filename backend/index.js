@@ -844,6 +844,62 @@ app.get('/api/usuarios/estado/:id', async (req, res) => {
     }
 });
 
+// ==========================================
+// MÓDULO 3 ADMIN: AUDITORÍA Y REPORTES
+// ==========================================
+
+// 1. Obtener todos los reportes/incidencias
+app.get('/api/admin/reportes', async (req, res) => {
+    try {
+        // Garantizamos que la tabla reportes exista
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS reportes (
+                id_reporte SERIAL PRIMARY KEY,
+                id_pedido INT,
+                id_usuario_reporta INT,
+                motivo TEXT,
+                estado VARCHAR(20) DEFAULT 'Pendiente', -- 'Pendiente', 'Resuelto', 'Desestimado'
+                fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
+
+        const result = await pool.query(`
+            SELECT 
+                r.id_reporte,
+                r.id_pedido,
+                r.motivo,
+                r.estado,
+                r.fecha_creacion,
+                u.nombre_completo AS reportador,
+                u.codigo_alumno AS codigo_reportador
+            FROM reportes r
+            LEFT JOIN usuarios u ON r.id_usuario_reporta = u.id_usuario
+            ORDER BY 
+                CASE WHEN r.estado = 'Pendiente' THEN 1 ELSE 2 END,
+                r.fecha_creacion DESC
+        `);
+
+        res.json(result.rows);
+    } catch (err) {
+        console.error('Error al obtener reportes:', err);
+        res.status(500).json({ error: 'Error interno al consultar reportes' });
+    }
+});
+
+// 2. Actualizar estado de un reporte (Resolver o Desestimar)
+app.patch('/api/admin/reportes/:id/estado', async (req, res) => {
+    const { id } = req.params;
+    const { estado } = req.body; // 'Resuelto' o 'Desestimado'
+
+    try {
+        await pool.query('UPDATE reportes SET estado = $1 WHERE id_reporte = $2', [estado, id]);
+        res.json({ success: true, message: `Reporte marcado como ${estado}.` });
+    } catch (err) {
+        console.error('Error al actualizar reporte:', err);
+        res.status(500).json({ error: 'Error al actualizar estado del reporte' });
+    }
+});
+
 // Iniciar servidor
 app.listen(port, () => {
     console.log(`Servidor ejecutándose en el puerto ${port}`);

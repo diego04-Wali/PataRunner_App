@@ -2988,6 +2988,12 @@ async function cargarUsuariosAdmin() {
 
         const contenedor = document.getElementById('mod-usuarios');
         if (!contenedor) return;
+
+    // 🚀 Cargamos los reportes en segundo plano al abrir el panel de admin
+   // CÓDIGO CORREGIDO:
+if (typeof cargarReportesAdmin === 'function') {
+    cargarReportesAdmin();
+}
         
         contenedor.innerHTML = '<p class="text-[12px] font-bold text-slate-800 uppercase mb-2">Gestión de Cuentas</p>';
 
@@ -3100,6 +3106,108 @@ async function asignarRunner(codigo) {
 window.bloquearUsuario = bloquearUsuario;
 window.quitarRunner = quitarRunner;
 window.asignarRunner = asignarRunner;
+
+// ==========================================
+// MÓDULO 3 ADMIN: AUDITORÍA Y REPORTES
+// ==========================================
+
+async function cargarReportesAdmin() {
+    const contenedor = document.getElementById('mod-auditoria');
+    if (!contenedor) return;
+
+    contenedor.innerHTML = '<div class="flex justify-center py-8"><i data-lucide="loader-2" class="w-6 h-6 text-indigo-600 animate-spin"></i></div>';
+    if (window.lucide) lucide.createIcons();
+
+    try {
+        const res = await fetch('/api/admin/reportes');
+        if (!res.ok) throw new Error("Error al obtener reportes");
+        const reportes = await res.json();
+
+        if (reportes.length === 0) {
+            contenedor.innerHTML = `
+                <div class="bg-white border border-slate-200 rounded-xl p-6 text-center shadow-sm">
+                    <i data-lucide="shield-check" class="w-8 h-8 text-emerald-500 mx-auto mb-2"></i>
+                    <p class="text-[13px] font-medium text-slate-600">No hay incidencias ni reportes registrados.</p>
+                </div>`;
+            if (window.lucide) lucide.createIcons();
+            return;
+        }
+
+        let html = '<p class="text-[12px] font-bold text-slate-800 uppercase mb-3">Resolución de Reportes</p>';
+
+        reportes.forEach(r => {
+            const esPendiente = r.estado === 'Pendiente';
+            
+            let badgeClass = 'bg-amber-100 text-amber-800 border-amber-200';
+            if (r.estado === 'Resuelto') badgeClass = 'bg-emerald-100 text-emerald-800 border-emerald-200';
+            if (r.estado === 'Desestimado') badgeClass = 'bg-slate-100 text-slate-600 border-slate-200';
+
+            const fecha = new Date(r.fecha_creacion).toLocaleDateString('es-PE', {
+                day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
+            });
+
+            html += `
+                <div class="bg-white border border-slate-200 rounded-xl p-3.5 mb-3 shadow-sm">
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <span class="text-[11px] font-bold text-slate-400">REPORTE #${r.id_reporte}</span>
+                            <p class="text-[13px] font-bold text-slate-800">Pedido #${r.id_pedido || 'S/N'}</p>
+                            <p class="text-[10px] text-slate-500">Reportado por: <span class="font-semibold text-slate-700">${r.codigo_reportador || 'Anónimo'} (${r.reportador || 'Usuario'})</span></p>
+                        </div>
+                        <span class="px-2 py-0.5 rounded-md border text-[9px] font-bold ${badgeClass}">${r.estado}</span>
+                    </div>
+
+                    <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-100 mb-2.5">
+                        <p class="text-[11.5px] text-slate-700 leading-snug">"${r.motivo || 'Sin descripción provista.'}"</p>
+                        <p class="text-[9px] text-slate-400 mt-1">${fecha}</p>
+                    </div>
+
+                    ${esPendiente ? `
+                        <div class="flex gap-2">
+                            <button onclick="responderReporte(${r.id_reporte}, 'Resuelto')" class="flex-1 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-100 hover:bg-emerald-100 text-[10.5px] font-semibold rounded-lg transition-colors">
+                                Resolver
+                            </button>
+                            <button onclick="responderReporte(${r.id_reporte}, 'Desestimado')" class="flex-1 py-1.5 bg-slate-100 text-slate-600 border border-slate-200 hover:bg-slate-200 text-[10.5px] font-semibold rounded-lg transition-colors">
+                                Desestimar
+                            </button>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        });
+
+        contenedor.innerHTML = html;
+        if (window.lucide) lucide.createIcons();
+
+    } catch (err) {
+        console.error("Error al cargar reportes:", err);
+        contenedor.innerHTML = '<p class="text-red-500 text-[11px]">Error al conectar con el servidor de reportes.</p>';
+    }
+}
+
+async function responderReporte(idReporte, nuevoEstado) {
+    if (!confirm(`¿Confirmas marcar el reporte #${idReporte} como ${nuevoEstado}?`)) return;
+
+    try {
+        const res = await fetch(`/api/admin/reportes/${idReporte}/estado`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ estado: nuevoEstado })
+        });
+        const data = await res.json();
+        if (data.success) {
+            alert(data.message);
+            cargarReportesAdmin();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    } catch (err) {
+        alert('Ocurrió un error al actualizar el reporte.');
+    }
+}
+
+window.cargarReportesAdmin = cargarReportesAdmin;
+window.responderReporte = responderReporte;
 
 // ==========================================
 // MÓDULO 2 ADMIN: MONITOREO DE OPERACIONES
