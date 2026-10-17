@@ -2297,35 +2297,30 @@ setInterval(async () => {
     if (!userStr) return;
     const userData = JSON.parse(userStr);
 
-// 🚨 VERIFICACIÓN DE SEGURIDAD: Comprobar estado y rol en tiempo real
+// 🚨 VERIFICACIÓN DE SEGURIDAD EN TIEMPO REAL
     try {
         const resEstado = await fetch(`/api/usuarios/estado/${userData.id_usuario}`);
         if (resEstado.ok) {
             const dataEstado = await resEstado.json();
             
-            // 1. Si la cuenta fue bloqueada
+            // 1. Si la cuenta fue bloqueada por completo
             if (dataEstado.blocked) {
                 alert("Tu cuenta ha sido suspendida por un administrador.");
                 sessionStorage.clear();
-                window.location.reload();
+                window.location.reload(); // Recarga y envía al Login
                 return;
             }
 
-            // 2. Si el administrador le quitó el rol de Runner
-            if (userData.id_rol !== dataEstado.id_rol) {
-                userData.id_rol = dataEstado.id_rol;
-                sessionStorage.setItem('usuario', JSON.stringify(userData));
-
-                if (dataEstado.id_rol === 1) { // Pasó a ser Alumno
-                    alert("Un administrador ha modificado tus permisos. Ya no cuentas con acceso al modo Runner.");
-                    sessionStorage.setItem('activeRole', 'alumno');
-                    window.location.reload(); // Recarga y pasa automáticamente a vista Alumno
-                    return;
-                }
+            // 2. Si se le revocó el rol de Runner
+            if (userData.id_rol === 2 && dataEstado.id_rol === 1) {
+                alert("Un administrador ha revocado tus permisos de Runner. Tu sesión se cerrará.");
+                sessionStorage.clear(); // Limpiamos la sesión por completo
+                window.location.reload(); // Redirige al Login de inmediato
+                return;
             }
         }
     } catch (e) {
-        // Silencioso si hay lag o caída temporal de red
+        // Silencioso si hay lag de red
     }
 
     // 1. === VIGILANTE PARA EL RUNNER (¡NUEVO!) ===
@@ -2625,6 +2620,15 @@ function aplicarEstadoRunner() {
     }
         
         if (window.lucide) lucide.createIcons();
+        else if (userData.bloqueado_runner) {
+        if (botonAbrirPostulacion) {
+            botonAbrirPostulacion.disabled = true;
+            botonAbrirPostulacion.removeAttribute('onclick');
+            botonAbrirPostulacion.innerHTML = '<i data-lucide="lock" class="w-5 h-5"></i> Acceso restringido por Admin';
+            botonAbrirPostulacion.className = 'w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-red-100 text-red-600 font-semibold cursor-not-allowed';
+        }
+        if (window.lucide) lucide.createIcons();
+    }
     }
 }
 // Hacemos que la función sea global para que otros archivos (como tu auth.js) puedan usarla
@@ -2659,6 +2663,11 @@ if (runnerCheckbox && activateRunnerBtn) {
         
         const userData = JSON.parse(userStr);
 
+        // 🚨 SI EL USUARIO TIENE EL ACCESO A RUNNER BLOQUEADO
+        if (userData.bloqueado_runner) {
+            alert("Un administrador ha revocado y restringido tu acceso para registrarte como Runner.");
+            return;
+        }
         activateRunnerBtn.disabled = true;
         activateRunnerBtn.textContent = "Activando...";
 

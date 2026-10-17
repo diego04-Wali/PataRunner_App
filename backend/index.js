@@ -472,12 +472,24 @@ const values = [firebase_uid, codigo_alumno, carrera, nombreCompleto, correoMinu
     }
 });
 
-// --- RUTA 2: Activar perfil de Runner ---
+// --- RUTA 2: Activar perfil de Runner (PROTEGIDA) ---
 app.put('/api/usuarios/activar-runner', verificarToken, async (req, res) => {
     try {
         const email = req.usuarioFirebase.email;
         
-        // Actualizamos el id_rol a 2 (Runner) basado en el correo verificado
+        // 1. Verificamos si el usuario tiene la opción de Runner restringida
+        const checkUser = await pool.query(
+            'SELECT COALESCE(bloqueado_runner, false) AS bloqueado_runner FROM usuarios WHERE correo_institucional = $1',
+            [email]
+        );
+
+        if (checkUser.rows.length > 0 && checkUser.rows[0].bloqueado_runner) {
+            return res.status(403).json({ 
+                error: 'Un administrador ha revocado y restringido tu acceso para ser Runner.' 
+            });
+        }
+
+        // 2. Si no está restringido, actualizamos el id_rol a 2 (Runner)
         const usuarioActualizado = await pool.query(
             "UPDATE usuarios SET id_rol = 2 WHERE correo_institucional = $1 RETURNING *",
             [email]
@@ -496,13 +508,25 @@ app.put('/api/usuarios/activar-runner', verificarToken, async (req, res) => {
         res.status(500).json({ error: 'Error al actualizar el perfil a Runner.' });
     }
 });
-// --- NUEVA RUTA: Ascender de Alumno a Runner ---
+
+// --- NUEVA RUTA: Ascender de Alumno a Runner (PROTEGIDA) ---
 app.put('/api/usuarios/rol', verificarToken, async (req, res) => {
     try {
-        // Extraemos el correo del token validado por seguridad
         const correo = req.usuarioFirebase.email;
         
-        // Actualizamos el rol a 2 (Runner)
+        // 1. Verificamos si el usuario tiene la opción de Runner restringida
+        const checkUser = await pool.query(
+            'SELECT COALESCE(bloqueado_runner, false) AS bloqueado_runner FROM usuarios WHERE correo_institucional = $1',
+            [correo]
+        );
+
+        if (checkUser.rows.length > 0 && checkUser.rows[0].bloqueado_runner) {
+            return res.status(403).json({ 
+                error: 'Un administrador ha revocado y restringido tu acceso para ser Runner.' 
+            });
+        }
+
+        // 2. Actualizamos el rol a 2 (Runner)
         const result = await pool.query(
             'UPDATE usuarios SET id_rol = 2 WHERE correo_institucional = $1 RETURNING *',
             [correo]
@@ -754,16 +778,17 @@ app.patch('/api/admin/usuarios/:codigo/bloquear', async (req, res) => {
     }
 });
 
-// 2. Quitar o Asignar el rol de Runner (Cambia id_rol a 1 = Alumno)
+// 2. Quitar o Asignar el rol de Runner (Maneja bloqueo de reclasificación)
 app.patch('/api/admin/usuarios/:codigo/runner', async (req, res) => {
     const { codigo } = req.params;
     const { isRunner } = req.body;
 
     try {
-        const nuevoRol = isRunner ? 2 : 1;
+        // Garantizamos que la columna exista en la BD
+        await pool.query('ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS bloqueado_runner BOOLEAN DEFAULT false;');
 
-        // Si se le quita el rol de Runner (isRunner = false), liberamos sus pedidos en curso
         if (!isRunner) {
+            // Liberamos sus pedidos en curso pasando a 'Pendiente'
             await pool.query(
                 `UPDATE pedidos 
                  SET estado = 'Pendiente', id_runner = NULL 
@@ -771,19 +796,25 @@ app.patch('/api/admin/usuarios/:codigo/runner', async (req, res) => {
                  AND estado = 'En Camino'`,
                 [codigo]
             );
-        }
 
-        // Actualizamos el rol del usuario
-        await pool.query(
-            'UPDATE usuarios SET id_rol = $1 WHERE codigo_alumno = $2',
-            [nuevoRol, codigo]
-        );
+            // Cambiamos id_rol a 1 Y BLOQUEAMOS su capacidad de volver a postular a Runner
+            await pool.query(
+                'UPDATE usuarios SET id_rol = 1, bloqueado_runner = true WHERE codigo_alumno = $2',
+                [codigo]
+            );
+        } else {
+            // Si el admin le vuelve a dar el rol manualmente
+            await pool.query(
+                'UPDATE usuarios SET id_rol = 2, bloqueado_runner = false WHERE codigo_alumno = $2',
+                [codigo]
+            );
+        }
 
         res.json({ 
             success: true, 
             message: isRunner 
                 ? 'Rol de Runner asignado correctamente.' 
-                : 'Rol retirado y pedidos en curso liberados a Pendiente correctamente.' 
+                : 'Rol de Runner revocado y restringido para este usuario.' 
         });
     } catch (err) {
         console.error('Error al cambiar rol de Runner:', err);
@@ -791,20 +822,21 @@ app.patch('/api/admin/usuarios/:codigo/runner', async (req, res) => {
     }
 });
 
-// Verificar si la sesión del usuario está bloqueada o si cambió su rol
+// Verificar si la sesión del usuario está bloqueada, su rol o si tiene bloqueado volver a ser Runner
 app.get('/api/usuarios/estado/:id', async (req, res) => {
     try {
         const { id } = req.params;
         const result = await pool.query(
-            'SELECT COALESCE(is_blocked, false) AS is_blocked, id_rol FROM usuarios WHERE id_usuario = $1',
+            'SELECT COALESCE(is_blocked, false) AS is_blocked, id_rol, COALESCE(bloqueado_runner, false) AS bloqueado_runner FROM usuarios WHERE id_usuario = $1',
             [id]
         );
         if (result.rows.length === 0) {
-            return res.json({ blocked: false, id_rol: 1 });
+            return res.json({ blocked: false, id_rol: 1, bloqueado_runner: false });
         }
         res.json({ 
             blocked: result.rows[0].is_blocked,
-            id_rol: result.rows[0].id_rol 
+            id_rol: result.rows[0].id_rol,
+            bloqueado_runner: result.rows[0].bloqueado_runner
         });
     } catch (error) {
         console.error('Error al consultar estado de usuario:', error);
