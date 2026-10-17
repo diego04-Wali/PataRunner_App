@@ -774,6 +774,24 @@ app.patch('/api/admin/usuarios/:codigo/runner', async (req, res) => {
     }
 });
 
+// Verificar si la sesión actual del usuario está bloqueada
+app.get('/api/usuarios/estado/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const result = await pool.query(
+            'SELECT COALESCE(is_blocked, false) AS is_blocked FROM usuarios WHERE id_usuario = $1',
+            [id]
+        );
+        if (result.rows.length === 0) {
+            return res.json({ blocked: false });
+        }
+        res.json({ blocked: result.rows[0].is_blocked });
+    } catch (error) {
+        console.error('Error al consultar estado de usuario:', error);
+        res.status(500).json({ error: 'Error al consultar estado' });
+    }
+});
+
 // Iniciar servidor
 app.listen(port, () => {
     console.log(`Servidor ejecutándose en el puerto ${port}`);

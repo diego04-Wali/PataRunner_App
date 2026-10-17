@@ -2297,6 +2297,22 @@ setInterval(async () => {
     if (!userStr) return;
     const userData = JSON.parse(userStr);
 
+// 🚨 VERIFICACIÓN DE SEGURIDAD: Comprobar si la cuenta fue bloqueada
+    try {
+        const resEstado = await fetch(`/api/usuarios/estado/${userData.id_usuario}`);
+        if (resEstado.ok) {
+            const dataEstado = await resEstado.json();
+            if (dataEstado.blocked) {
+                alert("Tu cuenta ha sido suspendida por un administrador.");
+                sessionStorage.clear(); // Limpiamos la sesión activa
+                window.location.reload(); // Recargamos para enviarlo al Login
+                return;
+            }
+        }
+    } catch (e) {
+        // Silencioso si hay lag o caída temporal de red
+    }
+
     // 1. === VIGILANTE PARA EL RUNNER (¡NUEVO!) ===
     if (typeof activeRole !== 'undefined' && activeRole === 'runner') {
         try {
