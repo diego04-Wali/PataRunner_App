@@ -1706,10 +1706,10 @@ async function enviarImagenChat(event) {
     const file = event.target.files[0];
     if (!file) return;
 
-    if (file.size > 2 * 1024 * 1024) {
-        alert("La imagen es muy pesada. El tamaño máximo es 2MB.");
-        return;
-    }
+    if (file.size > 10 * 1024 * 1024) {
+    alert("La imagen es muy pesada. El tamaño máximo es 10MB.");
+    return;
+}
 
     if (!pedidoChatActual) {
         console.warn("No hay pedido vinculado al chat.");
