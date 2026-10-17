@@ -6,22 +6,21 @@ dotenv.config();
 
 const { Pool } = pg;
 
-// Configurar la conexión usando las credenciales ocultas
+// Configurar la conexión usando la Connection String de Neon
 const pool = new Pool({
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT,
-    database: process.env.DB_NAME,
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false // Exigido por Neon para conexiones seguras en la nube
+  }
 });
 
 // Probar la conexión
 pool.connect((err, client, release) => {
-    if (err) {
-        return console.error('Error al conectar con PostgreSQL ❌', err.stack);
-    }
-    console.log('Conexión exitosa a la base de datos PostgreSQL 🐘');
-    release();
+  if (err) {
+    return console.error('Error al conectar con la BD de Neon en la nube ❌', err.stack);
+  }
+  console.log('¡Conexión exitosa a la base de datos de Neon en la nube! 🚀');
+  release();
 });
 
 export default pool;
