@@ -2981,9 +2981,10 @@ async function cargarUsuariosAdmin() {
             } else if (user.id_rol === 2) {
                 badgeHtml = '<span class="bg-emerald-50 text-emerald-700 border border-emerald-100 text-[9px] font-bold px-2 py-0.5 rounded-md">RUNNER</span>';
                 botonesHtml += `<button onclick="quitarRunner('${user.codigo}')" class="flex-1 py-1.5 bg-amber-50 text-amber-700 text-[10.5px] font-semibold rounded-lg border border-amber-100 hover:bg-amber-100 transition-colors">Quitar Runner</button>`;
-            } else {
-                badgeHtml = '<span class="bg-slate-100 text-slate-600 border border-slate-200 text-[9px] font-bold px-2 py-0.5 rounded-md">ALUMNO</span>';
-            }
+           } else {
+    badgeHtml = '<span class="bg-slate-100 text-slate-600 border border-slate-200 text-[9px] font-bold px-2 py-0.5 rounded-md">ALUMNO</span>';
+    botonesHtml += `<button onclick="asignarRunner('${user.codigo}')" class="flex-1 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-100 hover:bg-emerald-100 text-[10.5px] font-semibold rounded-lg border transition-colors">Dar Runner</button>`;
+}
 
             contenedor.innerHTML += `
                 <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm mb-3">
@@ -3051,9 +3052,29 @@ async function quitarRunner(codigo) {
         alert('Ocurrió un error al intentar quitar el rol.');
     }
 }
+async function asignarRunner(codigo) {
+    if (!confirm(`¿Deseas asignar el rol de Runner al usuario ${codigo}?`)) return;
 
+    try {
+        const res = await fetch(`/api/admin/usuarios/${codigo}/runner`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ isRunner: true })
+        });
+        const data = await res.json();
+        if (data.success) {
+            alert(data.message);
+            cargarUsuariosAdmin();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    } catch (err) {
+        alert('Ocurrió un error al intentar actualizar el usuario.');
+    }
+}
 window.bloquearUsuario = bloquearUsuario;
 window.quitarRunner = quitarRunner;
+window.asignarRunner = asignarRunner;
 
 // ==========================================
 // MÓDULO 2 ADMIN: MONITOREO DE OPERACIONES
