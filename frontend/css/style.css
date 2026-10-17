@@ -5,3 +5,24 @@
   .filter-btn.active {
     background-color: #2563eb; color: #fff;
   }
+
+  /* ==========================================
+   ESTILOS DEL PANEL DE ADMINISTRACIÓN
+   ========================================== */
+
+/* Ocultar barra de scroll en el menú horizontal */
+.no-scrollbar::-webkit-scrollbar { 
+    display: none; 
+}
+.no-scrollbar { 
+    -ms-overflow-style: none; 
+    scrollbar-width: none; 
+}
+
+/* Cursor para arrastrar el menú en PC */
+.cursor-grab { 
+    cursor: grab; 
+}
+.cursor-grabbing { 
+    cursor: grabbing !important; 
+}

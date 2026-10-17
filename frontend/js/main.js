@@ -2836,3 +2836,131 @@ function togglePassword() {
     
     lucide.createIcons();
 }
+
+// ==========================================
+// LÓGICA DEL PANEL DE ADMINISTRACIÓN
+// ==========================================
+
+function mostrarModulo(idModulo) {
+    // Ocultar todos los módulos
+    document.querySelectorAll('.modulo-admin').forEach(el => el.classList.add('hidden'));
+    // Quitar estilos activos de todos los botones
+    document.querySelectorAll('.mod-btn').forEach(btn => {
+        btn.classList.remove('bg-indigo-600', 'text-white');
+        btn.classList.add('bg-white', 'text-slate-600');
+    });
+    
+    // Mostrar el módulo seleccionado
+    document.getElementById(idModulo).classList.remove('hidden');
+    // Activar el botón correspondiente
+    const btnActivo = document.getElementById('btn-' + idModulo);
+    if(btnActivo) {
+        btnActivo.classList.remove('bg-white', 'text-slate-600');
+        btnActivo.classList.add('bg-indigo-600', 'text-white');
+    }
+}
+
+// Configurar el arrastre del menú horizontal (Solo se ejecuta si el panel existe)
+document.addEventListener('DOMContentLoaded', () => {
+    const slider = document.getElementById('admin-menu-tabs');
+    if (!slider) return;
+
+    let isDown = false;
+    let startX;
+    let scrollLeft;
+    let isDragging = false;
+
+    slider.addEventListener('mousedown', (e) => {
+        isDown = true;
+        isDragging = false;
+        slider.classList.add('cursor-grabbing');
+        startX = e.pageX - slider.offsetLeft;
+        scrollLeft = slider.scrollLeft;
+    });
+    slider.addEventListener('mouseleave', () => {
+        isDown = false;
+        slider.classList.remove('cursor-grabbing');
+    });
+    slider.addEventListener('mouseup', () => {
+        isDown = false;
+        slider.classList.remove('cursor-grabbing');
+    });
+    slider.addEventListener('mousemove', (e) => {
+        if(!isDown) return;
+        e.preventDefault();
+        const x = e.pageX - slider.offsetLeft;
+        const walk = (x - startX) * 2; // Velocidad de arrastre
+        if (Math.abs(walk) > 5) isDragging = true;
+        slider.scrollLeft = scrollLeft - walk;
+    });
+
+    // Evitar que el clic active los botones si estamos arrastrando
+    document.querySelectorAll('.mod-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            if(isDragging) {
+                e.preventDefault();
+                e.stopPropagation();
+            } else {
+                const modulo = btn.id.replace('btn-', '');
+                mostrarModulo(modulo);
+            }
+        });
+    });
+});
+
+// ==========================================
+// FUNCIONES DEL PANEL DE ADMINISTRACIÓN
+// ==========================================
+async function cargarUsuariosAdmin() {
+    try {
+        // Asegúrate de que este enlace sea el mismo de ngrok que usas en el resto de tu app
+        const respuesta = await fetch('https://unopposed-cosmetics-sudden.ngrok-free.dev/api/admin/usuarios');
+        
+        if (!respuesta.ok) throw new Error("Error al obtener usuarios");
+        const usuarios = await respuesta.json();
+
+        // Buscamos el contenedor donde se dibujarán los usuarios
+        const contenedor = document.getElementById('mod-usuarios');
+        
+        // Limpiamos el contenedor dejando solo el título
+        contenedor.innerHTML = '<p class="text-[12px] font-bold text-slate-800 uppercase mb-2">Gestión de Cuentas</p>';
+
+        // Recorremos los usuarios de la base de datos y creamos su tarjeta
+        usuarios.forEach(user => {
+            let badgeHtml = '';
+            let botonesHtml = '<button class="flex-1 py-1.5 bg-red-50 text-red-600 text-[10.5px] font-semibold rounded-lg border border-red-100 hover:bg-red-100 transition-colors">Bloquear</button>';
+
+            // Asignamos las etiquetas según el id_rol (3=Admin, 2=Runner, 1=Alumno)
+            if (user.id_rol === 3) {
+                badgeHtml = '<span class="bg-indigo-50 text-indigo-700 border border-indigo-100 text-[9px] font-bold px-2 py-0.5 rounded-md">ADMIN</span>';
+                botonesHtml = ''; // Al admin no le ponemos botón de bloquear
+            } else if (user.id_rol === 2) {
+                badgeHtml = '<span class="bg-emerald-50 text-emerald-700 border border-emerald-100 text-[9px] font-bold px-2 py-0.5 rounded-md">RUNNER</span>';
+                botonesHtml += `<button class="flex-1 py-1.5 bg-amber-50 text-amber-700 text-[10.5px] font-semibold rounded-lg border border-amber-100 hover:bg-amber-100 transition-colors">Quitar Runner</button>`;
+            } else {
+                badgeHtml = '<span class="bg-slate-100 text-slate-600 border border-slate-200 text-[9px] font-bold px-2 py-0.5 rounded-md">ALUMNO</span>';
+            }
+
+            // Inyectamos el HTML con los datos exactos que vienen de PostgreSQL
+            contenedor.innerHTML += `
+                <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm mb-3">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-[13px] font-bold text-slate-900">${user.codigo} - ${user.nombres} ${user.apellidos || ''}</p>
+                            <p class="text-[10px] text-slate-500 mt-0.5">${user.carrera}</p>
+                        </div>
+                        ${badgeHtml}
+                    </div>
+                    ${botonesHtml !== '' ? `<div class="flex gap-2 mt-3">${botonesHtml}</div>` : ''}
+                </div>
+            `;
+        });
+
+    } catch (error) {
+        console.error("Error crítico en cargarUsuariosAdmin:", error);
+        const contenedor = document.getElementById('mod-usuarios');
+        if(contenedor) {
+            contenedor.innerHTML += '<p class="text-red-500 text-[11px] mt-2 border border-red-200 bg-red-50 p-2 rounded">Error de conexión: No se pudo cargar la base de datos.</p>';
+        }
+    }
+}

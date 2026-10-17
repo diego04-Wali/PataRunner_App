@@ -670,6 +670,29 @@ app.put('/api/pedidos/:id/calificar', async (req, res) => {
         res.status(500).json({ error: 'Error interno del servidor al calificar.' });
     }
 });
+
+// ==========================================
+// RUTA ADMIN: OBTENER TODOS LOS USUARIOS
+// ==========================================
+app.get('/api/admin/usuarios', async (req, res) => {
+    try {
+        // Hacemos la consulta a tu tabla usuarios
+        // OJO: Si en tu base de datos la columna se llama "nombre" en vez de "nombres", cámbialo aquí abajo
+        const query = `
+            SELECT id_usuario, codigo, nombres, apellidos, carrera, id_rol 
+            FROM usuarios 
+            ORDER BY id_rol DESC, nombres ASC
+        `;
+        const result = await pool.query(query);
+        
+        // Enviamos los datos al frontend
+        res.json(result.rows);
+    } catch (error) {
+        console.error("Error al obtener usuarios para admin:", error);
+        res.status(500).json({ error: 'Error del servidor' });
+    }
+});
+
 // Iniciar servidor
 app.listen(port, () => {
     console.log(`Servidor ejecutándose en el puerto ${port}`);
