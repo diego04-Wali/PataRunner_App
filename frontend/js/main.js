@@ -3,9 +3,14 @@ const API_URL = 'https://patarunner-app.onrender.com';
 const originalFetch = window.fetch.bind(window);
 
 window.fetch = function(url, config) {
-    // Si la ruta empieza con "/", le anteponemos automáticamente el dominio de Render
+    // Si la ruta empieza con "/", le anteponemos obligatoriamente el servidor de Render
     if (url && typeof url === 'string' && url.startsWith('/')) {
         url = API_URL + url;
+    }
+    // Si por alguna razón la URL trae localhost o un enlace viejo, lo redirigimos a Render
+    else if (url && typeof url === 'string' && (url.includes('localhost') || url.includes('ngrok'))) {
+        const path = url.replace(/https?:\/\/[^\/]+/, '');
+        url = API_URL + path;
     }
     return originalFetch(url, config);
 };
