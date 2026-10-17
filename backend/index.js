@@ -702,21 +702,30 @@ app.get('/api/admin/pedidos', async (req, res) => {
 });
 
 
-/// ==========================================
+/// ----------------------------------------
 // RUTA ADMIN: OBTENER TODOS LOS USUARIOS
-// ==========================================
+// ----------------------------------------
 app.get('/api/admin/usuarios', async (req, res) => {
     try {
+        // Garantizar que la columna is_blocked exista en la tabla usuarios
+        await pool.query('ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS is_blocked BOOLEAN DEFAULT false;');
+
         const query = `
-            SELECT id_usuario, codigo_alumno AS codigo, nombre_completo, carrera, id_rol 
-            FROM usuarios 
+            SELECT 
+                id_usuario, 
+                codigo_alumno AS codigo, 
+                nombre_completo, 
+                carrera, 
+                id_rol, 
+                COALESCE(is_blocked, false) AS is_blocked
+            FROM usuarios
             ORDER BY id_rol DESC, nombre_completo ASC
         `;
         const result = await pool.query(query);
         res.json(result.rows);
     } catch (error) {
         console.error("Error al obtener usuarios para admin:", error);
-        res.status(500).json({ error: 'Error del servidor' });
+        res.status(500).json({ error: "Error interno del servidor" });
     }
 });
 
@@ -726,6 +735,7 @@ app.patch('/api/admin/usuarios/:codigo/bloquear', async (req, res) => {
     const { blocked } = req.body;
 
     try {
+        await pool.query('ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS is_blocked BOOLEAN DEFAULT false;');
         await pool.query(
             'UPDATE usuarios SET is_blocked = $1 WHERE codigo_alumno = $2',
             [blocked, codigo]
@@ -733,24 +743,27 @@ app.patch('/api/admin/usuarios/:codigo/bloquear', async (req, res) => {
         res.json({ success: true, message: `Usuario ${blocked ? 'bloqueado' : 'desbloqueado'} con éxito.` });
     } catch (err) {
         console.error('Error al cambiar estado de bloqueo:', err);
-        res.status(500).json({ error: 'Error al actualizar usuario' });
+        res.status(500).json({ error: 'Error interno al actualizar usuario' });
     }
 });
 
-// 2. Quitar o Asignar el rol de Runner
+// 2. Quitar el rol de Runner (Cambia id_rol a 1 = Alumno)
 app.patch('/api/admin/usuarios/:codigo/runner', async (req, res) => {
     const { codigo } = req.params;
     const { isRunner } = req.body;
 
     try {
+        // Asignamos id_rol = 1 (Alumno) si isRunner es false
+        const nuevoRol = isRunner ? 2 : 1;
+
         await pool.query(
-            'UPDATE usuarios SET is_runner = $1 WHERE codigo_alumno = $2',
-            [isRunner, codigo]
+            'UPDATE usuarios SET id_rol = $1 WHERE codigo_alumno = $2',
+            [nuevoRol, codigo]
         );
-        res.json({ success: true, message: 'Estado de Runner actualizado correctamente.' });
+        res.json({ success: true, message: 'Rol de usuario actualizado a Alumno correctamente.' });
     } catch (err) {
         console.error('Error al cambiar rol de Runner:', err);
-        res.status(500).json({ error: 'Error al actualizar rol de Runner' });
+        res.status(500).json({ error: 'Error interno al actualizar rol de Runner' });
     }
 });
 
