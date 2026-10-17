@@ -3068,6 +3068,7 @@ async function cargarOperacionesAdmin(silencioso = false) {
     }
 }
 
+
 // 6. Escuchamos el clic en la pestaña "2. Operaciones" para cargar los datos en el momento exacto
 const btnModPedidos = document.getElementById('btn-mod-pedidos');
 if (btnModPedidos) {
@@ -3089,4 +3090,3 @@ if (btnModPedidos) {
             }
         }
     });
-});
