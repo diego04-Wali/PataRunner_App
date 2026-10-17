@@ -2966,55 +2966,23 @@ async function cargarUsuariosAdmin() {
 }
 
 // ==========================================
-// CONTROL DE ACCESO (SEGURIDAD ADMIN)
-// ==========================================
-document.addEventListener('DOMContentLoaded', () => {
-    const userStr = sessionStorage.getItem('usuario');
-    if (userStr) {
-        const userData = JSON.parse(userStr);
-        
-        // Si es Administrador
-        if (userData.id_rol === 3) {
-            // Ocultar las barras
-            const bottomNav = document.getElementById('bottom-nav-bar');
-            if (bottomNav) bottomNav.classList.add('hidden');
-            
-            const topBar = document.getElementById('role-switcher-bar');
-            if (topBar) topBar.classList.add('hidden');
-
-            // Mostrar a pantalla completa
-            document.querySelectorAll('div[id^="tab-"]').forEach(tab => tab.classList.add('hidden'));
-            const tabAdmin = document.getElementById('tab-admin');
-            if (tabAdmin) {
-                tabAdmin.classList.remove('hidden', 'pb-24');
-                tabAdmin.classList.add('pb-6');
-            }
-            if (typeof cargarUsuariosAdmin === 'function') {
-                cargarUsuariosAdmin();
-            }
-        }
-    }
-
-    // ==========================================
 // MÓDULO 2 ADMIN: MONITOREO DE OPERACIONES
 // ==========================================
-async function cargarOperacionesAdmin() {
+async function cargarOperacionesAdmin(silencioso = false) {
     const contenedor = document.getElementById('contenedor-operaciones-admin');
     if (!contenedor) return;
 
-    // 1. Mostramos una animación de carga
-    contenedor.innerHTML = '<div class="flex justify-center py-8"><i data-lucide="loader-2" class="w-6 h-6 text-indigo-600 animate-spin"></i></div>';
-    if (window.lucide) lucide.createIcons();
+    if (!silencioso) {
+        contenedor.innerHTML = '<div class="flex justify-center py-8"><i data-lucide="loader-2" class="w-6 h-6 text-indigo-600 animate-spin"></i></div>';
+        if (window.lucide) lucide.createIcons();
+    }
 
     try {
-        // 2. Pedimos los datos a tu servidor a través de ngrok
         const response = await fetch('https://unopposed-cosmetics-sudden.ngrok-free.dev/api/admin/pedidos');
-        
         if (!response.ok) throw new Error('Error al conectar con el servidor');
         
         const pedidos = await response.json();
 
-        // 3. Si no hay pedidos en la base de datos
         if (pedidos.length === 0) {
             contenedor.innerHTML = `
                 <div class="bg-white border border-slate-200 rounded-xl p-6 text-center shadow-sm">
@@ -3025,11 +2993,9 @@ async function cargarOperacionesAdmin() {
             return;
         }
 
-        // 4. Si hay pedidos, construimos las tarjetas HTML
         let html = '';
         pedidos.forEach(p => {
-            // Asignamos colores bonitos según el estado del pedido
-            let colorEstado = 'bg-slate-100 text-slate-600'; // Por defecto
+            let colorEstado = 'bg-slate-100 text-slate-600';
             const estado = p.estado ? p.estado.toLowerCase() : '';
             
             if (estado.includes('pendiente')) colorEstado = 'bg-amber-100 text-amber-700';
@@ -3037,8 +3003,23 @@ async function cargarOperacionesAdmin() {
             else if (estado.includes('entregado')) colorEstado = 'bg-emerald-100 text-emerald-700';
             else if (estado.includes('cancelado')) colorEstado = 'bg-red-100 text-red-700';
 
-            // Formateamos el costo aproximado
-            const costo = p.costo_aproximado ? parseFloat(p.costo_aproximado).toFixed(2) : '0.00';
+            // Lógica inteligente de costos: Suma catálogo + costo aproximado manual
+            const costoManual = parseFloat(p.costo_aproximado) || 0;
+            const costoCatalogo = parseFloat(p.total_catalogo) || 0;
+            const costoTotalProductos = (costoManual + costoCatalogo).toFixed(2);
+            
+            const propina = p.tarifa_entrega ? parseFloat(p.tarifa_entrega).toFixed(2) : '0.00';
+
+            // Detectamos si es un pedido "Otro" para mostrarle al admin qué pidió el usuario
+            let etiquetaPersonalizado = '';
+            if (costoManual > 0 || (p.descripcion_pedido && p.descripcion_pedido.trim() !== '')) {
+                etiquetaPersonalizado = `
+                    <div class="mt-1.5 bg-purple-50 border border-purple-100 rounded-md p-2 flex items-start gap-1.5">
+                        <i data-lucide="pen-tool" class="w-3.5 h-3.5 text-purple-600 mt-0.5 shrink-0"></i>
+                        <p class="text-[11px] text-purple-800 leading-snug"><span class="font-bold">Pedido Especial:</span> ${p.descripcion_pedido || 'Producto fuera de catálogo'}</p>
+                    </div>
+                `;
+            }
 
             html += `
                 <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex flex-col gap-2">
@@ -3058,22 +3039,32 @@ async function cargarOperacionesAdmin() {
                             <i data-lucide="zap" class="w-3.5 h-3.5 text-amber-500"></i>
                             <p class="text-[12px] text-slate-700"><span class="font-semibold">Runner:</span> ${p.nombre_runner || '<span class="text-slate-400 italic">Buscando runner...</span>'}</p>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <i data-lucide="coins" class="w-3.5 h-3.5 text-emerald-500"></i>
-                            <p class="text-[12px] text-slate-700"><span class="font-semibold">Costo Aprox:</span> S/ ${costo}</p>
+                        
+                        ${etiquetaPersonalizado}
+
+                        <div class="grid grid-cols-2 gap-2 mt-1.5 p-2 bg-slate-50 rounded-lg border border-slate-100">
+                            <div class="flex items-center gap-1.5">
+                                <i data-lucide="shopping-bag" class="w-3.5 h-3.5 text-blue-500"></i>
+                                <p class="text-[11px] text-slate-600 font-medium">Productos: <span class="font-bold text-slate-800 font-mono-stat">S/ ${costoTotalProductos}</span></p>
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                <i data-lucide="bike" class="w-3.5 h-3.5 text-emerald-500"></i>
+                                <p class="text-[11px] text-slate-600 font-medium">Propina: <span class="font-bold text-slate-800 font-mono-stat">S/ ${propina}</span></p>
+                            </div>
                         </div>
                     </div>
                 </div>
             `;
         });
 
-        // 5. Inyectamos las tarjetas en la pantalla
         contenedor.innerHTML = html;
         if (window.lucide) lucide.createIcons();
 
     } catch (error) {
         console.error("Error en cargarOperacionesAdmin:", error);
-        contenedor.innerHTML = '<p class="text-[13px] text-red-500 text-center py-4 bg-red-50 rounded-xl border border-red-100">Hubo un error al cargar las operaciones.</p>';
+        if (!silencioso) {
+            contenedor.innerHTML = '<p class="text-[13px] text-red-500 text-center py-4 bg-red-50 rounded-xl border border-red-100">Hubo un error al cargar las operaciones.</p>';
+        }
     }
 }
 

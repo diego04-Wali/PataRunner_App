@@ -699,22 +699,24 @@ app.listen(port, () => {
 // ==========================================
 app.get('/api/admin/pedidos', async (req, res) => {
     try {
-        // Hacemos un JOIN usando los nombres exactos de tus tablas y columnas
         const query = `
             SELECT 
                 p.id_pedido, 
                 p.estado, 
                 p.fecha_pedido,
+                p.descripcion_pedido,
                 p.costo_aproximado,
+                p.tarifa_entrega, 
                 cliente.nombre_completo AS nombre_cliente,
-                runner.nombre_completo AS nombre_runner
+                runner.nombre_completo AS nombre_runner,
+                (SELECT COALESCE(SUM(subtotal), 0) FROM detalle_pedido WHERE id_pedido = p.id_pedido) AS total_catalogo
             FROM pedidos p
             LEFT JOIN usuarios cliente ON p.id_cliente = cliente.id_usuario
             LEFT JOIN usuarios runner ON p.id_runner = runner.id_usuario
             ORDER BY p.fecha_pedido DESC
             LIMIT 50;
         `;
-        const result = await pool.query(query); // Asumo que tu conexión se llama "pool"
+        const result = await pool.query(query);
         res.json(result.rows);
     } catch (error) {
         console.error("Error obteniendo pedidos de admin:", error);
