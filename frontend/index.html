@@ -341,7 +341,7 @@
           <button id="nav-btn-historial" onclick="showTab('historial-runner'); if(typeof cargarHistorialRunner === 'function') cargarHistorialRunner();" class="hidden nav-btn flex flex-col items-center gap-1" data-nav="historial-runner">
               <i data-lucide="history" class="w-5 h-5"></i><span class="text-[9.5px] font-medium">Historial</span>
           </button>
-<button onclick="showTab('tab-admin'); cargarUsuariosAdmin();" class="nav-btn flex flex-col items-center gap-1" data-nav="admin"></button>
+<button id="nav-btn-admin" onclick="showTab('tab-admin'); cargarUsuariosAdmin();" class="hidden flex-col items-center gap-1" data-nav="admin">
     <i data-lucide="shield" class="w-5 h-5 text-indigo-600"></i><span class="text-[9.5px] font-bold text-indigo-600">Admin</span>
 </button>
 

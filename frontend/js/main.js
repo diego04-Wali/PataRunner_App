@@ -2946,7 +2946,7 @@ async function cargarUsuariosAdmin() {
                 <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm mb-3">
                     <div class="flex justify-between items-start">
                         <div>
-                            <p class="text-[13px] font-bold text-slate-900">${user.codigo} - ${user.nombres} ${user.apellidos || ''}</p>
+                            <p class="text-[13px] font-bold text-slate-900">${user.codigo} - ${user.nombre_completo}</p>
                             <p class="text-[10px] text-slate-500 mt-0.5">${user.carrera}</p>
                         </div>
                         ${badgeHtml}
@@ -2964,3 +2964,21 @@ async function cargarUsuariosAdmin() {
         }
     }
 }
+
+// ==========================================
+// CONTROL DE ACCESO (SEGURIDAD ADMIN)
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
+    // Revisamos quién tiene la sesión iniciada
+    const userStr = sessionStorage.getItem('usuario');
+    if (userStr) {
+        const userData = JSON.parse(userStr);
+        const btnAdmin = document.getElementById('nav-btn-admin');
+        
+        // Si el usuario es el Administrador (asumiendo que id_rol = 3 es Admin)
+        if (userData.id_rol === 3 && btnAdmin) {
+            btnAdmin.classList.remove('hidden');
+            btnAdmin.classList.add('flex', 'nav-btn'); // Lo mostramos en la barra
+        }
+    }
+});
