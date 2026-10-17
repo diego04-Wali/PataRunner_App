@@ -1,14 +1,12 @@
-// --- INTERCEPTADOR NGROK GLOBAL ---
+// --- INTERCEPTOR GLOBAL PARA RENDER ---
+const API_URL = 'https://patarunner-app.onrender.com';
 const originalFetch = window.fetch.bind(window);
-window.fetch = function(...args) {
-    let [url, config] = args;
-    config = config || {};
-    
-    // Solo agregar la cabecera si la petición va hacia Ngrok
-    if (url && url.toString().includes('ngrok-free.dev')) {
-        config.headers = Object.assign({ 'ngrok-skip-browser-warning': 'true' }, config.headers || {});
+
+window.fetch = function(url, config) {
+    // Si la ruta empieza con "/", le anteponemos automáticamente el dominio de Render
+    if (url && typeof url === 'string' && url.startsWith('/')) {
+        url = API_URL + url;
     }
-    
     return originalFetch(url, config);
 };
   lucide.createIcons();
@@ -675,7 +673,7 @@ cart.push({ id: "favor_personalizado", category: "otro", name: text, price, qty:
     submitRatingBtn.textContent = "Enviando...";
 
     try {
-        const respuesta = await fetch(`https://unopposed-cosmetics-sudden.ngrok-free.dev/api/pedidos/${window.pedidoCalificarActual.id_pedido}/calificar`, {
+        const respuesta = await fetch(`https://patarunner-app.onrender.com/api/pedidos/${window.pedidoCalificarActual.id_pedido}/calificar`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
