@@ -64,13 +64,21 @@ if (loginBtn) {
             return;
         }
 
-        if (!codigo.startsWith('U') || codigo.length !== 9) {
-            alert("El código de alumno debe empezar con 'U' y tener 8 números.");
-            return;
-        }
+       // 3. EXCEPCIÓN VIP PARA EL ADMIN Y GENERACIÓN DE CORREO
+        let emailInput = "";
 
-        // 3. Generamos el correo institucional en secreto para Firebase
-        const emailInput = `${codigo}@utp.edu.pe`;
+        if (codigo === "ADMIN01") {
+            // Si eres tú, saltamos las reglas y usamos tu correo de admin
+            emailInput = "terronesdiego04@gmail.com";
+        } else {
+            // Si es un alumno normal, aplicamos las validaciones estrictas
+            if (!codigo.startsWith('U') || codigo.length !== 9) {
+                alert("El código de alumno debe empezar con 'U' y tener 8 números.");
+                return;
+            }
+            // Generamos el correo institucional en secreto para Firebase
+            emailInput = `${codigo}@utp.edu.pe`;
+        }
 
         try {
             loginBtn.textContent = "Iniciando...";
