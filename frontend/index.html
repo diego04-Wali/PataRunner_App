@@ -331,27 +331,27 @@
       </div> <!-- FIN CONTENIDO SCROLLABLE PRINCIPAL -->
 
       <!-- ===== NAV BAR INFERIOR ===== -->
-      <div id="bottom-nav-bar" class="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-100 px-6 py-3 flex items-center justify-between"></div>
-          <button onclick="showTab('inicio')" class="nav-btn flex flex-col items-center gap-1" data-nav="inicio">
-              <i data-lucide="home" class="w-5 h-5"></i><span class="text-[9.5px] font-medium">Inicio</span>
-          </button>
-          <button onclick="showTab('pedidos'); if(typeof cargarMisPedidos === 'function') cargarMisPedidos();" class="nav-btn flex flex-col items-center gap-1" data-nav="pedidos">
-              <i data-lucide="package" class="w-5 h-5"></i><span class="text-[9.5px] font-medium">Pedidos</span>
-          </button>
-          <button onclick="showTab('runner'); if(typeof cargarEntregasActivas === 'function') cargarEntregasActivas();" class="nav-btn flex flex-col items-center gap-1" data-nav="runner">
-              <i data-lucide="wallet" class="w-5 h-5"></i><span class="text-[9.5px] font-medium">Runner</span>
-          </button>
-          <button id="nav-btn-historial" onclick="showTab('historial-runner'); if(typeof cargarHistorialRunner === 'function') cargarHistorialRunner();" class="hidden nav-btn flex flex-col items-center gap-1" data-nav="historial-runner">
-              <i data-lucide="history" class="w-5 h-5"></i><span class="text-[9.5px] font-medium">Historial</span>
-          </button>
-<button id="nav-btn-admin" onclick="showTab('tab-admin'); cargarUsuariosAdmin();" class="hidden flex-col items-center gap-1" data-nav="admin">
-    <i data-lucide="shield" class="w-5 h-5 text-indigo-600"></i><span class="text-[9.5px] font-bold text-indigo-600">Admin</span>
-</button>
+<div id="bottom-nav-bar" class="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-100 px-6 py-3 flex items-center justify-between">
+    <button onclick="showTab('inicio')" class="nav-btn flex flex-col items-center gap-1" data-nav="inicio">
+        <i data-lucide="home" class="w-5 h-5"></i><span class="text-[9.5px] font-medium">Inicio</span>
+    </button>
+    
+    <button onclick="showTab('pedidos'); if(typeof cargarMisPedidos === 'function') cargarMisPedidos();" class="nav-btn flex flex-col items-center gap-1" data-nav="pedidos">
+        <i data-lucide="package" class="w-5 h-5"></i><span class="text-[9.5px] font-medium">Pedidos</span>
+    </button>
+    
+    <button onclick="showTab('runner'); if(typeof cargarEntregasActivas === 'function') cargarEntregasActivas();" class="nav-btn flex flex-col items-center gap-1" data-nav="runner">
+        <i data-lucide="wallet" class="w-5 h-5"></i><span class="text-[9.5px] font-medium">Runner</span>
+    </button>
+    
+    <button id="nav-btn-historial" onclick="showTab('historial-runner'); if(typeof cargarHistorialRunner === 'function') cargarHistorialRunner();" class="hidden nav-btn flex flex-col items-center gap-1" data-nav="historial">
+        <i data-lucide="history" class="w-5 h-5"></i><span class="text-[9.5px] font-medium">Historial</span>
+    </button>
 
-          <button onclick="showTab('perfil')" class="nav-btn flex flex-col items-center gap-1" data-nav="perfil">
-              <i data-lucide="user" class="w-5 h-5"></i><span class="text-[9.5px] font-medium">Perfil</span>
-          </button>
-      </div>
+    <button onclick="showTab('perfil')" class="nav-btn flex flex-col items-center gap-1" data-nav="perfil">
+        <i data-lucide="user" class="w-5 h-5"></i><span class="text-[9.5px] font-medium">Perfil</span>
+    </button>
+</div>
 
       <!-- MODALS FLOTANTES -->
       <div id="product-modal" class="hidden absolute inset-0 z-50 bg-black/50 items-end">
