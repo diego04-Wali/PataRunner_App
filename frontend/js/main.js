@@ -2969,16 +2969,43 @@ async function cargarUsuariosAdmin() {
 // CONTROL DE ACCESO (SEGURIDAD ADMIN)
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
-    // Revisamos quién tiene la sesión iniciada
     const userStr = sessionStorage.getItem('usuario');
     if (userStr) {
         const userData = JSON.parse(userStr);
-        const btnAdmin = document.getElementById('nav-btn-admin');
         
-        // Si el usuario es el Administrador (asumiendo que id_rol = 3 es Admin)
-        if (userData.id_rol === 3 && btnAdmin) {
-            btnAdmin.classList.remove('hidden');
-            btnAdmin.classList.add('flex', 'nav-btn'); // Lo mostramos en la barra
+        // Si es Administrador
+        if (userData.id_rol === 3) {
+            // Ocultar las barras
+            const bottomNav = document.getElementById('bottom-nav-bar');
+            if (bottomNav) bottomNav.classList.add('hidden');
+            
+            const topBar = document.getElementById('role-switcher-bar');
+            if (topBar) topBar.classList.add('hidden');
+
+            // Mostrar a pantalla completa
+            document.querySelectorAll('div[id^="tab-"]').forEach(tab => tab.classList.add('hidden'));
+            const tabAdmin = document.getElementById('tab-admin');
+            if (tabAdmin) {
+                tabAdmin.classList.remove('hidden', 'pb-24');
+                tabAdmin.classList.add('pb-6');
+            }
+            if (typeof cargarUsuariosAdmin === 'function') {
+                cargarUsuariosAdmin();
+            }
         }
     }
+
+    // Funcionalidad del botón "Salir" del Administrador
+    document.addEventListener('click', (e) => {
+        const adminLogoutBtn = e.target.closest('#admin-logout-btn');
+        if (adminLogoutBtn) {
+            const realLogout = document.getElementById('logout-btn');
+            if (realLogout) {
+                realLogout.click();
+            } else {
+                sessionStorage.clear();
+                window.location.reload();
+            }
+        }
+    });
 });

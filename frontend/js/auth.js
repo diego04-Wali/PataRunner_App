@@ -130,22 +130,28 @@ sessionStorage.setItem('usuario', JSON.stringify(data.usuario));
 
                 // --- NUEVA LÓGICA DE ROLES (INCLUYE REDIRECCIÓN DEL ADMIN) ---
                 if (data.usuario && data.usuario.id_rol === 3) {
-                    // 1. Encendemos su botón secreto en la barra inferior al instante
-                    const btnAdmin = document.getElementById('nav-btn-admin');
-                    if (btnAdmin) {
-                        btnAdmin.classList.remove('hidden');
-                        btnAdmin.classList.add('flex', 'nav-btn');
+                    // 1. Ocultamos las barras de navegación
+                    const bottomNav = document.getElementById('bottom-nav-bar');
+                    if (bottomNav) bottomNav.classList.add('hidden');
+                    
+                    const topBar = document.getElementById('role-switcher-bar'); // Usamos tu ID exacto
+                    if (topBar) topBar.classList.add('hidden');
+
+                    // 2. Ocultamos todos los tabs normales
+                    document.querySelectorAll('div[id^="tab-"]').forEach(tab => tab.classList.add('hidden'));
+
+                    // 3. Mostramos SOLO el panel de admin a pantalla completa
+                    const tabAdmin = document.getElementById('tab-admin');
+                    if (tabAdmin) {
+                        tabAdmin.classList.remove('hidden');
+                        tabAdmin.classList.remove('pb-24');
+                        tabAdmin.classList.add('pb-6');
                     }
                     
-                    // 2. Lo mandamos directo a su Panel de Control
-                    if (typeof showTab === 'function') {
-                        showTab('tab-admin');
-                    }
-                    // 3. Cargamos la base de datos automáticamente
+                    // 4. Cargamos la base de datos automáticamente
                     if (typeof cargarUsuariosAdmin === 'function') {
                         cargarUsuariosAdmin();
                     }
-
                 } else if (data.usuario && data.usuario.id_rol === 2) {
                     sessionStorage.setItem('isRunnerStatus', 'true');
                     // Usamos window.isRunner si la variable está global en otro lado, sino omitimos. 
