@@ -416,8 +416,15 @@ if (result.rows.length === 0) {
         error: 'Usuario no encontrado en la base de datos. Falta completar el registro.' 
     });
 }
-        // 3. Devolvemos los datos del usuario (sea recién creado o antiguo)
+       // 3. Devolvemos los datos del usuario (validando si está bloqueado)
         const usuario = result.rows[0];
+
+        if (usuario.is_blocked) {
+            return res.status(403).json({ 
+                error: 'Tu cuenta ha sido suspendida. Contacta con soporte.' 
+            });
+        }
+
         res.status(200).json({ mensaje: 'Inicio de sesión exitoso', usuario: usuario });
 
     } catch (error) {
