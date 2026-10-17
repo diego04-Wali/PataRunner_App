@@ -2297,16 +2297,31 @@ setInterval(async () => {
     if (!userStr) return;
     const userData = JSON.parse(userStr);
 
-// 🚨 VERIFICACIÓN DE SEGURIDAD: Comprobar si la cuenta fue bloqueada
+// 🚨 VERIFICACIÓN DE SEGURIDAD: Comprobar estado y rol en tiempo real
     try {
         const resEstado = await fetch(`/api/usuarios/estado/${userData.id_usuario}`);
         if (resEstado.ok) {
             const dataEstado = await resEstado.json();
+            
+            // 1. Si la cuenta fue bloqueada
             if (dataEstado.blocked) {
                 alert("Tu cuenta ha sido suspendida por un administrador.");
-                sessionStorage.clear(); // Limpiamos la sesión activa
-                window.location.reload(); // Recargamos para enviarlo al Login
+                sessionStorage.clear();
+                window.location.reload();
                 return;
+            }
+
+            // 2. Si el administrador le quitó el rol de Runner
+            if (userData.id_rol !== dataEstado.id_rol) {
+                userData.id_rol = dataEstado.id_rol;
+                sessionStorage.setItem('usuario', JSON.stringify(userData));
+
+                if (dataEstado.id_rol === 1) { // Pasó a ser Alumno
+                    alert("Un administrador ha modificado tus permisos. Ya no cuentas con acceso al modo Runner.");
+                    sessionStorage.setItem('activeRole', 'alumno');
+                    window.location.reload(); // Recarga y pasa automáticamente a vista Alumno
+                    return;
+                }
             }
         }
     } catch (e) {
