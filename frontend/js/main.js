@@ -2916,35 +2916,35 @@ document.addEventListener('DOMContentLoaded', () => {
 // ==========================================
 async function cargarUsuariosAdmin() {
     try {
-        // Asegúrate de que este enlace sea el mismo de ngrok que usas en el resto de tu app
-        const respuesta = await fetch('https://unopposed-cosmetics-sudden.ngrok-free.dev/api/admin/usuarios');
+        const respuesta = await fetch('/api/admin/usuarios');
         
         if (!respuesta.ok) throw new Error("Error al obtener usuarios");
         const usuarios = await respuesta.json();
 
-        // Buscamos el contenedor donde se dibujarán los usuarios
         const contenedor = document.getElementById('mod-usuarios');
+        if (!contenedor) return;
         
-        // Limpiamos el contenedor dejando solo el título
         contenedor.innerHTML = '<p class="text-[12px] font-bold text-slate-800 uppercase mb-2">Gestión de Cuentas</p>';
 
-        // Recorremos los usuarios de la base de datos y creamos su tarjeta
         usuarios.forEach(user => {
             let badgeHtml = '';
-            let botonesHtml = '<button class="flex-1 py-1.5 bg-red-50 text-red-600 text-[10.5px] font-semibold rounded-lg border border-red-100 hover:bg-red-100 transition-colors">Bloquear</button>';
+            let btnBloquearText = user.is_blocked ? 'Desbloquear' : 'Bloquear';
+            let btnBloquearClass = user.is_blocked 
+                ? 'bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-100' 
+                : 'bg-red-50 text-red-600 border-red-100 hover:bg-red-100';
 
-            // Asignamos las etiquetas según el id_rol (3=Admin, 2=Runner, 1=Alumno)
+            let botonesHtml = `<button onclick="bloquearUsuario('${user.codigo}', ${user.is_blocked || false})" class="flex-1 py-1.5 text-[10.5px] font-semibold rounded-lg border transition-colors ${btnBloquearClass}">${btnBloquearText}</button>`;
+
             if (user.id_rol === 3) {
                 badgeHtml = '<span class="bg-indigo-50 text-indigo-700 border border-indigo-100 text-[9px] font-bold px-2 py-0.5 rounded-md">ADMIN</span>';
-                botonesHtml = ''; // Al admin no le ponemos botón de bloquear
+                botonesHtml = ''; 
             } else if (user.id_rol === 2) {
                 badgeHtml = '<span class="bg-emerald-50 text-emerald-700 border border-emerald-100 text-[9px] font-bold px-2 py-0.5 rounded-md">RUNNER</span>';
-                botonesHtml += `<button class="flex-1 py-1.5 bg-amber-50 text-amber-700 text-[10.5px] font-semibold rounded-lg border border-amber-100 hover:bg-amber-100 transition-colors">Quitar Runner</button>`;
+                botonesHtml += `<button onclick="quitarRunner('${user.codigo}')" class="flex-1 py-1.5 bg-amber-50 text-amber-700 text-[10.5px] font-semibold rounded-lg border border-amber-100 hover:bg-amber-100 transition-colors">Quitar Runner</button>`;
             } else {
                 badgeHtml = '<span class="bg-slate-100 text-slate-600 border border-slate-200 text-[9px] font-bold px-2 py-0.5 rounded-md">ALUMNO</span>';
             }
 
-            // Inyectamos el HTML con los datos exactos que vienen de PostgreSQL
             contenedor.innerHTML += `
                 <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm mb-3">
                     <div class="flex justify-between items-start">
@@ -2962,11 +2962,58 @@ async function cargarUsuariosAdmin() {
     } catch (error) {
         console.error("Error crítico en cargarUsuariosAdmin:", error);
         const contenedor = document.getElementById('mod-usuarios');
-        if(contenedor) {
+        if (contenedor) {
             contenedor.innerHTML += '<p class="text-red-500 text-[11px] mt-2 border border-red-200 bg-red-50 p-2 rounded">Error de conexión: No se pudo cargar la base de datos.</p>';
         }
     }
 }
+
+// --- LÓGICA DE ACCIONES ADMIN ---
+async function bloquearUsuario(codigo, estadoActual) {
+    const nuevoEstado = !estadoActual;
+    if (!confirm(`¿Deseas ${nuevoEstado ? 'bloquear' : 'desbloquear'} al usuario ${codigo}?`)) return;
+
+    try {
+        const res = await fetch(`/api/admin/usuarios/${codigo}/bloquear`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ blocked: nuevoEstado })
+        });
+        const data = await res.json();
+        if (data.success) {
+            alert(data.message);
+            cargarUsuariosAdmin();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    } catch (err) {
+        alert('Ocurrió un error al intentar actualizar el usuario.');
+    }
+}
+
+async function quitarRunner(codigo) {
+    if (!confirm(`¿Deseas quitar el rol de Runner al usuario ${codigo}?`)) return;
+
+    try {
+        const res = await fetch(`/api/admin/usuarios/${codigo}/runner`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ isRunner: false })
+        });
+        const data = await res.json();
+        if (data.success) {
+            alert(data.message);
+            cargarUsuariosAdmin();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    } catch (err) {
+        alert('Ocurrió un error al intentar quitar el rol.');
+    }
+}
+
+window.bloquearUsuario = bloquearUsuario;
+window.quitarRunner = quitarRunner;
 
 // ==========================================
 // MÓDULO 2 ADMIN: MONITOREO DE OPERACIONES

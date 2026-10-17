@@ -671,29 +671,6 @@ app.put('/api/pedidos/:id/calificar', async (req, res) => {
     }
 });
 
-/// ==========================================
-// RUTA ADMIN: OBTENER TODOS LOS USUARIOS
-// ==========================================
-app.get('/api/admin/usuarios', async (req, res) => {
-    try {
-        const query = `
-            SELECT id_usuario, codigo_alumno AS codigo, nombre_completo, carrera, id_rol 
-            FROM usuarios 
-            ORDER BY id_rol DESC, nombre_completo ASC
-        `;
-        const result = await pool.query(query);
-        res.json(result.rows);
-    } catch (error) {
-        console.error("Error al obtener usuarios para admin:", error);
-        res.status(500).json({ error: 'Error del servidor' });
-    }
-});
-
-// Iniciar servidor
-app.listen(port, () => {
-    console.log(`Servidor ejecutándose en el puerto ${port}`);
-});
-
 // ==========================================
 // RUTA ADMIN: OBTENER TODOS LOS PEDIDOS (OPERACIONES)
 // ==========================================
@@ -723,3 +700,62 @@ app.get('/api/admin/pedidos', async (req, res) => {
         res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
+
+
+/// ==========================================
+// RUTA ADMIN: OBTENER TODOS LOS USUARIOS
+// ==========================================
+app.get('/api/admin/usuarios', async (req, res) => {
+    try {
+        const query = `
+            SELECT id_usuario, codigo_alumno AS codigo, nombre_completo, carrera, id_rol 
+            FROM usuarios 
+            ORDER BY id_rol DESC, nombre_completo ASC
+        `;
+        const result = await pool.query(query);
+        res.json(result.rows);
+    } catch (error) {
+        console.error("Error al obtener usuarios para admin:", error);
+        res.status(500).json({ error: 'Error del servidor' });
+    }
+});
+
+// 1. Bloquear o Desbloquear un usuario
+app.patch('/api/admin/usuarios/:codigo/bloquear', async (req, res) => {
+    const { codigo } = req.params;
+    const { blocked } = req.body;
+
+    try {
+        await pool.query(
+            'UPDATE usuarios SET is_blocked = $1 WHERE codigo_alumno = $2',
+            [blocked, codigo]
+        );
+        res.json({ success: true, message: `Usuario ${blocked ? 'bloqueado' : 'desbloqueado'} con éxito.` });
+    } catch (err) {
+        console.error('Error al cambiar estado de bloqueo:', err);
+        res.status(500).json({ error: 'Error al actualizar usuario' });
+    }
+});
+
+// 2. Quitar o Asignar el rol de Runner
+app.patch('/api/admin/usuarios/:codigo/runner', async (req, res) => {
+    const { codigo } = req.params;
+    const { isRunner } = req.body;
+
+    try {
+        await pool.query(
+            'UPDATE usuarios SET is_runner = $1 WHERE codigo_alumno = $2',
+            [isRunner, codigo]
+        );
+        res.json({ success: true, message: 'Estado de Runner actualizado correctamente.' });
+    } catch (err) {
+        console.error('Error al cambiar rol de Runner:', err);
+        res.status(500).json({ error: 'Error al actualizar rol de Runner' });
+    }
+});
+
+// Iniciar servidor
+app.listen(port, () => {
+    console.log(`Servidor ejecutándose en el puerto ${port}`);
+});
+
