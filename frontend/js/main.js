@@ -2307,22 +2307,33 @@ setInterval(async () => {
             if (dataEstado.blocked) {
                 alert("Tu cuenta ha sido suspendida por un administrador.");
                 sessionStorage.clear();
-                window.location.reload(); // Recarga y envía al Login
+                window.location.reload();
                 return;
             }
 
-            // 2. Si se le revocó el rol de Runner
+            // 2. Si se le revocó el rol de Runner estando activo
             if (userData.id_rol === 2 && dataEstado.id_rol === 1) {
                 alert("Un administrador ha revocado tus permisos de Runner. Tu sesión se cerrará.");
-                sessionStorage.clear(); // Limpiamos la sesión por completo
-                window.location.reload(); // Redirige al Login de inmediato
+                sessionStorage.clear();
+                window.location.reload();
                 return;
+            }
+
+            // 3. 🔄 SINCRONIZAR CAMBIOS EN TIEMPO REAL (Si el Admin habilitó/deshabilitó permisos)
+            if (userData.bloqueado_runner !== dataEstado.bloqueado_runner || userData.id_rol !== dataEstado.id_rol) {
+                userData.bloqueado_runner = dataEstado.bloqueado_runner;
+                userData.id_rol = dataEstado.id_rol;
+                sessionStorage.setItem('usuario', JSON.stringify(userData));
+                
+                // Actualizamos la interfaz del botón
+                if (typeof aplicarEstadoRunner === 'function') {
+                    aplicarEstadoRunner();
+                }
             }
         }
     } catch (e) {
         // Silencioso si hay lag de red
     }
-
     // 1. === VIGILANTE PARA EL RUNNER (¡NUEVO!) ===
     if (typeof activeRole !== 'undefined' && activeRole === 'runner') {
         try {
@@ -2651,23 +2662,37 @@ if (runnerCheckbox && activateRunnerBtn) {
         }
     });
 
-    // 3. CONECTANDO A TU BACKEND REAL
+   // 3. CONECTANDO A TU BACKEND REAL
     activateRunnerBtn.addEventListener('click', async () => {
         const userStr = sessionStorage.getItem('usuario');
-        const token = sessionStorage.getItem('token'); 
-        
+        const token = sessionStorage.getItem('token');
+
         if (!userStr || !token) {
             alert("Error de sesión. Vuelve a iniciar sesión.");
             return;
         }
-        
-        const userData = JSON.parse(userStr);
 
-        // 🚨 SI EL USUARIO TIENE EL ACCESO A RUNNER BLOQUEADO
+        let userData = JSON.parse(userStr);
+
+        // 🔄 Consultar el estado más reciente directamente desde la base de datos
+        try {
+            const resEstado = await fetch(`/api/usuarios/estado/${userData.id_usuario}`);
+            if (resEstado.ok) {
+                const dataEstado = await resEstado.json();
+                userData.bloqueado_runner = dataEstado.bloqueado_runner;
+                userData.id_rol = dataEstado.id_rol;
+                sessionStorage.setItem('usuario', JSON.stringify(userData));
+            }
+        } catch (e) {
+            console.error("No se pudo verificar el estado en vivo:", e);
+        }
+
+        // 🚨 SI SIGUE RESTRINGIDO EN LA BASE DE DATOS
         if (userData.bloqueado_runner) {
             alert("Un administrador ha revocado y restringido tu acceso para registrarte como Runner.");
             return;
         }
+
         activateRunnerBtn.disabled = true;
         activateRunnerBtn.textContent = "Activando...";
 
