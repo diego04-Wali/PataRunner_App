@@ -693,3 +693,31 @@ app.get('/api/admin/usuarios', async (req, res) => {
 app.listen(port, () => {
     console.log(`Servidor ejecutándose en el puerto ${port}`);
 });
+
+// ==========================================
+// RUTA ADMIN: OBTENER TODOS LOS PEDIDOS (OPERACIONES)
+// ==========================================
+app.get('/api/admin/pedidos', async (req, res) => {
+    try {
+        // Hacemos un JOIN usando los nombres exactos de tus tablas y columnas
+        const query = `
+            SELECT 
+                p.id_pedido, 
+                p.estado, 
+                p.fecha_pedido,
+                p.costo_aproximado,
+                cliente.nombre_completo AS nombre_cliente,
+                runner.nombre_completo AS nombre_runner
+            FROM pedidos p
+            LEFT JOIN usuarios cliente ON p.id_cliente = cliente.id_usuario
+            LEFT JOIN usuarios runner ON p.id_runner = runner.id_usuario
+            ORDER BY p.fecha_pedido DESC
+            LIMIT 50;
+        `;
+        const result = await pool.query(query); // Asumo que tu conexión se llama "pool"
+        res.json(result.rows);
+    } catch (error) {
+        console.error("Error obteniendo pedidos de admin:", error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});

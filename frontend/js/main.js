@@ -2995,6 +2995,96 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // ==========================================
+// MÓDULO 2 ADMIN: MONITOREO DE OPERACIONES
+// ==========================================
+async function cargarOperacionesAdmin() {
+    const contenedor = document.getElementById('contenedor-operaciones-admin');
+    if (!contenedor) return;
+
+    // 1. Mostramos una animación de carga
+    contenedor.innerHTML = '<div class="flex justify-center py-8"><i data-lucide="loader-2" class="w-6 h-6 text-indigo-600 animate-spin"></i></div>';
+    if (window.lucide) lucide.createIcons();
+
+    try {
+        // 2. Pedimos los datos a tu servidor a través de ngrok
+        const response = await fetch('https://unopposed-cosmetics-sudden.ngrok-free.dev/api/admin/pedidos');
+        
+        if (!response.ok) throw new Error('Error al conectar con el servidor');
+        
+        const pedidos = await response.json();
+
+        // 3. Si no hay pedidos en la base de datos
+        if (pedidos.length === 0) {
+            contenedor.innerHTML = `
+                <div class="bg-white border border-slate-200 rounded-xl p-6 text-center shadow-sm">
+                    <i data-lucide="package-x" class="w-8 h-8 text-slate-300 mx-auto mb-2"></i>
+                    <p class="text-[13px] font-medium text-slate-500">No hay pedidos activos en este momento.</p>
+                </div>`;
+            if (window.lucide) lucide.createIcons();
+            return;
+        }
+
+        // 4. Si hay pedidos, construimos las tarjetas HTML
+        let html = '';
+        pedidos.forEach(p => {
+            // Asignamos colores bonitos según el estado del pedido
+            let colorEstado = 'bg-slate-100 text-slate-600'; // Por defecto
+            const estado = p.estado ? p.estado.toLowerCase() : '';
+            
+            if (estado.includes('pendiente')) colorEstado = 'bg-amber-100 text-amber-700';
+            else if (estado.includes('camino') || estado.includes('curso')) colorEstado = 'bg-blue-100 text-blue-700';
+            else if (estado.includes('entregado')) colorEstado = 'bg-emerald-100 text-emerald-700';
+            else if (estado.includes('cancelado')) colorEstado = 'bg-red-100 text-red-700';
+
+            // Formateamos el costo aproximado
+            const costo = p.costo_aproximado ? parseFloat(p.costo_aproximado).toFixed(2) : '0.00';
+
+            html += `
+                <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex flex-col gap-2">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+                        <span class="text-[11px] font-bold text-slate-500 font-mono-stat">PEDIDO #${p.id_pedido}</span>
+                        <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded-md ${colorEstado}">
+                            ${p.estado || 'Desconocido'}
+                        </span>
+                    </div>
+                    
+                    <div class="flex flex-col gap-1.5 mt-1">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="user" class="w-3.5 h-3.5 text-slate-400"></i>
+                            <p class="text-[12px] text-slate-700"><span class="font-semibold">Cliente:</span> ${p.nombre_cliente || 'Desconocido'}</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="zap" class="w-3.5 h-3.5 text-amber-500"></i>
+                            <p class="text-[12px] text-slate-700"><span class="font-semibold">Runner:</span> ${p.nombre_runner || '<span class="text-slate-400 italic">Buscando runner...</span>'}</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="coins" class="w-3.5 h-3.5 text-emerald-500"></i>
+                            <p class="text-[12px] text-slate-700"><span class="font-semibold">Costo Aprox:</span> S/ ${costo}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        // 5. Inyectamos las tarjetas en la pantalla
+        contenedor.innerHTML = html;
+        if (window.lucide) lucide.createIcons();
+
+    } catch (error) {
+        console.error("Error en cargarOperacionesAdmin:", error);
+        contenedor.innerHTML = '<p class="text-[13px] text-red-500 text-center py-4 bg-red-50 rounded-xl border border-red-100">Hubo un error al cargar las operaciones.</p>';
+    }
+}
+
+// 6. Escuchamos el clic en la pestaña "2. Operaciones" para cargar los datos en el momento exacto
+const btnModPedidos = document.getElementById('btn-mod-pedidos');
+if (btnModPedidos) {
+    btnModPedidos.addEventListener('click', () => {
+        cargarOperacionesAdmin();
+    });
+}
+
     // Funcionalidad del botón "Salir" del Administrador
     document.addEventListener('click', (e) => {
         const adminLogoutBtn = e.target.closest('#admin-logout-btn');

@@ -281,9 +281,20 @@
                     </div>
 
                     <!-- MÓDULO 2: OPERACIONES -->
-                    <div id="mod-pedidos" class="modulo-admin hidden space-y-3">
-                        <p class="text-[12px] font-bold text-slate-800 uppercase mb-2">Monitoreo en Vivo</p>
-                    </div>
+            <div id="mod-pedidos" class="modulo-admin hidden space-y-3">
+                <div class="flex items-center justify-between mb-2">
+                    <p class="text-[12px] font-bold text-slate-800 uppercase">Monitoreo en Vivo</p>
+                    <!-- Botón para actualizar los pedidos manualmente -->
+                    <button onclick="cargarOperacionesAdmin()" class="text-blue-600 hover:bg-blue-50 p-1 rounded transition-colors">
+                        <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                    </button>
+                </div>
+                
+                <!-- Aquí inyectaremos las tarjetas con JS -->
+                <div id="contenedor-operaciones-admin" class="space-y-3 pb-10">
+                    <p class="text-[13px] text-slate-500 text-center py-4">Haz clic en Operaciones para cargar...</p>
+                </div>
+            </div>
 
                     <!-- MÓDULO 3: AUDITORÍA -->
                     <div id="mod-auditoria" class="modulo-admin hidden space-y-3">
