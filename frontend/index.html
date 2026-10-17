@@ -432,12 +432,20 @@
           </div>
           <div id="chat-messages" class="flex-1 overflow-y-auto px-4 py-3 space-y-2.5 bg-slate-50"></div>
           <div class="border-t border-slate-100 px-3 py-2.5 flex items-center gap-2 shrink-0">
-            <input id="caja-chat-verdadera" type="text" placeholder="Escribe un mensaje..." onkeypress="if(event.key === 'Enter') enviarMensaje()" class="flex-1 text-[13px] bg-slate-100 rounded-full px-4 py-2 outline-none text-slate-700" />
-            <button type="button" onclick="enviarMensaje()" class="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white shrink-0">
-                <i data-lucide="send" class="w-4 h-4"></i>
-            </button>
-          </div>
-        </div>
+  <!-- Input oculto para leer la foto -->
+  <input type="file" id="chat-image-input" accept="image/*" class="hidden" onchange="enviarImagenChat(event)" />
+  
+  <!-- Botón de cámara -->
+  <button type="button" onclick="document.getElementById('chat-image-input').click()" class="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 shrink-0 hover:bg-slate-200 transition-colors">
+      <i data-lucide="camera" class="w-4.5 h-4.5"></i>
+  </button>
+
+  <input id="caja-chat-verdadera" type="text" placeholder="Escribe un mensaje..." onkeypress="if(event.key === 'Enter') enviarMensaje()" class="flex-1 text-[13px] bg-slate-100 rounded-full px-4 py-2 outline-none text-slate-700" />
+  
+  <button type="button" onclick="enviarMensaje()" class="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white shrink-0 transition-colors">
+      <i data-lucide="send" class="w-4 h-4"></i>
+  </button>
+</div>
       </div>
 
     </div>

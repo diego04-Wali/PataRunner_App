@@ -1624,10 +1624,18 @@ async function cargarMensajes(id_pedido) {
             const alineacion = soyYo ? 'justify-end' : 'justify-start';
             const colorFondo = soyYo ? 'bg-blue-600 text-white rounded-br-none' : 'bg-slate-100 text-slate-700 rounded-bl-none';
 
+           // Detectar si el mensaje es una imagen (empieza con [IMG])
+            let contenidoMensaje = msg.mensaje;
+            if (contenidoMensaje.startsWith('[IMG]')) {
+                const base64Data = contenidoMensaje.replace('[IMG]', '');
+                // Renderizamos la imagen en lugar del texto
+                contenidoMensaje = `<img src="${base64Data}" class="rounded-xl max-w-full" alt="Evidencia">`;
+            }
+
             contenedor.innerHTML += `
                 <div class="flex ${alineacion} mb-3">
                     <div class="max-w-[75%] rounded-2xl px-3 py-2 text-[13px] ${colorFondo}">
-                        ${msg.mensaje}
+                        ${contenidoMensaje}
                     </div>
                 </div>
             `;
@@ -1692,6 +1700,71 @@ const input = document.getElementById('caja-chat-verdadera');
         console.error("Error al conectar con el backend:", error);
     }
 }
+
+// 5. Enviar una imagen en el chat
+async function enviarImagenChat(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+        alert("La imagen es muy pesada. El tamaño máximo es 2MB.");
+        return;
+    }
+
+    if (!pedidoChatActual) {
+        console.warn("No hay pedido vinculado al chat.");
+        return;
+    }
+
+    // Convertir la imagen a Base64
+    const reader = new FileReader();
+    reader.onloadend = async function () {
+        const base64String = reader.result;
+        const mensajeConPrefijo = "[IMG]" + base64String; // Le ponemos la etiqueta para reconocerlo
+
+        try {
+            const userStr = sessionStorage.getItem('usuario');
+            if (!userStr) return;
+            const userData = JSON.parse(userStr);
+            const token = sessionStorage.getItem('token');
+
+            // Cambiar el placeholder temporalmente para dar feedback visual
+            const input = document.getElementById('caja-chat-verdadera');
+            const placeholderOriginal = input.placeholder;
+            input.placeholder = "Enviando imagen...";
+            input.disabled = true;
+
+            const respuesta = await fetch('https://unopposed-cosmetics-sudden.ngrok-free.dev/api/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    id_pedido: pedidoChatActual,
+                    id_remitente: userData.id_usuario,
+                    id_rol: userData.id_rol,
+                    mensaje: mensajeConPrefijo
+                })
+            });
+
+            if (respuesta.ok) {
+                await cargarMensajes(pedidoChatActual);
+            } else {
+                console.error("Error al enviar imagen al backend");
+            }
+
+            // Restaurar la caja de texto
+            input.placeholder = placeholderOriginal;
+            input.disabled = false;
+            event.target.value = ''; // Limpiar el input file para poder subir otra
+        } catch (error) {
+            console.error("Error crítico al enviar imagen:", error);
+        }
+    };
+    reader.readAsDataURL(file);
+}
+
 // ==================== CARGAR TABLERO DE MISIONES ====================
 async function cargarPedidosPendientes() {
     const contenedor = document.getElementById('runner-disponibles');
