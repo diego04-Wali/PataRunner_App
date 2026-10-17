@@ -88,8 +88,8 @@ if (loginBtn) {
             const userCredential = await signInWithEmailAndPassword(auth, emailInput, passwordInput);
             const user = userCredential.user;
 
-            // Verificamos si el correo ya fue validado en su bandeja
-            if (!user.emailVerified) {
+            // Verificamos si el correo ya fue validado en su bandeja (EXCEPTO PARA EL ADMIN)
+            if (!user.emailVerified && codigo !== "ADMIN01") {
                 alert("Debes verificar tu correo institucional antes de ingresar a PataRunner. Revisa tu bandeja de entrada.");
                 await auth.signOut(); // Lo bloqueamos por seguridad
                 return; // Detenemos todo aquí
