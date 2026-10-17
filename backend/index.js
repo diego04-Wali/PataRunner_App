@@ -797,15 +797,15 @@ app.patch('/api/admin/usuarios/:codigo/runner', async (req, res) => {
                 [codigo]
             );
 
-            // Cambiamos id_rol a 1 Y BLOQUEAMOS su capacidad de volver a postular a Runner
+            // Cambiamos id_rol a 1 Y BLOQUEAMOS su capacidad de volver a postular a Runner ($1 en lugar de $2)
             await pool.query(
-                'UPDATE usuarios SET id_rol = 1, bloqueado_runner = true WHERE codigo_alumno = $2',
+                'UPDATE usuarios SET id_rol = 1, bloqueado_runner = true WHERE codigo_alumno = $1',
                 [codigo]
             );
         } else {
-            // Si el admin le vuelve a dar el rol manualmente
+            // Si el admin le vuelve a dar el rol manualmente ($1 en lugar de $2)
             await pool.query(
-                'UPDATE usuarios SET id_rol = 2, bloqueado_runner = false WHERE codigo_alumno = $2',
+                'UPDATE usuarios SET id_rol = 2, bloqueado_runner = false WHERE codigo_alumno = $1',
                 [codigo]
             );
         }
