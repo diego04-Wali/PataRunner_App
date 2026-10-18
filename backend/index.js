@@ -900,6 +900,55 @@ app.patch('/api/admin/reportes/:id/estado', async (req, res) => {
     }
 });
 
+// ==========================================
+// MÓDULO 4 ADMIN: KPIs Y ESTADÍSTICAS DEL DÍA
+// ==========================================
+app.get('/api/admin/kpis', async (req, res) => {
+    try {
+        // 1. Conteo de pedidos por estado (del día de hoy)
+        const resPedidos = await pool.query(`
+            SELECT 
+                COUNT(*) FILTER (WHERE DATE(fecha_pedido) = CURRENT_DATE) AS total_hoy,
+                COUNT(*) FILTER (WHERE DATE(fecha_pedido) = CURRENT_DATE AND estado = 'Entregado') AS entregados_hoy,
+                COUNT(*) FILTER (WHERE DATE(fecha_pedido) = CURRENT_DATE AND estado = 'En Camino') AS en_camino_hoy,
+                COUNT(*) FILTER (WHERE DATE(fecha_pedido) = CURRENT_DATE AND estado = 'Pendiente') AS pendientes_hoy,
+                COUNT(*) FILTER (WHERE DATE(fecha_pedido) = CURRENT_DATE AND estado = 'Cancelado') AS cancelados_hoy,
+                COALESCE(SUM(tarifa_entrega) FILTER (WHERE DATE(fecha_pedido) = CURRENT_DATE AND estado = 'Entregado'), 0) AS ganancias_runners_hoy
+            FROM pedidos;
+        `);
+
+        // 2. Conteo de usuarios (Solo Alumnos y Runners, excluyendo administradores)
+        const resUsuarios = await pool.query(`
+            SELECT 
+                COUNT(*) FILTER (WHERE id_rol = 1) AS total_alumnos,
+                COUNT(*) FILTER (WHERE id_rol = 2) AS total_runners
+            FROM usuarios;
+        `);
+
+        // 3. Tienda con más ventas hoy
+        const resTopTienda = await pool.query(`
+            SELECT t.nombre, COUNT(dp.id_pedido) as total_ventas
+            FROM detalle_pedidos dp
+            JOIN productos p ON dp.id_producto = p.id_producto
+            JOIN tiendas t ON p.id_tienda = t.id_tienda
+            JOIN pedidos ped ON dp.id_pedido = ped.id_pedido
+            WHERE DATE(ped.fecha_pedido) = CURRENT_DATE
+            GROUP BY t.nombre
+            ORDER BY total_ventas DESC
+            LIMIT 1;
+        `);
+
+        res.json({
+            pedidos: resPedidos.rows[0],
+            usuarios: resUsuarios.rows[0],
+            topTienda: resTopTienda.rows[0]?.nombre || 'Sin ventas aún'
+        });
+    } catch (err) {
+        console.error('Error al calcular KPIs:', err);
+        res.status(500).json({ error: 'Error al consultar estadísticas' });
+    }
+});
+
 // Iniciar servidor
 app.listen(port, () => {
     console.log(`Servidor ejecutándose en el puerto ${port}`);

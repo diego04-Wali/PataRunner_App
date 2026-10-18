@@ -3334,3 +3334,122 @@ if (btnModPedidos) {
             }
         }
     });
+
+    // ==========================================
+// MÓDULO 4 ADMIN: KPIS Y ESTADÍSTICAS
+// ==========================================
+
+async function cargarKPIsAdmin() {
+    const contenedor = document.getElementById('mod-kpi');
+    if (!contenedor) return;
+
+    contenedor.innerHTML = '<div class="flex justify-center py-8"><i data-lucide="loader-2" class="w-6 h-6 text-indigo-600 animate-spin"></i></div>';
+    if (window.lucide) lucide.createIcons();
+
+    try {
+        const res = await fetch('/api/admin/kpis');
+        if (!res.ok) throw new Error("Error al obtener KPIs");
+        const data = await res.json();
+
+        const p = data.pedidos || {};
+        const u = data.usuarios || {};
+        const gananciasRunners = parseFloat(p.ganancias_runners_hoy || 0).toFixed(2);
+
+        contenedor.innerHTML = `
+            <p class="text-[12px] font-bold text-slate-800 uppercase mb-3">Estadísticas del Día</p>
+            
+            <!-- Resumen principal de transacciones del día -->
+            <div class="grid grid-cols-2 gap-2.5 mb-3">
+                <div class="bg-white border border-slate-200 rounded-xl p-3 shadow-sm">
+                    <div class="flex items-center gap-1.5 text-slate-500 mb-1">
+                        <i data-lucide="package" class="w-4 h-4 text-indigo-600"></i>
+                        <span class="text-[10px] font-bold uppercase">Pedidos Hoy</span>
+                    </div>
+                    <p class="text-2xl font-bold font-mono-stat text-slate-900">${p.total_hoy || 0}</p>
+                    <p class="text-[10px] text-slate-400 mt-0.5">${p.entregados_hoy || 0} entregados</p>
+                </div>
+
+                <div class="bg-white border border-slate-200 rounded-xl p-3 shadow-sm">
+                    <div class="flex items-center gap-1.5 text-slate-500 mb-1">
+                        <i data-lucide="coins" class="w-4 h-4 text-emerald-600"></i>
+                        <span class="text-[10px] font-bold uppercase">Propinas Hoy</span>
+                    </div>
+                    <p class="text-2xl font-bold font-mono-stat text-emerald-600">S/ ${gananciasRunners}</p>
+                    <p class="text-[10px] text-slate-400 mt-0.5">Generado por Runners</p>
+                </div>
+            </div>
+
+            <!-- Desglose por Estado de Pedidos -->
+            <div class="bg-white border border-slate-200 rounded-xl p-3.5 mb-3 shadow-sm">
+                <p class="text-[11px] font-bold text-slate-500 uppercase mb-2.5">Estado de Pedidos Hoy</p>
+                <div class="grid grid-cols-3 gap-2 text-center">
+                    <div class="bg-amber-50 border border-amber-100 rounded-lg p-2">
+                        <span class="text-[10px] font-bold text-amber-700 block">Pendientes</span>
+                        <span class="text-base font-bold font-mono-stat text-amber-900">${p.pendientes_hoy || 0}</span>
+                    </div>
+                    <div class="bg-blue-50 border border-blue-100 rounded-lg p-2">
+                        <span class="text-[10px] font-bold text-blue-700 block">En Camino</span>
+                        <span class="text-base font-bold font-mono-stat text-blue-900">${p.en_camino_hoy || 0}</span>
+                    </div>
+                    <div class="bg-red-50 border border-red-100 rounded-lg p-2">
+                        <span class="text-[10px] font-bold text-red-700 block">Cancelados</span>
+                        <span class="text-base font-bold font-mono-stat text-red-900">${p.cancelados_hoy || 0}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Métricas de Usuarios (Solo Alumnos y Runners) -->
+            <div class="bg-white border border-slate-200 rounded-xl p-3.5 mb-3 shadow-sm">
+                <p class="text-[11px] font-bold text-slate-500 uppercase mb-2.5">Comunidad PataRunner</p>
+                <div class="grid grid-cols-2 gap-2.5">
+                    <div class="flex items-center gap-2.5 p-2 bg-slate-50 rounded-lg border border-slate-100">
+                        <div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs shrink-0">
+                            🎓
+                        </div>
+                        <div>
+                            <p class="text-[10px] text-slate-500 font-semibold uppercase">Alumnos</p>
+                            <p class="text-base font-bold font-mono-stat text-slate-800">${u.total_alumnos || 0}</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2.5 p-2 bg-slate-50 rounded-lg border border-slate-100">
+                        <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xs shrink-0">
+                            ⚡
+                        </div>
+                        <div>
+                            <p class="text-[10px] text-slate-500 font-semibold uppercase">Runners</p>
+                            <p class="text-base font-bold font-mono-stat text-slate-800">${u.total_runners || 0}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tienda Destacada -->
+            <div class="bg-white border border-slate-200 rounded-xl p-3.5 shadow-sm flex items-center justify-between">
+                <div>
+                    <span class="text-[10px] font-bold text-slate-400 uppercase">Tienda Líder de Hoy</span>
+                    <p class="text-[13px] font-bold text-slate-800">${data.topTienda}</p>
+                </div>
+                <div class="w-9 h-9 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600">
+                    <i data-lucide="trophy" class="w-5 h-5"></i>
+                </div>
+            </div>
+        `;
+
+        if (window.lucide) lucide.createIcons();
+
+    } catch (err) {
+        console.error("Error al cargar KPIs:", err);
+        contenedor.innerHTML = '<p class="text-red-500 text-[11px]">Error al conectar con el servidor de estadísticas.</p>';
+    }
+}
+
+window.cargarKPIsAdmin = cargarKPIsAdmin;
+
+// Listener para cargar KPIs al hacer clic en la pestaña 4
+const btnModKpi = document.getElementById('btn-mod-kpi');
+if (btnModKpi) {
+    btnModKpi.addEventListener('click', () => {
+        cargarKPIsAdmin();
+    });
+}
