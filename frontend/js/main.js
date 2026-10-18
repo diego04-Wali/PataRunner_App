@@ -3459,10 +3459,15 @@ async function cargarTiendasAdmin() {
     if (window.lucide) lucide.createIcons();
 
     try {
-        const res = await fetch('/api/admin/tiendas');
-        if (!res.ok) throw new Error("Error al consultar tiendas");
+        const [resTiendas, resProductos] = await Promise.all([
+            fetch('/api/admin/tiendas'),
+            fetch('/api/productos')
+        ]);
         
-        listaTiendasGlobal = await res.json();
+        if (!resTiendas.ok || !resProductos.ok) throw new Error("Error al consultar datos");
+        
+        listaTiendasGlobal = await resTiendas.json();
+        const productos = await resProductos.json();
 
         if (listaTiendasGlobal.length === 0) {
             contenedor.innerHTML = '<p class="text-[12px] text-slate-400 text-center py-6">No hay tiendas registradas aún.</p>';
@@ -3471,8 +3476,31 @@ async function cargarTiendasAdmin() {
 
         let html = '';
         listaTiendasGlobal.forEach(tienda => {
+            // Filtrar productos pertenecientes a esta tienda
+            const productosTienda = productos.filter(p => p.id_tienda === tienda.id_tienda);
+
+            let listaProductosHTML = '';
+            if (productosTienda.length === 0) {
+                listaProductosHTML = '<p class="text-[11px] text-slate-400 italic py-2 text-center">No hay productos registrados en esta tienda.</p>';
+            } else {
+                productosTienda.forEach(p => {
+                    const precio = Number(p.precio).toFixed(2);
+                    listaProductosHTML += `
+                        <div class="flex items-center justify-between p-2 bg-slate-50 border border-slate-100 rounded-lg text-xs mb-1.5">
+                            <div class="flex items-center gap-2 min-w-0 pr-2">
+                                <span class="font-bold text-slate-800 truncate">${p.nombre}</span>
+                                <span class="text-[10px] text-slate-400 font-mono">S/ ${precio}</span>
+                            </div>
+                            <button onclick="eliminarProductoAdmin(${p.id_producto})" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-100 px-2 py-1 rounded text-[10px] font-semibold transition-colors shrink-0">
+                                🗑️ Eliminar
+                            </button>
+                        </div>
+                    `;
+                });
+            }
+
             html += `
-                <div class="bg-white border border-slate-200 rounded-xl p-3.5 shadow-sm">
+                <div class="bg-white border border-slate-200 rounded-xl p-3.5 shadow-sm mb-3">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-2.5">
                             <div class="w-9 h-9 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-sm shrink-0">
@@ -3483,9 +3511,20 @@ async function cargarTiendasAdmin() {
                                 <p class="text-[10px] text-slate-500">📍 ${tienda.ubicacion || 'Ubicación no especificada'}</p>
                             </div>
                         </div>
-                        <span class="text-[9px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-md">
-                            ID: #${tienda.id_tienda}
-                        </span>
+                        <div class="flex items-center gap-2">
+                            <span class="text-[9px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-md">
+                                ID: #${tienda.id_tienda}
+                            </span>
+                            <button onclick="toggleProductosTienda(${tienda.id_tienda})" class="text-[11px] font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1 rounded-lg border border-indigo-100 transition-colors">
+                                Productos (${productosTienda.length}) 👇
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Lista desplegable de productos -->
+                    <div id="tienda-prod-list-${tienda.id_tienda}" class="hidden mt-3 pt-3 border-t border-slate-100">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase mb-2">Catálogo de la tienda:</p>
+                        ${listaProductosHTML}
                     </div>
                 </div>
             `;
@@ -3496,7 +3535,7 @@ async function cargarTiendasAdmin() {
 
     } catch (err) {
         console.error("Error al cargar tiendas:", err);
-        contenedor.innerHTML = '<p class="text-red-500 text-[11px]">Error al conectar con el servidor de tiendas.</p>';
+        contenedor.innerHTML = '<p class="text-red-500 text-[11px] text-center py-4">Error al conectar con el servidor de tiendas.</p>';
     }
 }
 
@@ -3613,3 +3652,36 @@ if (btnModTiendas) {
 }
 
 window.cargarTiendasAdmin = cargarTiendasAdmin;
+
+// Desplegar/ocultar productos de una tienda
+window.toggleProductosTienda = function(idTienda) {
+    const el = document.getElementById(`tienda-prod-list-${idTienda}`);
+    if (el) {
+        el.classList.toggle('hidden');
+    }
+};
+
+// Eliminar producto desde el panel de admin
+window.eliminarProductoAdmin = async function(idProducto) {
+    if (!confirm(`¿Estás seguro de que deseas eliminar este producto del catálogo?`)) {
+        return;
+    }
+
+    try {
+        const res = await fetch(`/api/admin/productos/${idProducto}`, {
+            method: 'DELETE'
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+            alert('¡Producto eliminado correctamente!');
+            cargarTiendasAdmin(); // Recargar el panel admin
+            if (typeof cargarCatalogo === 'function') cargarCatalogo(); // Recargar el catálogo del alumno
+        } else {
+            alert('Error al eliminar: ' + (data.error || 'No se pudo eliminar el producto'));
+        }
+    } catch (err) {
+        console.error("Error al eliminar producto:", err);
+        alert('Ocurrió un error de conexión al intentar eliminar el producto.');
+    }
+};
