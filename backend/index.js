@@ -87,11 +87,30 @@ app.post('/api/productos', async (req, res) => {
         res.status(500).json({ error: 'Error al registrar el producto.' });
     }
 });
+// --- RUTA: Eliminar / Desactivar Producto ---
+app.delete('/api/admin/productos/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const resultado = await pool.query(
+            'UPDATE productos SET disponible = false WHERE id_producto = $1 RETURNING *',
+            [id]
+        );
+
+        if (resultado.rowCount === 0) {
+            return res.status(404).json({ success: false, error: 'Producto no encontrado' });
+        }
+
+        res.json({ success: true, message: 'Producto eliminado del catálogo correctamente' });
+    } catch (error) {
+        console.error("Error al eliminar producto:", error);
+        res.status(500).json({ success: false, error: 'Error en la base de datos' });
+    }
+});
 // --- RUTA: Obtener todos los Productos ---
 app.get('/api/productos', async (req, res) => {
     try {
         // Consultamos toda la tabla de productos
-        const todosLosProductos = await pool.query('SELECT * FROM productos');
+        const todosLosProductos = await pool.query("SELECT * FROM productos WHERE disponible = true ORDER BY id_producto ASC");
         
         // Devolvemos la lista en formato JSON
         res.status(200).json(todosLosProductos.rows);
