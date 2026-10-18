@@ -2427,7 +2427,6 @@ if (pedidoHoy.estado === 'Pendiente') {
                 modal.classList.remove('hidden');
             }
             if (typeof cargarMisPedidos === 'function') cargarMisPedidos();
-        }
 }
                         
                         // CASO B: El Runner ENTREGÓ el pedido
