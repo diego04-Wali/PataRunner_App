@@ -1928,61 +1928,61 @@ async function cargarPedidosPendientes() {
 
 // ================= LÓGICA DEL CATÁLOGO (ALUMNO) =================
 async function cargarCatalogo() {
-  const contenedorLista = document.getElementById('product-list');
+    const contenedorLista = document.getElementById('product-list');
+    const contenedorTabs = document.getElementById('store-tabs');
 
-  if (!contenedorLista) return;
+    if (!contenedorLista) return;
 
-  try {
-    // 1. Llamamos al backend para traer los productos
-    const respuesta = await fetch('/api/productos');
-    const productos = await respuesta.json();
+    try {
+        const respuesta = await fetch('/api/productos');
+        const productos = await respuesta.json();
 
-    // 2. Limpiamos el contenedor
-    contenedorLista.innerHTML = '';
+        // Mapeo de tiendas
+        const mapaTiendas = { 1: 'Frago Gourmet', 2: 'LISTO!', 3: 'Papelería UTP' };
+        productos.forEach(p => {
+            p.nombre_tienda = p.nombre_tienda || mapaTiendas[p.id_tienda] || 'Tienda UTP';
+        });
 
-    if (productos.length === 0) {
-      contenedorLista.innerHTML = '<p class="text-[13px] text-slate-400 text-center py-6">No hay productos disponibles por ahora.</p>';
-      return;
+        window.productosGlobales = productos;
+
+        // Filtrar por categoría activa
+        const catActiva = window.currentProductCategory || 'snack';
+        const productosFiltrados = productos.filter(p => p.categoria.toLowerCase() === catActiva.toLowerCase());
+
+        if (productosFiltrados.length === 0) {
+            if (contenedorTabs) contenedorTabs.innerHTML = '';
+            contenedorLista.innerHTML = '<p class="text-[13px] text-slate-400 text-center py-6">No hay productos en esta categoría por ahora.</p>';
+            return;
+        }
+
+        // 1. Pestañas de tiendas únicas
+        const tiendasUnicas = [...new Set(productosFiltrados.map(p => p.nombre_tienda))];
+        if (contenedorTabs) {
+            let tabsHTML = '';
+            tiendasUnicas.forEach((tienda, index) => {
+                const isActive = index === 0;
+                tabsHTML += `
+                    <button onclick="renderizarTienda('${tienda}')" class="store-tab-btn flex flex-col items-center gap-1 shrink-0" data-store="${tienda}">
+                        <div class="w-12 h-12 rounded-full flex items-center justify-center text-[22px] bg-white border-2 ${isActive ? 'border-blue-600' : 'border-slate-200 opacity-60'} shadow-sm transition-all">
+                            🏪
+                        </div>
+                        <span class="text-[10px] font-semibold ${isActive ? 'text-blue-600' : 'text-slate-400'}">${tienda}</span>
+                    </button>
+                `;
+            });
+            contenedorTabs.innerHTML = tabsHTML;
+        }
+
+        // 2. Renderizar productos de la primera tienda
+        if (tiendasUnicas.length > 0) {
+            renderizarTienda(tiendasUnicas[0]);
+        }
+
+    } catch (error) {
+        console.error("Error al cargar el catálogo:", error);
+        contenedorLista.innerHTML = '<p class="text-red-500 text-center py-4 text-[13px]">Error de conexión al cargar el catálogo.</p>';
     }
-
-    // 3. Dibujamos una tarjeta por cada producto de la BD
-    productos.forEach(producto => {
-      const precioFormateado = Number(producto.precio).toFixed(2);
-
-      const fotoProductoHTML = (producto.imagen && producto.imagen.trim() !== '') 
-          ? `<img src="${producto.imagen}" alt="${producto.nombre}" class="w-12 h-12 object-cover rounded-xl shrink-0" onerror="this.onerror=null; this.src='https://i.postimg.cc/YqKYgmdc/images.jpg';">`
-          : `<div class="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center text-2xl shrink-0">${obtenerEmoji(producto.nombre)}</div>`;
-
-      const tarjeta = `
-        <div class="flex items-center justify-between p-3 mb-3 bg-white border border-slate-100 rounded-2xl shadow-sm">
-          <div class="flex items-center gap-3 flex-1 pr-3">
-            ${fotoProductoHTML}
-            <div>
-              <span class="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full uppercase tracking-wider mb-1 inline-block">${producto.categoria || 'General'}</span>
-              <h3 class="text-[14px] font-bold text-slate-800 leading-tight">${producto.nombre}</h3>
-              <p class="text-[12px] text-slate-500 leading-snug mt-1">${producto.descripcion || ''}</p>
-              <p class="text-[13px] font-mono-stat font-semibold text-slate-900 mt-2">S/ ${precioFormateado}</p>
-            </div>
-          </div>
-
-          <button onclick="agregarAlCarrito(${producto.id_producto}, '${producto.nombre}', ${producto.precio})" class="w-9 h-9 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-blue-600 hover:text-white transition-colors shrink-0">
-            <i data-lucide="plus" class="w-4 h-4"></i>
-          </button>
-        </div>
-      `;
-
-      contenedorLista.innerHTML += tarjeta;
-    });
-
-    if (window.lucide) lucide.createIcons();
-
-  } catch (error) {
-    console.error("Error al cargar el catálogo:", error);
-    contenedorLista.innerHTML = '<p class="text-red-500 text-center py-4 text-[13px]">Error al conectar con la base de datos.</p>';
-  }
 }
-
-cargarCatalogo();
 // Hacemos las funciones globales para usarlas desde el HTML
 window.abrirChat = abrirChat;
 window.cerrarChat = cerrarChat;
@@ -2013,65 +2013,52 @@ function obtenerEmoji(nombre) {
 
 function renderizarTienda(nombreTienda) {
     const contenedorLista = document.getElementById('product-list');
+    if (!contenedorLista || !window.productosGlobales) return;
 
-    // Actualizar estilo de las pestañas
+    // Actualizar estilos visuales de las pestañas
     document.querySelectorAll('.store-tab-btn').forEach(btn => {
-        const t = btn.dataset.store;
-        const isAct = (t === nombreTienda);
-        const iconDiv = btn.querySelector('.tab-icon');
-        const spanTxt = btn.querySelector('.tab-text');
+        const isSelected = btn.dataset.store === nombreTienda;
+        const iconDiv = btn.querySelector('div');
+        const spanText = btn.querySelector('span');
 
-        if(isAct) {
-            iconDiv.className = "tab-icon w-12 h-12 rounded-full flex items-center justify-center text-[22px] bg-white border-2 border-blue-600 shadow-sm transition-all";
-            spanTxt.className = "tab-text text-[10px] font-semibold text-blue-600";
-        } else {
-            iconDiv.className = "tab-icon w-12 h-12 rounded-full flex items-center justify-center text-[22px] bg-white border-2 border-slate-200 opacity-60 shadow-sm transition-all";
-            spanTxt.className = "tab-text text-[10px] font-semibold text-slate-400";
-        }
+        if (iconDiv) iconDiv.className = `w-12 h-12 rounded-full flex items-center justify-center text-[22px] bg-white border-2 ${isSelected ? 'border-blue-600' : 'border-slate-200 opacity-60'} shadow-sm transition-all`;
+        if (spanText) spanText.className = `text-[10px] font-semibold ${isSelected ? 'text-blue-600' : 'text-slate-400'}`;
     });
 
-    const productosTienda = productosGlobales.filter(p => p.nombre_tienda === nombreTienda);
-    const agrupados = {};
-    productosTienda.forEach(p => {
-        const sub = p.subcategoria || 'General';
-        if (!agrupados[sub]) agrupados[sub] = [];
-        agrupados[sub].push(p);
-    });
+    const catActiva = window.currentProductCategory || 'snack';
+    const productosTienda = window.productosGlobales.filter(p => 
+        p.categoria.toLowerCase() === catActiva.toLowerCase() && p.nombre_tienda === nombreTienda
+    );
 
-    // Dibujar tarjetas estilo pastel con botón de '+'
-    let html = '';
-    let colorOffset = 0;
+    contenedorLista.innerHTML = '';
 
-    for (const [subcategoria, items] of Object.entries(agrupados)) {
-        html += `<p class="text-[12.5px] font-display font-bold text-slate-900 mt-3 mb-2 px-1">${subcategoria}</p>`;
-        html += `<div class="grid grid-cols-2 gap-2.5 mb-4 px-1">`;
+    productosTienda.forEach(producto => {
+        const precioFormateado = Number(producto.precio).toFixed(2);
 
-        items.forEach((producto) => {
-            const bg = coloresTarjetasPastel[colorOffset % coloresTarjetasPastel.length];
-            const emoji = obtenerEmoji(producto.nombre);
-            const precio = Number(producto.precio).toFixed(2);
-            colorOffset++;
+        const fotoProductoHTML = (producto.imagen && producto.imagen.trim() !== '') 
+            ? `<img src="${producto.imagen}" alt="${producto.nombre}" class="w-12 h-12 object-cover rounded-xl shrink-0" onerror="this.onerror=null; this.src='https://i.postimg.cc/YqKYgmdc/images.jpg';">`
+            : `<div class="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center text-2xl shrink-0">${obtenerEmoji(producto.nombre)}</div>`;
 
-            html += `
-            <div class="relative rounded-2xl border border-slate-100 overflow-hidden bg-white">
-                <div class="h-16 flex items-center justify-center text-[30px] ${bg}">${emoji}</div>
-                <div class="px-2.5 pt-2 pb-2.5">
-                    <p class="text-[11.5px] font-medium text-slate-800 leading-snug line-clamp-2 min-h-[28px]">${producto.nombre}</p>
-                    <span class="font-mono-stat text-[11.5px] font-bold text-blue-600 block mt-1">S/ ${precio}</span>
+        const tarjeta = `
+            <div class="flex items-center justify-between p-3 mb-3 bg-white border border-slate-100 rounded-2xl shadow-sm">
+                <div class="flex items-center gap-3 flex-1 pr-3">
+                    ${fotoProductoHTML}
+                    <div>
+                        <span class="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full uppercase tracking-wider mb-1 inline-block">${producto.categoria || 'General'}</span>
+                        <h3 class="text-[14px] font-bold text-slate-800 leading-tight">${producto.nombre}</h3>
+                        <p class="text-[12px] text-slate-500 leading-snug mt-1">${producto.descripcion || ''}</p>
+                        <p class="text-[13px] font-mono-stat font-semibold text-slate-900 mt-2">S/ ${precioFormateado}</p>
+                    </div>
                 </div>
-                <!-- Botón flotante (+) -->
-                <div class="absolute top-1.5 right-1.5">
-                    <button onclick="agregarAlCarrito(${producto.id_producto}, '${producto.nombre}', ${producto.precio})" class="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-[15px] shadow-md hover:bg-blue-700 transition-colors">
-                        +
-                    </button>
-                </div>
+                <button onclick="agregarAlCarrito(${producto.id_producto}, '${producto.nombre}', ${producto.precio})" class="w-9 h-9 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-blue-600 hover:text-white transition-colors shrink-0">
+                    <i data-lucide="plus" class="w-4 h-4"></i>
+                </button>
             </div>
-            `;
-        });
-        html += `</div>`;
-    }
+        `;
+        contenedorLista.innerHTML += tarjeta;
+    });
 
-    contenedorLista.innerHTML = html;
+    if (window.lucide) lucide.createIcons();
 }
 
 // Hacerla global para los botones
