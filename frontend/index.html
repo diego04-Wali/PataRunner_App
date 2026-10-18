@@ -248,83 +248,76 @@
             <div id="contenedor-historial-runner" class="px-5"></div>
         </div>
 
-<!-- TAB: ADMINISTRACIÓN (Oculto por defecto) -->
-            <div id="tab-admin" class="hidden w-full h-full pt-6 pb-24 overflow-y-auto bg-slate-50">
-                <div class="px-5 pb-3 shrink-0">
-                   <div class="flex items-center justify-between mb-1">
-            <div class="flex items-center gap-2">
-                <i data-lucide="shield-alert" class="w-5 h-5 text-indigo-600"></i>
-                <p class="font-display text-lg font-bold text-slate-900">Panel Admin</p>
-            </div>
-            <!-- Botón de Cerrar Sesión exclusivo del Admin -->
-            <button id="admin-logout-btn" class="bg-red-50 text-red-600 border border-red-100 px-3 py-1.5 rounded-lg text-[10px] font-bold flex items-center gap-1">
-                <i data-lucide="log-out" class="w-3 h-3"></i> Salir
-            </button>
-        </div>
-                </div>
-
-                <!-- ===== MENÚ INTERNO ===== -->
-<div id="admin-menu-tabs" class="flex overflow-x-auto gap-2 px-5 pb-3 border-b border-slate-200 no-scrollbar shrink-0 cursor-grab select-none">
-    <button id="btn-mod-usuarios" class="mod-btn bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-[11px] font-semibold whitespace-nowrap pointer-events-auto">1. Usuarios</button>
-    <button id="btn-mod-pedidos" class="mod-btn bg-white text-slate-600 border border-slate-200 px-3 py-1.5 rounded-lg text-[11px] font-semibold whitespace-nowrap pointer-events-auto">2. Operaciones</button>
-   <button id="btn-mod-auditoria" class="mod-btn bg-white text-slate-600 border border-slate-200 px-3 py-1.5 rounded-lg text-[11px] font-semibold whitespace-nowrap pointer-events-auto">3. Reportes</button>
-    <button id="btn-mod-kpi" class="mod-btn bg-white text-slate-600 border border-slate-200 px-3 py-1.5 rounded-lg text-[11px] font-semibold whitespace-nowrap pointer-events-auto">4. KPIs</button>
-    <button id="btn-mod-tiendas" class="mod-btn bg-white text-slate-600 border border-slate-200 px-3 py-1.5 rounded-lg text-[11px] font-semibold whitespace-nowrap pointer-events-auto">5. Catálogo</button>
-</div>
-
-                <!-- CONTENEDOR DE PANTALLAS -->
-                <div class="px-5 pt-4">
-                    <!-- MÓDULO 1: USUARIOS -->
-                    <div id="mod-usuarios" class="modulo-admin space-y-3">
-                        <p class="text-[12px] font-bold text-slate-800 uppercase mb-2">Gestión de Cuentas</p>
-                        <!-- Aquí se inyectarán los usuarios desde la BD -->
+        <!-- TAB: ADMINISTRACIÓN (Oculto por defecto) -->
+        <div id="tab-admin" class="hidden w-full h-full pt-6 pb-24 overflow-y-auto bg-slate-50">
+            <div class="px-5 pb-3 shrink-0">
+               <div class="flex items-center justify-between mb-1">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="shield-alert" class="w-5 h-5 text-indigo-600"></i>
+                        <p class="font-display text-lg font-bold text-slate-900">Panel Admin</p>
                     </div>
-
-                    <!-- MÓDULO 2: OPERACIONES -->
-            <div id="mod-pedidos" class="modulo-admin hidden space-y-3">
-                <div class="flex items-center justify-between mb-2">
-                    <p class="text-[12px] font-bold text-slate-800 uppercase">Monitoreo en Vivo</p>
-                    <!-- Botón para actualizar los pedidos manualmente -->
-                    <button onclick="cargarOperacionesAdmin()" class="text-blue-600 hover:bg-blue-50 p-1 rounded transition-colors">
-                        <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                    <button id="admin-logout-btn" class="bg-red-50 text-red-600 border border-red-100 px-3 py-1.5 rounded-lg text-[10px] font-bold flex items-center gap-1">
+                        <i data-lucide="log-out" class="w-3 h-3"></i> Salir
                     </button>
                 </div>
-                
-                <!-- Aquí inyectaremos las tarjetas con JS -->
-                <div id="contenedor-operaciones-admin" class="space-y-3 pb-10">
-                    <p class="text-[13px] text-slate-500 text-center py-4">Haz clic en Operaciones para cargar...</p>
-                </div>
             </div>
 
-                    <!-- MÓDULO 3: AUDITORÍA -->
-                    <div id="mod-auditoria" class="modulo-admin hidden space-y-3">
-                        <p class="text-[12px] font-bold text-slate-800 uppercase mb-2">Resolución de Reportes</p>
+            <!-- ===== MENÚ INTERNO ===== -->
+            <div id="admin-menu-tabs" class="flex overflow-x-auto gap-2 px-5 pb-3 border-b border-slate-200 no-scrollbar shrink-0 cursor-grab select-none">
+                <button id="btn-mod-usuarios" class="mod-btn bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-[11px] font-semibold whitespace-nowrap pointer-events-auto">1. Usuarios</button>
+                <button id="btn-mod-pedidos" class="mod-btn bg-white text-slate-600 border border-slate-200 px-3 py-1.5 rounded-lg text-[11px] font-semibold whitespace-nowrap pointer-events-auto">2. Operaciones</button>
+                <button id="btn-mod-auditoria" class="mod-btn bg-white text-slate-600 border border-slate-200 px-3 py-1.5 rounded-lg text-[11px] font-semibold whitespace-nowrap pointer-events-auto">3. Reportes</button>
+                <button id="btn-mod-kpi" class="mod-btn bg-white text-slate-600 border border-slate-200 px-3 py-1.5 rounded-lg text-[11px] font-semibold whitespace-nowrap pointer-events-auto">4. KPIs</button>
+                <button id="btn-mod-tiendas" class="mod-btn bg-white text-slate-600 border border-slate-200 px-3 py-1.5 rounded-lg text-[11px] font-semibold whitespace-nowrap pointer-events-auto">5. Catálogo</button>
+            </div>
+
+            <!-- CONTENEDOR DE PANTALLAS -->
+            <div class="px-5 pt-4">
+                <!-- MÓDULO 1: USUARIOS -->
+                <div id="mod-usuarios" class="modulo-admin space-y-3">
+                    <p class="text-[12px] font-bold text-slate-800 uppercase mb-2">Gestión de Cuentas</p>
+                </div>
+
+                <!-- MÓDULO 2: OPERACIONES -->
+                <div id="mod-pedidos" class="modulo-admin hidden space-y-3">
+                    <div class="flex items-center justify-between mb-2">
+                        <p class="text-[12px] font-bold text-slate-800 uppercase">Monitoreo en Vivo</p>
+                        <button onclick="cargarOperacionesAdmin()" class="text-blue-600 hover:bg-blue-50 p-1 rounded transition-colors">
+                            <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                        </button>
                     </div>
-
-                    <!-- MÓDULO 4: KPIs -->
-                    <div id="mod-kpi" class="modulo-admin hidden space-y-3">
-                        <p class="text-[12px] font-bold text-slate-800 uppercase mb-2">Estadísticas del Día</p>
+                    <div id="contenedor-operaciones-admin" class="space-y-3 pb-10">
+                        <p class="text-[13px] text-slate-500 text-center py-4">Haz clic en Operaciones para cargar...</p>
                     </div>
+                </div>
 
-                   <!-- MÓDULO 5: CATÁLOGO Y TIENDAS -->
-<div id="mod-tiendas" class="modulo-admin hidden space-y-3">
-    <div class="flex items-center justify-between mb-2">
-        <p class="text-[12px] font-bold text-slate-800 uppercase">Directorio y Catálogo UTP</p>
-        <div class="flex gap-1.5">
-            <button onclick="abrirModalNuevaTienda()" class="bg-slate-900 text-white px-2.5 py-1 rounded-lg text-[10.5px] font-semibold flex items-center gap-1 hover:bg-slate-800 transition-colors">
-                <i data-lucide="plus" class="w-3 h-3"></i> Tienda
-            </button>
-            <button onclick="abrirModalNuevoProducto()" class="bg-indigo-600 text-white px-2.5 py-1 rounded-lg text-[10.5px] font-semibold flex items-center gap-1 hover:bg-indigo-700 transition-colors">
-                <i data-lucide="package-plus" class="w-3 h-3"></i> Producto
-            </button>
-        </div>
-    </div>
+                <!-- MÓDULO 3: AUDITORÍA -->
+                <div id="mod-auditoria" class="modulo-admin hidden space-y-3">
+                    <p class="text-[12px] font-bold text-slate-800 uppercase mb-2">Resolución de Reportes</p>
+                </div>
 
-    <!-- Lista dinámicamente inyectada de tiendas con sus productos -->
-    <div id="contenedor-tiendas-admin" class="space-y-3">
-        <!-- Aquí se cargarán las tarjetas de las tiendas -->
-    </div>
-</div>
+                <!-- MÓDULO 4: KPIs -->
+                <div id="mod-kpi" class="modulo-admin hidden space-y-3">
+                    <p class="text-[12px] font-bold text-slate-800 uppercase mb-2">Estadísticas del Día</p>
+                </div>
+
+                <!-- MÓDULO 5: CATÁLOGO Y TIENDAS -->
+                <div id="mod-tiendas" class="modulo-admin hidden space-y-3">
+                    <div class="flex items-center justify-between mb-2">
+                        <p class="text-[12px] font-bold text-slate-800 uppercase">Directorio y Catálogo UTP</p>
+                        <div class="flex gap-1.5">
+                            <button onclick="abrirModalNuevaTienda()" class="bg-slate-900 text-white px-2.5 py-1 rounded-lg text-[10.5px] font-semibold flex items-center gap-1 hover:bg-slate-800 transition-colors">
+                                <i data-lucide="plus" class="w-3 h-3"></i> Tienda
+                            </button>
+                            <button onclick="abrirModalNuevoProducto()" class="bg-indigo-600 text-white px-2.5 py-1 rounded-lg text-[10.5px] font-semibold flex items-center gap-1 hover:bg-indigo-700 transition-colors">
+                                <i data-lucide="package-plus" class="w-3 h-3"></i> Producto
+                            </button>
+                        </div>
+                    </div>
+                    <div id="contenedor-tiendas-admin" class="space-y-3"></div>
+                </div>
+            </div> <!-- Cierre contenedor de pantallas admin -->
+        </div> <!-- Cierre tab-admin -->
 
         <!-- TAB: PERFIL -->
         <div id="tab-perfil" class="hidden w-full h-full pt-8 pb-24 overflow-y-auto">
@@ -352,27 +345,27 @@
       </div> <!-- FIN CONTENIDO SCROLLABLE PRINCIPAL -->
 
       <!-- ===== NAV BAR INFERIOR ===== -->
-<div id="bottom-nav-bar" class="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-100 px-6 py-3 flex items-center justify-between">
-    <button onclick="showTab('inicio')" class="nav-btn flex flex-col items-center gap-1" data-nav="inicio">
-        <i data-lucide="home" class="w-5 h-5"></i><span class="text-[9.5px] font-medium">Inicio</span>
-    </button>
-    
-    <button onclick="showTab('pedidos'); if(typeof cargarMisPedidos === 'function') cargarMisPedidos();" class="nav-btn flex flex-col items-center gap-1" data-nav="pedidos">
-        <i data-lucide="package" class="w-5 h-5"></i><span class="text-[9.5px] font-medium">Pedidos</span>
-    </button>
-    
-    <button onclick="showTab('runner'); if(typeof cargarEntregasActivas === 'function') cargarEntregasActivas();" class="nav-btn flex flex-col items-center gap-1" data-nav="runner">
-        <i data-lucide="wallet" class="w-5 h-5"></i><span class="text-[9.5px] font-medium">Runner</span>
-    </button>
-    
-    <button id="nav-btn-historial" onclick="showTab('historial-runner'); if(typeof cargarHistorialRunner === 'function') cargarHistorialRunner();" class="hidden nav-btn flex flex-col items-center gap-1" data-nav="historial">
-        <i data-lucide="history" class="w-5 h-5"></i><span class="text-[9.5px] font-medium">Historial</span>
-    </button>
+      <div id="bottom-nav-bar" class="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-100 px-6 py-3 flex items-center justify-between z-30">
+          <button onclick="showTab('inicio')" class="nav-btn text-blue-600 flex flex-col items-center gap-1" data-nav="inicio">
+              <i data-lucide="home" class="w-5 h-5"></i><span class="text-[9.5px] font-medium">Inicio</span>
+          </button>
+          
+          <button onclick="showTab('pedidos'); if(typeof cargarMisPedidos === 'function') cargarMisPedidos();" class="nav-btn text-slate-300 flex flex-col items-center gap-1" data-nav="pedidos">
+              <i data-lucide="package" class="w-5 h-5"></i><span class="text-[9.5px] font-medium">Pedidos</span>
+          </button>
+          
+          <button onclick="showTab('runner'); if(typeof cargarEntregasActivas === 'function') cargarEntregasActivas();" class="nav-btn text-slate-300 flex flex-col items-center gap-1" data-nav="runner">
+              <i data-lucide="wallet" class="w-5 h-5"></i><span class="text-[9.5px] font-medium">Runner</span>
+          </button>
+          
+          <button id="nav-btn-historial" onclick="showTab('historial-runner'); if(typeof cargarHistorialRunner === 'function') cargarHistorialRunner();" class="hidden nav-btn text-slate-300 flex flex-col items-center gap-1" data-nav="historial">
+              <i data-lucide="history" class="w-5 h-5"></i><span class="text-[9.5px] font-medium">Historial</span>
+          </button>
 
-    <button onclick="showTab('perfil')" class="nav-btn flex flex-col items-center gap-1" data-nav="perfil">
-        <i data-lucide="user" class="w-5 h-5"></i><span class="text-[9.5px] font-medium">Perfil</span>
-    </button>
-</div>
+          <button onclick="showTab('perfil')" class="nav-btn text-slate-300 flex flex-col items-center gap-1" data-nav="perfil">
+              <i data-lucide="user" class="w-5 h-5"></i><span class="text-[9.5px] font-medium">Perfil</span>
+          </button>
+      </div>
 
       <!-- MODALS FLOTANTES -->
       <div id="product-modal" class="hidden absolute inset-0 z-50 bg-black/50 items-end">
@@ -497,7 +490,7 @@
       <div id="chat-modal" class="hidden absolute inset-0 z-50 bg-black/40 items-end">
         <div class="w-full h-[86%] bg-white rounded-t-[28px] flex flex-col overflow-hidden shadow-2xl">
           <div class="flex items-center gap-3 px-4 py-3 border-b border-slate-100 shrink-0">
-            <button id ="chat-close-btn" onclick="cerrarChat()" class="text-slate-400"><i data-lucide="chevron-down" class="w-5 h-5"></i></button>
+            <button id="chat-close-btn" onclick="cerrarChat()" class="text-slate-400"><i data-lucide="chevron-down" class="w-5 h-5"></i></button>
             <div id="chat-student-avatar" class="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white text-[12px] font-semibold shrink-0">AR</div>
             <div class="flex-1 min-w-0">
               <p id="chat-student-name" class="text-[13px] font-semibold text-slate-900 truncate">Andrea Ruiz</p>
@@ -514,111 +507,111 @@
           </div>
           <div id="chat-messages" class="flex-1 overflow-y-auto px-4 py-3 space-y-2.5 bg-slate-50"></div>
           <div class="border-t border-slate-100 px-3 py-2.5 flex items-center gap-2 shrink-0">
-  <!-- Input oculto para leer la foto -->
-  <input type="file" id="chat-image-input" accept="image/*" class="hidden" onchange="enviarImagenChat(event)" />
-  
-  <!-- Botón de cámara -->
-  <button type="button" onclick="document.getElementById('chat-image-input').click()" class="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 shrink-0 hover:bg-slate-200 transition-colors">
-      <i data-lucide="camera" class="w-4.5 h-4.5"></i>
-  </button>
+              <input type="file" id="chat-image-input" accept="image/*" class="hidden" onchange="enviarImagenChat(event)" />
+              <button type="button" onclick="document.getElementById('chat-image-input').click()" class="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 shrink-0 hover:bg-slate-200 transition-colors">
+                  <i data-lucide="camera" class="w-4.5 h-4.5"></i>
+              </button>
+              <input id="caja-chat-verdadera" type="text" placeholder="Escribe un mensaje..." onkeypress="if(event.key === 'Enter') enviarMensaje()" class="flex-1 text-[13px] bg-slate-100 rounded-full px-4 py-2 outline-none text-slate-700" />
+              <button type="button" onclick="enviarMensaje()" class="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white shrink-0 transition-colors">
+                  <i data-lucide="send" class="w-4 h-4"></i>
+              </button>
+          </div>
+        </div>
+      </div>
 
-  <input id="caja-chat-verdadera" type="text" placeholder="Escribe un mensaje..." onkeypress="if(event.key === 'Enter') enviarMensaje()" class="flex-1 text-[13px] bg-slate-100 rounded-full px-4 py-2 outline-none text-slate-700" />
-  
-  <button type="button" onclick="enviarMensaje()" class="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white shrink-0 transition-colors">
-      <i data-lucide="send" class="w-4 h-4"></i>
-  </button>
-</div>
+      <!-- MODAL: AÑADIR NUEVA TIENDA -->
+      <div id="modal-nueva-tienda" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+          <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-slate-100">
+              <div class="flex justify-between items-center mb-4">
+                  <h3 class="text-sm font-bold text-slate-800">Añadir Nueva Tienda</h3>
+                  <button onclick="cerrarModalNuevaTienda()" class="text-slate-400 hover:text-slate-600">
+                      <i data-lucide="x" class="w-4 h-4"></i>
+                  </button>
+              </div>
+              <form id="form-nueva-tienda" class="space-y-3">
+                  <div>
+                      <label class="text-[11px] font-semibold text-slate-600 block mb-1">Nombre de la Tienda</label>
+                      <input type="text" id="input-nombre-tienda" required placeholder="Ej. Frago Gourmet (Torre B)" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:border-indigo-600">
+                  </div>
+                  <div>
+                      <label class="text-[11px] font-semibold text-slate-600 block mb-1">Ubicación en Sede</label>
+                      <input type="text" id="input-ubicacion-tienda" required placeholder="Ej. Torre B - Piso 1" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:border-indigo-600">
+                  </div>
+                  <button type="submit" class="w-full py-2 bg-indigo-600 text-white font-semibold rounded-lg text-xs hover:bg-indigo-700 transition-colors mt-2">
+                      Guardar Tienda
+                  </button>
+              </form>
+          </div>
+      </div>
+
+      <!-- MODAL: AÑADIR NUEVO PRODUCTO -->
+      <div id="modal-nuevo-producto" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+          <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-slate-100">
+              <div class="flex justify-between items-center mb-4">
+                  <h3 class="text-sm font-bold text-slate-800">Añadir Nuevo Producto</h3>
+                  <button onclick="cerrarModalNuevoProducto()" class="text-slate-400 hover:text-slate-600">
+                      <i data-lucide="x" class="w-4 h-4"></i>
+                  </button>
+              </div>
+              <form id="form-nuevo-producto" class="space-y-2.5">
+                  <div>
+                      <label class="text-[11px] font-semibold text-slate-600 block mb-1">Asignar a Tienda</label>
+                      <select id="select-tienda-producto" required class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:border-indigo-600">
+                      </select>
+                  </div>
+                  <div>
+                      <label class="text-[11px] font-semibold text-slate-600 block mb-1">Nombre del Producto</label>
+                      <input type="text" id="input-nombre-producto" required placeholder="Ej. Empanada de Carne" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:border-indigo-600">
+                  </div>
+                  <div class="grid grid-cols-2 gap-2">
+                      <div>
+                          <label class="text-[11px] font-semibold text-slate-600 block mb-1">Precio (S/)</label>
+                          <input type="number" step="0.10" id="input-precio-producto" required placeholder="4.50" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:border-indigo-600">
+                      </div>
+                      <div>
+                          <label class="text-[11px] font-semibold text-slate-600 block mb-1">Categoría</label>
+                          <select id="select-categoria-producto" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:border-indigo-600">
+                              <option value="snack">Snack</option>
+                              <option value="almuerzo">Almuerzo</option>
+                              <option value="utiles">Útiles</option>
+                              <option value="otro">Otro</option>
+                          </select>
+                      </div>
+                  </div>
+                  <div>
+                      <label class="text-[11px] font-semibold text-slate-600 block mb-1">Descripción (Opcional)</label>
+                      <input type="text" id="input-desc-producto" placeholder="Ej. Rellena de carne picada y huevo" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:border-indigo-600">
+                  </div>
+                  <button type="submit" class="w-full py-2 bg-indigo-600 text-white font-semibold rounded-lg text-xs hover:bg-indigo-700 transition-colors mt-2">
+                      Guardar Producto
+                  </button>
+              </form>
+          </div>
+      </div>
+
+      <!-- MODAL: CANCELACIÓN RUNNER -->
+      <div id="modal-cancelacion" class="hidden fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <div class="bg-[#e5e5e5] rounded-[30px] p-8 w-11/12 max-w-sm text-center shadow-xl">
+              <div class="bg-red-500 text-white rounded-full w-14 h-14 flex items-center justify-center mx-auto mb-4">
+                  <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                  </svg>
+              </div>
+              <h3 class="text-xl font-medium text-gray-900 mb-6">Tu Runner canceló el pedido</h3>
+              <p class="text-gray-700 mb-6 text-lg">¿Quieres volver a publicar tu pedido?</p>
+              <div class="flex flex-col gap-3">
+                  <button onclick="republicarPedido()" class="bg-blue-500 text-white py-3 rounded-2xl font-medium text-lg hover:bg-blue-600 transition">Si, publicar de nuevo</button>
+                  <button onclick="cerrarModalCancelacion()" class="bg-blue-200 text-gray-800 py-3 rounded-2xl font-medium text-lg hover:bg-blue-300 transition">No, gracias</button>
+              </div>
+          </div>
       </div>
 
     </div>
   </div>
-<!-- MODAL: AÑADIR NUEVA TIENDA -->
-<div id="modal-nueva-tienda" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-slate-100">
-        <div class="flex justify-between items-center mb-4">
-            <h3 class="text-sm font-bold text-slate-800">Añadir Nueva Tienda</h3>
-            <button onclick="cerrarModalNuevaTienda()" class="text-slate-400 hover:text-slate-600">
-                <i data-lucide="x" class="w-4 h-4"></i>
-            </button>
-        </div>
-        <form id="form-nueva-tienda" class="space-y-3">
-            <div>
-                <label class="text-[11px] font-semibold text-slate-600 block mb-1">Nombre de la Tienda</label>
-                <input type="text" id="input-nombre-tienda" required placeholder="Ej. Frago Gourmet (Torre B)" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:border-indigo-600">
-            </div>
-            <div>
-                <label class="text-[11px] font-semibold text-slate-600 block mb-1">Ubicación en Sede</label>
-                <input type="text" id="input-ubicacion-tienda" required placeholder="Ej. Torre B - Piso 1" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:border-indigo-600">
-            </div>
-            <button type="submit" class="w-full py-2 bg-indigo-600 text-white font-semibold rounded-lg text-xs hover:bg-indigo-700 transition-colors mt-2">
-                Guardar Tienda
-            </button>
-        </form>
-    </div>
-</div>
 
-<!-- MODAL: AÑADIR NUEVO PRODUCTO -->
-<div id="modal-nuevo-producto" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-slate-100">
-        <div class="flex justify-between items-center mb-4">
-            <h3 class="text-sm font-bold text-slate-800">Añadir Nuevo Producto</h3>
-            <button onclick="cerrarModalNuevoProducto()" class="text-slate-400 hover:text-slate-600">
-                <i data-lucide="x" class="w-4 h-4"></i>
-            </button>
-        </div>
-        <form id="form-nuevo-producto" class="space-y-2.5">
-            <div>
-                <label class="text-[11px] font-semibold text-slate-600 block mb-1">Asignar a Tienda</label>
-                <select id="select-tienda-producto" required class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:border-indigo-600">
-                    <!-- Opciones cargadas dinámicamente -->
-                </select>
-            </div>
-            <div>
-                <label class="text-[11px] font-semibold text-slate-600 block mb-1">Nombre del Producto</label>
-                <input type="text" id="input-nombre-producto" required placeholder="Ej. Empanada de Carne" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:border-indigo-600">
-            </div>
-            <div class="grid grid-cols-2 gap-2">
-                <div>
-                    <label class="text-[11px] font-semibold text-slate-600 block mb-1">Precio (S/)</label>
-                    <input type="number" step="0.10" id="input-precio-producto" required placeholder="4.50" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:border-indigo-600">
-                </div>
-                <div>
-                    <label class="text-[11px] font-semibold text-slate-600 block mb-1">Categoría</label>
-                    <select id="select-categoria-producto" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:border-indigo-600">
-                        <option value="snack">Snack</option>
-                        <option value="almuerzo">Almuerzo</option>
-                        <option value="utiles">Útiles</option>
-                        <option value="otro">Otro</option>
-                    </select>
-                </div>
-            </div>
-            <div>
-                <label class="text-[11px] font-semibold text-slate-600 block mb-1">Descripción (Opcional)</label>
-                <input type="text" id="input-desc-producto" placeholder="Ej. Rellena de carne picada y huevo" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:border-indigo-600">
-            </div>
-            <button type="submit" class="w-full py-2 bg-indigo-600 text-white font-semibold rounded-lg text-xs hover:bg-indigo-700 transition-colors mt-2">
-                Guardar Producto
-            </button>
-        </form>
-    </div>
-</div>
-<script src="js/main.js"></script>
-<script type="module" src="js/auth.js"></script>
+  <!-- SCRIPTS AL FINAL -->
+  <script src="js/main.js"></script>
+  <script type="module" src="js/auth.js"></script>
 
-<div id="modal-cancelacion" class="hidden fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-    <div class="bg-[#e5e5e5] rounded-[30px] p-8 w-11/12 max-w-sm text-center shadow-xl">
-        <div class="bg-red-500 text-white rounded-full w-14 h-14 flex items-center justify-center mx-auto mb-4">
-            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
-        </div>
-        <h3 class="text-xl font-medium text-gray-900 mb-6">Tu Runner canceló el pedido</h3>
-        <p class="text-gray-700 mb-6 text-lg">¿Quieres volver a publicar tu pedido?</p>
-        <div class="flex flex-col gap-3">
-            <button onclick="republicarPedido()" class="bg-blue-500 text-white py-3 rounded-2xl font-medium text-lg hover:bg-blue-600 transition">Si, publicar de nuevo</button>
-            <button onclick="cerrarModalCancelacion()" class="bg-blue-200 text-gray-800 py-3 rounded-2xl font-medium text-lg hover:bg-blue-300 transition">No, gracias</button>
-        </div>
-    </div>
-</div>
 </body>
 </html>
