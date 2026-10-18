@@ -3446,10 +3446,27 @@ async function cargarKPIsAdmin() {
 
 window.cargarKPIsAdmin = cargarKPIsAdmin;
 
-// Listener para cargar KPIs al hacer clic en la pestaña 4
+// Listener para cargar KPIs al hacer clic y activar refresco automático
+let intervaloKPIs = null;
+
 const btnModKpi = document.getElementById('btn-mod-kpi');
 if (btnModKpi) {
     btnModKpi.addEventListener('click', () => {
+        // Carga inmediata
         cargarKPIsAdmin();
+
+        // Limpiamos intervalos previos si existían
+        if (intervaloKPIs) clearInterval(intervaloKPIs);
+
+        // Auto-actualizar cada 10 segundos mientras la pestaña esté activa
+        intervaloKPIs = setInterval(() => {
+            const modKpi = document.getElementById('mod-kpi');
+            if (modKpi && !modKpi.classList.contains('hidden')) {
+                cargarKPIsAdmin();
+            } else {
+                clearInterval(intervaloKPIs);
+            }
+        }, 10000);
     });
 }
+
