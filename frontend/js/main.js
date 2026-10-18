@@ -3743,3 +3743,67 @@ document.addEventListener('submit', async function(e) {
         }
     }
 });
+
+
+// --- FUNCIONES PARA EL MODAL DE REPORTES ---
+window.abrirModalReporte = function() {
+    const modal = document.getElementById('modal-reportar-incidencia');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
+    }
+};
+
+window.cerrarModalReporte = function() {
+    const modal = document.getElementById('modal-reportar-incidencia');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+        const form = document.getElementById('form-nuevo-reporte');
+        if (form) form.reset();
+    }
+};
+
+// Escuchar el envío del formulario de reporte
+document.addEventListener('submit', async function(e) {
+    if (e.target && e.target.id === 'form-nuevo-reporte') {
+        e.preventDefault();
+
+        const usuarioStr = sessionStorage.getItem('usuario');
+        if (!usuarioStr) {
+            alert('Debes iniciar sesión para enviar un reporte.');
+            return;
+        }
+
+        const usuario = JSON.parse(usuarioStr);
+        const motivo = document.getElementById('input-motivo-reporte').value.trim();
+
+        if (!motivo) {
+            alert('Por favor, ingresa el detalle del problema.');
+            return;
+        }
+
+        try {
+            const res = await fetch('/api/reportes', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id_usuario: usuario.id_usuario,
+                    motivo: motivo
+                })
+            });
+
+            const data = await res.json();
+
+            if (res.ok && data.success) {
+                alert('¡Reporte enviado correctamente al equipo de administración!');
+                cerrarModalReporte();
+            } else {
+                alert('Error: ' + (data.error || 'No se pudo registrar el reporte.'));
+            }
+        } catch (err) {
+            console.error('Error al enviar el reporte:', err);
+            alert('Error de conexión al intentar enviar el reporte.');
+        }
+    }
+});

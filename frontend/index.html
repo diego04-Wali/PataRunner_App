@@ -630,6 +630,34 @@
     </div>
   </div>
 
+<!-- MODAL: REPORTAR INCIDENCIA (Pegar al final absoluto de index.html) -->
+<div id="modal-reportar-incidencia" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-[999] flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl w-full max-w-sm p-5 shadow-2xl space-y-4">
+        <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+            <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                🚨 Reportar Incidencia
+            </h3>
+            <button onclick="cerrarModalReporte()" class="text-slate-400 hover:text-slate-600 font-bold text-lg">✕</button>
+        </div>
+
+        <form id="form-nuevo-reporte" class="space-y-3">
+            <div>
+                <label class="block text-[11px] font-semibold text-slate-600 mb-1">Detalle del problema</label>
+                <textarea id="input-motivo-reporte" rows="4" required placeholder="Describe lo sucedido (ej: falla en pago, problema con un pedido o un usuario)..." class="w-full p-3 text-xs border border-slate-200 rounded-xl focus:outline-none focus:border-red-500 resize-none"></textarea>
+            </div>
+
+            <div class="flex gap-2 pt-2">
+                <button type="button" onclick="cerrarModalReporte()" class="flex-1 py-2.5 bg-slate-100 text-slate-600 font-semibold text-xs rounded-xl hover:bg-slate-200 transition-colors">
+                    Cancelar
+                </button>
+                <button type="submit" class="flex-1 py-2.5 bg-red-600 text-white font-semibold text-xs rounded-xl hover:bg-red-700 transition-colors shadow-sm">
+                    Enviar Reporte
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
   <!-- SCRIPTS AL FINAL -->
   <script src="js/main.js"></script>
   <script type="module" src="js/auth.js"></script>
