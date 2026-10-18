@@ -1937,7 +1937,7 @@ async function cargarCatalogo() {
         const respuesta = await fetch('/api/productos');
         const productos = await respuesta.json();
 
-        // Mapeo de tiendas
+        // Mapeo de tiendas si no viene el nombre desde PostgreSQL
         const mapaTiendas = { 1: 'Frago Gourmet', 2: 'LISTO!', 3: 'Papelería UTP' };
         productos.forEach(p => {
             p.nombre_tienda = p.nombre_tienda || mapaTiendas[p.id_tienda] || 'Tienda UTP';
@@ -1945,18 +1945,23 @@ async function cargarCatalogo() {
 
         window.productosGlobales = productos;
 
-        // Filtrar por categoría activa
-        const catActiva = window.currentProductCategory || 'snack';
-        const productosFiltrados = productos.filter(p => p.categoria.toLowerCase() === catActiva.toLowerCase());
+        // Categoría seleccionada desde la app (ej. snack, almuerzo, utiles)
+        const catActiva = window.currentProductCategory;
+        let productosFiltrados = productos;
+
+        if (catActiva && catActiva !== 'todos') {
+            productosFiltrados = productos.filter(p => p.categoria && p.categoria.toLowerCase() === catActiva.toLowerCase());
+        }
 
         if (productosFiltrados.length === 0) {
             if (contenedorTabs) contenedorTabs.innerHTML = '';
-            contenedorLista.innerHTML = '<p class="text-[13px] text-slate-400 text-center py-6">No hay productos en esta categoría por ahora.</p>';
+            contenedorLista.innerHTML = '<p class="text-[13px] text-slate-400 text-center py-6">No hay productos disponibles en esta sección.</p>';
             return;
         }
 
-        // 1. Pestañas de tiendas únicas
+        // Obtener tiendas únicas que tienen productos para esta sección
         const tiendasUnicas = [...new Set(productosFiltrados.map(p => p.nombre_tienda))];
+
         if (contenedorTabs) {
             let tabsHTML = '';
             tiendasUnicas.forEach((tienda, index) => {
@@ -1966,14 +1971,14 @@ async function cargarCatalogo() {
                         <div class="w-12 h-12 rounded-full flex items-center justify-center text-[22px] bg-white border-2 ${isActive ? 'border-blue-600' : 'border-slate-200 opacity-60'} shadow-sm transition-all">
                             🏪
                         </div>
-                        <span class="text-[10px] font-semibold ${isActive ? 'text-blue-600' : 'text-slate-400'}">${tienda}</span>
+                        <span class="text-[10px] font-semibold ${isActive ? 'text-blue-600 font-bold' : 'text-slate-400'}">${tienda}</span>
                     </button>
                 `;
             });
             contenedorTabs.innerHTML = tabsHTML;
         }
 
-        // 2. Renderizar productos de la primera tienda
+        // Renderizar por defecto la primera tienda
         if (tiendasUnicas.length > 0) {
             renderizarTienda(tiendasUnicas[0]);
         }
@@ -1983,6 +1988,7 @@ async function cargarCatalogo() {
         contenedorLista.innerHTML = '<p class="text-red-500 text-center py-4 text-[13px]">Error de conexión al cargar el catálogo.</p>';
     }
 }
+
 // Hacemos las funciones globales para usarlas desde el HTML
 window.abrirChat = abrirChat;
 window.cerrarChat = cerrarChat;
@@ -2015,48 +2021,71 @@ function renderizarTienda(nombreTienda) {
     const contenedorLista = document.getElementById('product-list');
     if (!contenedorLista || !window.productosGlobales) return;
 
-    // Actualizar estilos visuales de las pestañas
+    // 1. Actualizar estado de las pestañas
     document.querySelectorAll('.store-tab-btn').forEach(btn => {
         const isSelected = btn.dataset.store === nombreTienda;
         const iconDiv = btn.querySelector('div');
         const spanText = btn.querySelector('span');
 
         if (iconDiv) iconDiv.className = `w-12 h-12 rounded-full flex items-center justify-center text-[22px] bg-white border-2 ${isSelected ? 'border-blue-600' : 'border-slate-200 opacity-60'} shadow-sm transition-all`;
-        if (spanText) spanText.className = `text-[10px] font-semibold ${isSelected ? 'text-blue-600' : 'text-slate-400'}`;
+        if (spanText) spanText.className = `text-[10px] font-semibold ${isSelected ? 'text-blue-600 font-bold' : 'text-slate-400'}`;
     });
 
-    const catActiva = window.currentProductCategory || 'snack';
-    const productosTienda = window.productosGlobales.filter(p => 
-        p.categoria.toLowerCase() === catActiva.toLowerCase() && p.nombre_tienda === nombreTienda
-    );
+    // 2. Filtrar productos según categoría activa y tienda
+    const catActiva = window.currentProductCategory;
+    let productosTienda = window.productosGlobales.filter(p => p.nombre_tienda === nombreTienda);
 
-    contenedorLista.innerHTML = '';
+    if (catActiva && catActiva !== 'todos') {
+        productosTienda = productosTienda.filter(p => p.categoria && p.categoria.toLowerCase() === catActiva.toLowerCase());
+    }
 
-    productosTienda.forEach(producto => {
-        const precioFormateado = Number(producto.precio).toFixed(2);
+    if (productosTienda.length === 0) {
+        contenedorLista.innerHTML = '<p class="text-[13px] text-slate-400 text-center py-6">No hay productos en esta tienda para esta categoría.</p>';
+        return;
+    }
 
-        const fotoProductoHTML = (producto.imagen && producto.imagen.trim() !== '') 
-            ? `<img src="${producto.imagen}" alt="${producto.nombre}" class="w-12 h-12 object-cover rounded-xl shrink-0" onerror="this.onerror=null; this.src='https://i.postimg.cc/YqKYgmdc/images.jpg';">`
-            : `<div class="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center text-2xl shrink-0">${obtenerEmoji(producto.nombre)}</div>`;
+    // 3. Agrupar productos por subcategoría (sección)
+    const grupos = {};
+    productosTienda.forEach(p => {
+        const subcat = (p.subcategoria && p.subcategoria.trim() !== '') ? p.subcategoria : (p.categoria || 'General');
+        const subcatTitulo = subcat.charAt(0).toUpperCase() + subcat.slice(1).toLowerCase();
+        if (!grupos[subcatTitulo]) {
+            grupos[subcatTitulo] = [];
+        }
+        grupos[subcatTitulo].push(p);
+    });
 
-        const tarjeta = `
-            <div class="flex items-center justify-between p-3 mb-3 bg-white border border-slate-100 rounded-2xl shadow-sm">
-                <div class="flex items-center gap-3 flex-1 pr-3">
-                    ${fotoProductoHTML}
-                    <div>
-                        <span class="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full uppercase tracking-wider mb-1 inline-block">${producto.categoria || 'General'}</span>
-                        <h3 class="text-[14px] font-bold text-slate-800 leading-tight">${producto.nombre}</h3>
-                        <p class="text-[12px] text-slate-500 leading-snug mt-1">${producto.descripcion || ''}</p>
-                        <p class="text-[13px] font-mono-stat font-semibold text-slate-900 mt-2">S/ ${precioFormateado}</p>
+    // 4. Generar HTML agrupado por títulos de sección
+    let htmlFinal = '';
+    for (const [seccion, listaProductos] of Object.entries(grupos)) {
+        htmlFinal += `<h4 class="text-xs font-bold text-slate-800 mt-4 mb-2 px-1">${seccion}</h4>`;
+        
+        listaProductos.forEach(producto => {
+            const precioFormateado = Number(producto.precio).toFixed(2);
+
+            const fotoProductoHTML = (producto.imagen && producto.imagen.trim() !== '') 
+                ? `<img src="${producto.imagen}" alt="${producto.nombre}" class="w-12 h-12 object-cover rounded-xl shrink-0" onerror="this.onerror=null; this.src='https://i.postimg.cc/YqKYgmdc/images.jpg';">`
+                : `<div class="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center text-2xl shrink-0">${obtenerEmoji(producto.nombre)}</div>`;
+
+            htmlFinal += `
+                <div class="bg-white border border-slate-100 rounded-2xl p-3 flex items-center justify-between shadow-sm mb-2">
+                    <div class="flex items-center gap-3 flex-1 pr-2">
+                        ${fotoProductoHTML}
+                        <div>
+                            <h3 class="text-xs font-bold text-slate-800">${producto.nombre}</h3>
+                            ${producto.descripcion ? `<p class="text-[11px] text-slate-400 leading-snug mt-0.5">${producto.descripcion}</p>` : ''}
+                            <p class="text-[11px] font-mono-stat font-semibold text-blue-600 mt-1">S/ ${precioFormateado}</p>
+                        </div>
                     </div>
+                    <button onclick="agregarAlCarrito(${producto.id_producto}, '${producto.nombre}', ${producto.precio})" class="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm shrink-0 hover:bg-blue-700 transition-colors">
+                        +
+                    </button>
                 </div>
-                <button onclick="agregarAlCarrito(${producto.id_producto}, '${producto.nombre}', ${producto.precio})" class="w-9 h-9 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-blue-600 hover:text-white transition-colors shrink-0">
-                    <i data-lucide="plus" class="w-4 h-4"></i>
-                </button>
-            </div>
-        `;
-        contenedorLista.innerHTML += tarjeta;
-    });
+            `;
+        });
+    }
+
+    contenedorLista.innerHTML = htmlFinal;
 
     if (window.lucide) lucide.createIcons();
 }
