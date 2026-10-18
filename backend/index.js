@@ -958,6 +958,62 @@ app.get('/api/admin/kpis', async (req, res) => {
     }
 });
 
+// ==========================================
+// MÓDULO 5 ADMIN: TIENDAS Y PRODUCTOS
+// ==========================================
+
+// 1. Obtener todas las tiendas
+app.get('/api/admin/tiendas', async (req, res) => {
+    try {
+        const result = await pool.query('SELECT * FROM tiendas ORDER BY id_tienda ASC');
+        res.json(result.rows);
+    } catch (err) {
+        console.error('Error al obtener tiendas:', err);
+        res.status(500).json({ error: 'Error al consultar tiendas' });
+    }
+});
+
+// 2. Crear una nueva tienda
+app.post('/api/admin/tiendas', async (req, res) => {
+    const { nombre, ubicacion } = req.body;
+
+    if (!nombre || !ubicacion) {
+        return res.status(400).json({ error: 'Nombre y ubicación son obligatorios.' });
+    }
+
+    try {
+        const result = await pool.query(
+            'INSERT INTO tiendas (nombre, ubicacion) VALUES ($1, $2) RETURNING *',
+            [nombre, ubicacion]
+        );
+        res.json({ success: true, message: 'Tienda registrada con éxito.', tienda: result.rows[0] });
+    } catch (err) {
+        console.error('Error al registrar tienda:', err);
+        res.status(500).json({ error: 'Error al guardar la tienda' });
+    }
+});
+
+// 3. Crear un nuevo producto en una tienda
+app.post('/api/admin/productos', async (req, res) => {
+    const { id_tienda, nombre, descripcion, precio, categoria, subcategoria } = req.body;
+
+    if (!id_tienda || !nombre || !precio) {
+        return res.status(400).json({ error: 'Tienda, nombre y precio son obligatorios.' });
+    }
+
+    try {
+        const result = await pool.query(
+            `INSERT INTO productos (id_tienda, nombre, descripcion, precio, disponible, categoria, subcategoria) 
+             VALUES ($1, $2, $3, $4, true, $5, $6) RETURNING *`,
+            [id_tienda, nombre, descripcion || '', precio, categoria || 'Snack', subcategoria || 'General']
+        );
+        res.json({ success: true, message: 'Producto agregado exitosamente al catálogo.', producto: result.rows[0] });
+    } catch (err) {
+        console.error('Error al registrar producto:', err);
+        res.status(500).json({ error: 'Error al guardar el producto' });
+    }
+});
+
 // Iniciar servidor
 app.listen(port, () => {
     console.log(`Servidor ejecutándose en el puerto ${port}`);

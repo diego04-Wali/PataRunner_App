@@ -3470,3 +3470,169 @@ if (btnModKpi) {
     });
 }
 
+// ==========================================
+// MÓDULO 5 ADMIN: TIENDAS Y CATÁLOGO
+// ==========================================
+
+let listaTiendasGlobal = [];
+
+async function cargarTiendasAdmin() {
+    const contenedor = document.getElementById('contenedor-tiendas-admin');
+    if (!contenedor) return;
+
+    contenedor.innerHTML = '<div class="flex justify-center py-8"><i data-lucide="loader-2" class="w-6 h-6 text-indigo-600 animate-spin"></i></div>';
+    if (window.lucide) lucide.createIcons();
+
+    try {
+        const res = await fetch('/api/admin/tiendas');
+        if (!res.ok) throw new Error("Error al consultar tiendas");
+        
+        listaTiendasGlobal = await res.json();
+
+        if (listaTiendasGlobal.length === 0) {
+            contenedor.innerHTML = '<p class="text-[12px] text-slate-400 text-center py-6">No hay tiendas registradas aún.</p>';
+            return;
+        }
+
+        let html = '';
+        listaTiendasGlobal.forEach(tienda => {
+            html += `
+                <div class="bg-white border border-slate-200 rounded-xl p-3.5 shadow-sm">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-9 h-9 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-sm shrink-0">
+                                🏪
+                            </div>
+                            <div>
+                                <h4 class="text-[13px] font-bold text-slate-800">${tienda.nombre}</h4>
+                                <p class="text-[10px] text-slate-500">📍 ${tienda.ubicacion || 'Ubicación no especificada'}</p>
+                            </div>
+                        </div>
+                        <span class="text-[9px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-md">
+                            ID: #${tienda.id_tienda}
+                        </span>
+                    </div>
+                </div>
+            `;
+        });
+
+        contenedor.innerHTML = html;
+        if (window.lucide) lucide.createIcons();
+
+    } catch (err) {
+        console.error("Error al cargar tiendas:", err);
+        contenedor.innerHTML = '<p class="text-red-500 text-[11px]">Error al conectar con el servidor de tiendas.</p>';
+    }
+}
+
+// Abrir y cerrar modal de tiendas
+window.abrirModalNuevaTienda = function() {
+    const modal = document.getElementById('modal-nueva-tienda');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+};
+
+window.cerrarModalNuevaTienda = function() {
+    const modal = document.getElementById('modal-nueva-tienda');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+};
+
+// Abrir y cerrar modal de productos
+window.abrirModalNuevoProducto = async function() {
+    const selectTiendas = document.getElementById('select-tienda-producto');
+    if (selectTiendas) {
+        if (listaTiendasGlobal.length === 0) {
+            try {
+                const res = await fetch('/api/admin/tiendas');
+                listaTiendasGlobal = await res.json();
+            } catch (e) {}
+        }
+        selectTiendas.innerHTML = listaTiendasGlobal.map(t => `<option value="${t.id_tienda}">${t.nombre}</option>`).join('');
+    }
+
+    const modal = document.getElementById('modal-nuevo-producto');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+};
+
+window.cerrarModalNuevoProducto = function() {
+    const modal = document.getElementById('modal-nuevo-producto');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+};
+
+// Evento submit para nueva tienda
+document.addEventListener('submit', async (e) => {
+    if (e.target.id === 'form-nueva-tienda') {
+        e.preventDefault();
+        const nombre = document.getElementById('input-nombre-tienda').value.trim();
+        const ubicacion = document.getElementById('input-ubicacion-tienda').value.trim();
+
+        try {
+            const res = await fetch('/api/admin/tiendas', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nombre, ubicacion })
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert('¡Tienda agregada con éxito!');
+                document.getElementById('form-nueva-tienda').reset();
+                cerrarModalNuevaTienda();
+                cargarTiendasAdmin();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        } catch (err) {
+            alert('Error de conexión al guardar la tienda.');
+        }
+    }
+
+    if (e.target.id === 'form-nuevo-producto') {
+        e.preventDefault();
+        const id_tienda = document.getElementById('select-tienda-producto').value;
+        const nombre = document.getElementById('input-nombre-producto').value.trim();
+        const precio = parseFloat(document.getElementById('input-precio-producto').value);
+        const categoria = document.getElementById('select-categoria-producto').value;
+        const descripcion = document.getElementById('input-desc-producto').value.trim();
+
+        try {
+            const res = await fetch('/api/admin/productos', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_tienda, nombre, precio, categoria, descripcion })
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert('¡Producto agregado al catálogo correctamente!');
+                document.getElementById('form-nuevo-producto').reset();
+                cerrarModalNuevoProducto();
+                // Si el alumno tiene abierto el catálogo, se reflejará de inmediato
+                if (typeof cargarCatalogo === 'function') cargarCatalogo();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        } catch (err) {
+            alert('Error de conexión al guardar el producto.');
+        }
+    }
+});
+
+// Escuchar clic en la pestaña 5 (Catálogo)
+const btnModTiendas = document.getElementById('btn-mod-tiendas');
+if (btnModTiendas) {
+    btnModTiendas.addEventListener('click', () => {
+        cargarTiendasAdmin();
+    });
+}
+
+window.cargarTiendasAdmin = cargarTiendasAdmin;
