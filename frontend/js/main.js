@@ -3086,12 +3086,15 @@ window.asignarRunner = asignarRunner;
 // MÓDULO 3 ADMIN: AUDITORÍA Y REPORTES
 // ==========================================
 
-async function cargarReportesAdmin() {
+async function cargarReportesAdmin(silencioso = false) {
     const contenedor = document.getElementById('mod-auditoria');
     if (!contenedor) return;
 
-    contenedor.innerHTML = '<div class="flex justify-center py-8"><i data-lucide="loader-2" class="w-6 h-6 text-indigo-600 animate-spin"></i></div>';
-    if (window.lucide) lucide.createIcons();
+    // Solo mostramos el spinner de carga la primera vez que entra
+    if (!silencioso) {
+        contenedor.innerHTML = '<div class="flex justify-center py-8"><i data-lucide="loader-2" class="w-6 h-6 text-indigo-600 animate-spin"></i></div>';
+        if (window.lucide) lucide.createIcons();
+    }
 
     try {
         const res = await fetch('/api/admin/reportes');
@@ -3156,7 +3159,9 @@ async function cargarReportesAdmin() {
 
     } catch (err) {
         console.error("Error al cargar reportes:", err);
-        contenedor.innerHTML = '<p class="text-red-500 text-[11px]">Error al conectar con el servidor de reportes.</p>';
+        if (!silencioso) {
+            contenedor.innerHTML = '<p class="text-red-500 text-[11px]">Error al conectar con el servidor de reportes.</p>';
+        }
     }
 }
 
@@ -3201,7 +3206,7 @@ if (btnModAuditoria) {
         intervaloReportesAdmin = setInterval(() => {
             const modAuditoria = document.getElementById('mod-auditoria');
             if (modAuditoria && !modAuditoria.classList.contains('hidden')) {
-                cargarReportesAdmin();
+              cargarReportesAdmin(true);
             } else {
                 clearInterval(intervaloReportesAdmin);
             }
