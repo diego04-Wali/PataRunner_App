@@ -3604,12 +3604,13 @@ document.addEventListener('submit', async (e) => {
         const precio = parseFloat(document.getElementById('input-precio-producto').value);
         const categoria = document.getElementById('select-categoria-producto').value;
         const descripcion = document.getElementById('input-desc-producto').value.trim();
+        const imagen = document.getElementById('input-imagen-producto').value.trim(); // <-- LÍNEA NUEVA
 
         try {
             const res = await fetch('/api/admin/productos', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id_tienda, nombre, precio, categoria, descripcion })
+                body: JSON.stringify({ id_tienda, nombre, precio, categoria, descripcion, imagen }) // <-- IMAGEN AGREGADA
             });
             const data = await res.json();
             if (data.success) {
@@ -3625,7 +3626,8 @@ document.addEventListener('submit', async (e) => {
             alert('Error de conexión al guardar el producto.');
         }
     }
-});
+    }
+);
 
 // Escuchar clic en la pestaña 5 (Catálogo)
 const btnModTiendas = document.getElementById('btn-mod-tiendas');

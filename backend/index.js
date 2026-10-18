@@ -993,9 +993,8 @@ app.post('/api/admin/tiendas', async (req, res) => {
     }
 });
 
-// 3. Crear un nuevo producto en una tienda
 app.post('/api/admin/productos', async (req, res) => {
-    const { id_tienda, nombre, descripcion, precio, categoria, subcategoria } = req.body;
+    const { id_tienda, nombre, descripcion, precio, categoria, subcategoria, imagen } = req.body;
 
     if (!id_tienda || !nombre || !precio) {
         return res.status(400).json({ error: 'Tienda, nombre y precio son obligatorios.' });
@@ -1003,9 +1002,9 @@ app.post('/api/admin/productos', async (req, res) => {
 
     try {
         const result = await pool.query(
-            `INSERT INTO productos (id_tienda, nombre, descripcion, precio, disponible, categoria, subcategoria) 
-             VALUES ($1, $2, $3, $4, true, $5, $6) RETURNING *`,
-            [id_tienda, nombre, descripcion || '', precio, categoria || 'Snack', subcategoria || 'General']
+            `INSERT INTO productos (id_tienda, nombre, descripcion, precio, disponible, categoria, subcategoria, imagen) 
+             VALUES ($1, $2, $3, $4, true, $5, $6, $7) RETURNING *`,
+            [id_tienda, nombre, descripcion || '', precio, categoria || 'Snack', subcategoria || 'General', imagen || null]
         );
         res.json({ success: true, message: 'Producto agregado exitosamente al catálogo.', producto: result.rows[0] });
     } catch (err) {
@@ -1013,7 +1012,6 @@ app.post('/api/admin/productos', async (req, res) => {
         res.status(500).json({ error: 'Error al guardar el producto' });
     }
 });
-
 // Iniciar servidor
 app.listen(port, () => {
     console.log(`Servidor ejecutándose en el puerto ${port}`);
