@@ -905,7 +905,7 @@ app.patch('/api/admin/reportes/:id/estado', async (req, res) => {
 // ==========================================
 app.get('/api/admin/kpis', async (req, res) => {
     try {
-        // 1. Conteo de pedidos por estado (del día de hoy)
+        // 1. Conteo de pedidos por estado (usando fecha_pedido)
         const resPedidos = await pool.query(`
             SELECT 
                 COUNT(*) FILTER (WHERE DATE(fecha_pedido) = CURRENT_DATE) AS total_hoy,
@@ -917,7 +917,7 @@ app.get('/api/admin/kpis', async (req, res) => {
             FROM pedidos;
         `);
 
-        // 2. Conteo de usuarios (Solo Alumnos y Runners, excluyendo administradores)
+        // 2. Conteo de usuarios por rol (1: Alumno, 2: Runner)
         const resUsuarios = await pool.query(`
             SELECT 
                 COUNT(*) FILTER (WHERE id_rol = 1) AS total_alumnos,
@@ -925,26 +925,35 @@ app.get('/api/admin/kpis', async (req, res) => {
             FROM usuarios;
         `);
 
-        // 3. Tienda con más ventas hoy
-        const resTopTienda = await pool.query(`
-            SELECT t.nombre, COUNT(dp.id_pedido) as total_ventas
-            FROM detalle_pedidos dp
-            JOIN productos p ON dp.id_producto = p.id_producto
-            JOIN tiendas t ON p.id_tienda = t.id_tienda
-            JOIN pedidos ped ON dp.id_pedido = ped.id_pedido
-            WHERE DATE(ped.fecha_pedido) = CURRENT_DATE
-            GROUP BY t.nombre
-            ORDER BY total_ventas DESC
-            LIMIT 1;
-        `);
+        // 3. Tienda con más ventas hoy (usando detalle_pedido en singular)
+        let topTiendaNombre = 'Sin ventas aún';
+        try {
+            const resTopTienda = await pool.query(`
+                SELECT t.nombre, COUNT(dp.id_pedido) as total_ventas
+                FROM detalle_pedido dp
+                JOIN productos p ON dp.id_producto = p.id_producto
+                JOIN tiendas t ON p.id_tienda = t.id_tienda
+                JOIN pedidos ped ON dp.id_pedido = ped.id_pedido
+                WHERE DATE(ped.fecha_pedido) = CURRENT_DATE
+                GROUP BY t.nombre
+                ORDER BY total_ventas DESC
+                LIMIT 1;
+            `);
+            if (resTopTienda.rows.length > 0) {
+                topTiendaNombre = resTopTienda.rows[0].nombre;
+            }
+        } catch (e) {
+            console.log("Aviso sobre Tienda Top:", e.message);
+        }
 
         res.json({
-            pedidos: resPedidos.rows[0],
-            usuarios: resUsuarios.rows[0],
-            topTienda: resTopTienda.rows[0]?.nombre || 'Sin ventas aún'
+            pedidos: resPedidos.rows[0] || {},
+            usuarios: resUsuarios.rows[0] || {},
+            topTienda: topTiendaNombre
         });
+
     } catch (err) {
-        console.error('Error al calcular KPIs:', err);
+        console.error('Error crítico al calcular KPIs:', err);
         res.status(500).json({ error: 'Error al consultar estadísticas' });
     }
 });
