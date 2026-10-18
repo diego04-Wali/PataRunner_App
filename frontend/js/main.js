@@ -2062,6 +2062,7 @@ function renderizarTienda(nombreTienda) {
     // 4. Generar HTML agrupado por títulos de sección
     let htmlFinal = '';
     for (const [seccion, listaProductos] of Object.entries(grupos)) {
+        if (catActiva !== 'utiles' && nombreTienda !== 'Papelería UTP')
         htmlFinal += `<h4 class="text-xs font-bold text-slate-800 mt-4 mb-2 px-1">${seccion}</h4>`;
         
         listaProductos.forEach(producto => {
