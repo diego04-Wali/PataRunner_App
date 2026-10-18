@@ -294,11 +294,12 @@ setInterval(() => {
   }
 
   function openProductModal(cat) {
+  window.currentProductCategory = cat; // Guarda 'snack', 'almuerzo' o 'utiles'
   currentProductCategory = cat;
-  // Cambiamos el título
+
   productModalTitle.textContent = `Productos de la tienda UTP`;
 
-  // ¡AQUÍ ESTÁ LA MAGIA! En vez del código viejo, llamamos a PostgreSQL
+  // Llama a cargarCatalogo() que filtrará por la categoría guardada arriba
   cargarCatalogo(); 
 
   productModal.classList.remove("hidden");
@@ -1927,6 +1928,8 @@ async function cargarPedidosPendientes() {
 }
 
 // ================= LÓGICA DEL CATÁLOGO (ALUMNO) =================
+const storeEmojiMap = { "Frago Gourmet": "🥐", "LISTO!": "🏪", "Listo": "🏪", "Papelería UTP": "📎" };
+
 async function cargarCatalogo() {
     const contenedorLista = document.getElementById('product-list');
     const contenedorTabs = document.getElementById('store-tabs');
@@ -1945,8 +1948,8 @@ async function cargarCatalogo() {
 
         window.productosGlobales = productos;
 
-        // Categoría seleccionada desde la app (ej. snack, almuerzo, utiles)
-        const catActiva = window.currentProductCategory;
+        // Categoría seleccionada desde la app (snack, almuerzo, utiles)
+        const catActiva = window.currentProductCategory || currentProductCategory;
         let productosFiltrados = productos;
 
         if (catActiva && catActiva !== 'todos') {
@@ -1959,17 +1962,18 @@ async function cargarCatalogo() {
             return;
         }
 
-        // Obtener tiendas únicas que tienen productos para esta sección
+        // Obtener SOLO las tiendas que contienen productos para esta categoría
         const tiendasUnicas = [...new Set(productosFiltrados.map(p => p.nombre_tienda))];
 
         if (contenedorTabs) {
             let tabsHTML = '';
             tiendasUnicas.forEach((tienda, index) => {
                 const isActive = index === 0;
+                const emojiIcon = storeEmojiMap[tienda] || '🏪';
                 tabsHTML += `
                     <button onclick="renderizarTienda('${tienda}')" class="store-tab-btn flex flex-col items-center gap-1 shrink-0" data-store="${tienda}">
                         <div class="w-12 h-12 rounded-full flex items-center justify-center text-[22px] bg-white border-2 ${isActive ? 'border-blue-600' : 'border-slate-200 opacity-60'} shadow-sm transition-all">
-                            🏪
+                            ${emojiIcon}
                         </div>
                         <span class="text-[10px] font-semibold ${isActive ? 'text-blue-600 font-bold' : 'text-slate-400'}">${tienda}</span>
                     </button>
@@ -1978,7 +1982,7 @@ async function cargarCatalogo() {
             contenedorTabs.innerHTML = tabsHTML;
         }
 
-        // Renderizar por defecto la primera tienda
+        // Renderizar por defecto la primera tienda de esta categoría
         if (tiendasUnicas.length > 0) {
             renderizarTienda(tiendasUnicas[0]);
         }
@@ -2032,7 +2036,7 @@ function renderizarTienda(nombreTienda) {
     });
 
     // 2. Filtrar productos según categoría activa y tienda
-    const catActiva = window.currentProductCategory;
+    const catActiva = window.currentProductCategory || currentProductCategory;
     let productosTienda = window.productosGlobales.filter(p => p.nombre_tienda === nombreTienda);
 
     if (catActiva && catActiva !== 'todos') {
@@ -2067,6 +2071,8 @@ function renderizarTienda(nombreTienda) {
                 ? `<img src="${producto.imagen}" alt="${producto.nombre}" class="w-12 h-12 object-cover rounded-xl shrink-0" onerror="this.onerror=null; this.src='https://i.postimg.cc/YqKYgmdc/images.jpg';">`
                 : `<div class="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center text-2xl shrink-0">${obtenerEmoji(producto.nombre)}</div>`;
 
+            const nombreEscapado = producto.nombre.replace(/'/g, "\\'");
+
             htmlFinal += `
                 <div class="bg-white border border-slate-100 rounded-2xl p-3 flex items-center justify-between shadow-sm mb-2">
                     <div class="flex items-center gap-3 flex-1 pr-2">
@@ -2077,7 +2083,7 @@ function renderizarTienda(nombreTienda) {
                             <p class="text-[11px] font-mono-stat font-semibold text-blue-600 mt-1">S/ ${precioFormateado}</p>
                         </div>
                     </div>
-                    <button onclick="agregarAlCarrito(${producto.id_producto}, '${producto.nombre}', ${producto.precio})" class="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm shrink-0 hover:bg-blue-700 transition-colors">
+                    <button onclick="agregarAlCarrito(${producto.id_producto}, '${nombreEscapado}', ${producto.precio})" class="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm shrink-0 hover:bg-blue-700 transition-colors">
                         +
                     </button>
                 </div>
