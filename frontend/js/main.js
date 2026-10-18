@@ -2393,7 +2393,7 @@ setInterval(async () => {
                         
                        // CASO A: El Runner abandonó o la cuenta fue restringida (El pedido ya regresó a 'Pendiente')
 if (pedidoHoy.estado === 'Pendiente') {
-            // ESCENARIO 1: El pedido ya se republicó automáticamente (ej. Admin quitó el rol de Runner)
+            // ESCENARIO 1: El pedido ya se republicó automáticamente
             const modal = document.getElementById('modal-cancelacion');
             if (modal) {
                 const textoModal = modal.querySelector('p');
@@ -2401,16 +2401,20 @@ if (pedidoHoy.estado === 'Pendiente') {
                     textoModal.textContent = "Tu Runner tuvo un inconveniente. Tu pedido se ha republicado automáticamente y ya estamos buscando un nuevo compañero.";
                 }
 
-                // Ocultamos el botón "Republicar" porque el pedido ya está activo en la bolsa
+                // Ocultamos el botón "Republicar"
                 const btnRepublicar = document.getElementById('republicar-btn') || modal.querySelector('button[onclick*="republicar"]');
                 if (btnRepublicar) btnRepublicar.classList.add('hidden');
+
+                // Cambiamos el texto del botón a "Entendido"
+                const btnCerrar = modal.querySelector('button[onclick*="cerrarModalCancelacion"]') || modal.querySelector('button:not(.hidden)');
+                if (btnCerrar) btnCerrar.textContent = "Entendido";
 
                 modal.classList.remove('hidden');
             }
             if (typeof cargarMisPedidos === 'function') cargarMisPedidos();
 
         } else if (pedidoHoy.estado === 'Cancelado') {
-            // ESCENARIO 2: El Runner canceló manualmente y requiere confirmación del alumno
+            // ESCENARIO 2: El Runner canceló manualmente y pregunta si desea volver a pedir
             const modal = document.getElementById('modal-cancelacion');
             if (modal) {
                 window.pedidoCanceladoTemporal = pedidoHoy.id_pedido;
@@ -2420,14 +2424,18 @@ if (pedidoHoy.estado === 'Pendiente') {
                     textoModal.textContent = "Tu Runner canceló la entrega. ¿Deseas volver a publicar tu pedido para que otro Runner lo tome?";
                 }
 
-                // Mostramos el botón "Republicar" para que el alumno decida si volver a pedir
+                // Mostramos el botón "Republicar"
                 const btnRepublicar = document.getElementById('republicar-btn') || modal.querySelector('button[onclick*="republicar"]');
                 if (btnRepublicar) btnRepublicar.classList.remove('hidden');
+
+                // Devolvemos el texto original "No, gracias" para la pregunta
+                const btnCerrar = modal.querySelector('button[onclick*="cerrarModalCancelacion"]') || modal.querySelector('button:not(.hidden)');
+                if (btnCerrar) btnCerrar.textContent = "No, gracias";
 
                 modal.classList.remove('hidden');
             }
             if (typeof cargarMisPedidos === 'function') cargarMisPedidos();
-}
+        }
                         
                         // CASO B: El Runner ENTREGÓ el pedido
                         if (pedidoHoy.estado === 'Entregado') {
