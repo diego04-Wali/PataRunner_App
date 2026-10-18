@@ -3183,7 +3183,31 @@ async function responderReporte(idReporte, nuevoEstado) {
 
 window.cargarReportesAdmin = cargarReportesAdmin;
 window.responderReporte = responderReporte;
+// ==========================================
+// AUTO-ACTUALIZACIÓN DE REPORTES EN TIEMPO REAL
+// ==========================================
+let intervaloReportesAdmin = null;
 
+const btnModAuditoria = document.getElementById('btn-mod-auditoria');
+if (btnModAuditoria) {
+    btnModAuditoria.addEventListener('click', () => {
+        // 1. Carga inmediata al hacer clic en la pestaña "Reportes / Auditoría"
+        cargarReportesAdmin();
+
+        // 2. Limpiamos intervalos anteriores para evitar duplicados
+        if (intervaloReportesAdmin) clearInterval(intervaloReportesAdmin);
+
+        // 3. Consultar reportes nuevos automáticamente cada 5 segundos mientras el módulo esté visible
+        intervaloReportesAdmin = setInterval(() => {
+            const modAuditoria = document.getElementById('mod-auditoria');
+            if (modAuditoria && !modAuditoria.classList.contains('hidden')) {
+                cargarReportesAdmin();
+            } else {
+                clearInterval(intervaloReportesAdmin);
+            }
+        }, 5000);
+    });
+}
 // ==========================================
 // MÓDULO 2 ADMIN: MONITOREO DE OPERACIONES
 // ==========================================
