@@ -1037,7 +1037,7 @@ app.post('/api/reportes', async (req, res) => {
     const { id_pedido, id_usuario, motivo } = req.body;
     try {
         const nuevoReporte = await pool.query(
-            'INSERT INTO reportes (id_pedido, id_usuario, motivo) VALUES ($1, $2, $3) RETURNING *',
+            'INSERT INTO reportes (id_pedido, id_usuario_reporta, motivo) VALUES ($1, $2, $3) RETURNING *',
             [id_pedido || null, id_usuario, motivo]
         );
         res.status(201).json({ success: true, mensaje: 'Reporte enviado con éxito', reporte: nuevoReporte.rows[0] });
@@ -1054,7 +1054,7 @@ app.get('/api/admin/reportes', async (req, res) => {
             SELECT r.id_reporte, r.id_pedido, r.motivo, r.estado, r.fecha_creacion,
                    u.nombre_completo AS reportador, u.codigo_alumno AS codigo_reportador
             FROM reportes r
-            LEFT JOIN usuarios u ON r.id_usuario = u.id_usuario
+            LEFT JOIN usuarios u ON r.id_usuario_reporta = u.id_usuario
             ORDER BY r.fecha_creacion DESC
         `;
         const resultado = await pool.query(query);
