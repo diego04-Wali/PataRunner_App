@@ -1927,59 +1927,62 @@ async function cargarPedidosPendientes() {
 }
 
 // ================= LÓGICA DEL CATÁLOGO (ALUMNO) =================
-
 async function cargarCatalogo() {
-    const contenedorLista = document.getElementById('product-list');
-    
-    // Si no estamos en la pantalla del alumno o no existe el modal, no hacemos nada
-    if (!contenedorLista) return;
+  const contenedorLista = document.getElementById('product-list');
 
-    try {
-        // 1. Llamamos a tu backend para traer los productos
-    const respuesta = await fetch('https://unopposed-cosmetics-sudden.ngrok-free.dev/api/productos', { headers: { 'ngrok-skip-browser-warning': 'true' } });
-        const productos = await respuesta.json();
+  if (!contenedorLista) return;
 
-        // 2. Limpiamos el contenedor por si había algo antes
-        contenedorLista.innerHTML = '';
+  try {
+    // 1. Llamamos al backend para traer los productos
+    const respuesta = await fetch('/api/productos');
+    const productos = await respuesta.json();
 
-        if (productos.length === 0) {
-            contenedorLista.innerHTML = '<p class="text-[13px] text-slate-400 text-center py-6">No hay productos disponibles por ahora.</p>';
-            return;
-        }
+    // 2. Limpiamos el contenedor
+    contenedorLista.innerHTML = '';
 
-        // 3. Dibujamos una tarjeta por cada producto de la BD
-        productos.forEach(producto => {
-            // Nos aseguramos de mostrar 2 decimales en el precio (ej: 2.50)
-            const precioFormateado = Number(producto.precio).toFixed(2);
-            
-            const tarjeta = `
-            <div class="flex items-center justify-between p-3 mb-3 bg-white border border-slate-100 rounded-2xl shadow-sm">
-                <div class="flex-1 pr-3">
-                    <span class="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full uppercase tracking-wider mb-1 inline-block">${producto.categoria || 'General'}</span>
-                    <h3 class="text-[14px] font-bold text-slate-800 leading-tight">${producto.nombre}</h3>
-                    <p class="text-[12px] text-slate-500 leading-snug mt-1">${producto.descripcion || ''}</p>
-                    <p class="text-[13px] font-mono-stat font-semibold text-slate-900 mt-2">S/ ${precioFormateado}</p>
-                </div>
-                
-                <!-- Botón para agregar al carrito (lo programaremos en el siguiente paso) -->
-                <button onclick="agregarAlCarrito(${producto.id_producto}, '${producto.nombre}', ${producto.precio})" class="w-9 h-9 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-colors shrink-0">
-                    <i data-lucide="plus" class="w-4 h-4"></i>
-                </button>
-            </div>
-            `;
-            contenedorLista.innerHTML += tarjeta;
-        });
-
-        // Recargar los íconos de Lucide para los botones nuevos
-        if (window.lucide) lucide.createIcons();
-
-    } catch (error) {
-        console.error("Error al cargar el catálogo:", error);
-        contenedorLista.innerHTML = '<p class="text-red-500 text-center py-4 text-[13px]">Error al conectar con la base de datos.</p>';
+    if (productos.length === 0) {
+      contenedorLista.innerHTML = '<p class="text-[13px] text-slate-400 text-center py-6">No hay productos disponibles por ahora.</p>';
+      return;
     }
-}
-cargarCatalogo();
 
+    // 3. Dibujamos una tarjeta por cada producto de la BD
+    productos.forEach(producto => {
+      const precioFormateado = Number(producto.precio).toFixed(2);
+
+      const fotoProductoHTML = (producto.imagen && producto.imagen.trim() !== '') 
+          ? `<img src="${producto.imagen}" alt="${producto.nombre}" class="w-12 h-12 object-cover rounded-xl shrink-0" onerror="this.onerror=null; this.src='https://i.postimg.cc/YqKYgmdc/images.jpg';">`
+          : `<div class="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center text-2xl shrink-0">${obtenerEmoji(producto.nombre)}</div>`;
+
+      const tarjeta = `
+        <div class="flex items-center justify-between p-3 mb-3 bg-white border border-slate-100 rounded-2xl shadow-sm">
+          <div class="flex items-center gap-3 flex-1 pr-3">
+            ${fotoProductoHTML}
+            <div>
+              <span class="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full uppercase tracking-wider mb-1 inline-block">${producto.categoria || 'General'}</span>
+              <h3 class="text-[14px] font-bold text-slate-800 leading-tight">${producto.nombre}</h3>
+              <p class="text-[12px] text-slate-500 leading-snug mt-1">${producto.descripcion || ''}</p>
+              <p class="text-[13px] font-mono-stat font-semibold text-slate-900 mt-2">S/ ${precioFormateado}</p>
+            </div>
+          </div>
+
+          <button onclick="agregarAlCarrito(${producto.id_producto}, '${producto.nombre}', ${producto.precio})" class="w-9 h-9 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-blue-600 hover:text-white transition-colors shrink-0">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+          </button>
+        </div>
+      `;
+
+      contenedorLista.innerHTML += tarjeta;
+    });
+
+    if (window.lucide) lucide.createIcons();
+
+  } catch (error) {
+    console.error("Error al cargar el catálogo:", error);
+    contenedorLista.innerHTML = '<p class="text-red-500 text-center py-4 text-[13px]">Error al conectar con la base de datos.</p>';
+  }
+}
+
+cargarCatalogo();
 // Hacemos las funciones globales para usarlas desde el HTML
 window.abrirChat = abrirChat;
 window.cerrarChat = cerrarChat;
@@ -2006,57 +2009,6 @@ function obtenerEmoji(nombre) {
     if (n.includes('bata')) return '🥼';
     if (n.includes('lomo') || n.includes('económico')) return '🍱';
     return '🛍️';
-}
-
-async function cargarCatalogo() {
-    const contenedorLista = document.getElementById('product-list');
-    const contenedorTabs = document.getElementById('store-tabs');
-    if (!contenedorLista) return;
-
-    try {
-    const respuesta = await fetch('https://unopposed-cosmetics-sudden.ngrok-free.dev/api/productos', { headers: { 'ngrok-skip-browser-warning': 'true' } });
-        const productos = await respuesta.json();
-
-        // Parche: Traducir ID a Nombre de Tienda
-        const mapaTiendas = { 1: 'Fraga Gourmet', 2: 'LISTO!', 3: 'Papelería UTP' };
-        productos.forEach(p => {
-            p.nombre_tienda = p.nombre_tienda || mapaTiendas[p.id_tienda] || 'Tienda Externa';
-        });
-
-        const catActiva = currentProductCategory || 'snack';
-        productosGlobales = productos.filter(p => p.categoria.toLowerCase() === catActiva.toLowerCase());
-
-        if (productosGlobales.length === 0) {
-            contenedorTabs.innerHTML = '';
-            contenedorLista.innerHTML = '<p class="text-[13px] text-slate-400 text-center py-6">No hay productos aquí por ahora.</p>';
-            return;
-        }
-
-        const tiendasUnicas = [...new Set(productosGlobales.map(p => p.nombre_tienda))];
-
-        // 1. Dibujar las pestañas circulares
-        let tabsHTML = '';
-        tiendasUnicas.forEach((tienda, index) => {
-            const isActive = index === 0;
-            const emoji = emojisLocales[tienda] || "🏪";
-            tabsHTML += `
-            <button onclick="renderizarTienda('${tienda}')" class="store-tab-btn flex flex-col items-center gap-1 shrink-0" data-store="${tienda}">
-                <div class="tab-icon w-12 h-12 rounded-full flex items-center justify-center text-[22px] bg-white border-2 ${isActive ? 'border-blue-600' : 'border-slate-200 opacity-60'} shadow-sm transition-all">
-                    ${emoji}
-                </div>
-                <span class="tab-text text-[10px] font-semibold ${isActive ? 'text-blue-600' : 'text-slate-400'}">${tienda}</span>
-            </button>
-            `;
-        });
-        contenedorTabs.innerHTML = tabsHTML;
-
-        // 2. Renderizar productos de la primera tienda
-        renderizarTienda(tiendasUnicas[0]);
-
-    } catch (error) {
-        console.error("Error al cargar:", error);
-        contenedorLista.innerHTML = '<p class="text-red-500 text-center py-4 text-[13px]">Error de conexión.</p>';
-    }
 }
 
 function renderizarTienda(nombreTienda) {
