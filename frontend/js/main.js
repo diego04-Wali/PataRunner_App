@@ -2062,7 +2062,7 @@ function renderizarTienda(nombreTienda) {
     // 4. Generar HTML agrupado por títulos de sección
     let htmlFinal = '';
     for (const [seccion, listaProductos] of Object.entries(grupos)) {
-        if (catActiva !== 'utiles' && nombreTienda !== 'Papelería UTP')
+        if (catActiva && catActiva.toLowerCase() === 'almuerzo')
         htmlFinal += `<h4 class="text-xs font-bold text-slate-800 mt-4 mb-2 px-1">${seccion}</h4>`;
         
         listaProductos.forEach(producto => {
@@ -3578,21 +3578,21 @@ document.addEventListener('submit', async (e) => {
         const nombre = document.getElementById('input-nombre-producto').value.trim();
         const precio = parseFloat(document.getElementById('input-precio-producto').value);
         const categoria = document.getElementById('select-categoria-producto').value;
+        const subcategoria = document.getElementById('input-subcategoria-producto') ? document.getElementById('input-subcategoria-producto').value.trim() : '';
         const descripcion = document.getElementById('input-desc-producto').value.trim();
-        const imagen = document.getElementById('input-imagen-producto').value.trim(); // <-- LÍNEA NUEVA
+        const imagen = document.getElementById('input-imagen-producto').value.trim();
 
         try {
             const res = await fetch('/api/admin/productos', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id_tienda, nombre, precio, categoria, descripcion, imagen }) // <-- IMAGEN AGREGADA
+                body: JSON.stringify({ id_tienda, nombre, precio, categoria, subcategoria, descripcion, imagen })
             });
             const data = await res.json();
             if (data.success) {
                 alert('¡Producto agregado al catálogo correctamente!');
                 document.getElementById('form-nuevo-producto').reset();
                 cerrarModalNuevoProducto();
-                // Si el alumno tiene abierto el catálogo, se reflejará de inmediato
                 if (typeof cargarCatalogo === 'function') cargarCatalogo();
             } else {
                 alert('Error: ' + data.error);
