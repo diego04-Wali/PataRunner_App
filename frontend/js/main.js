@@ -3343,12 +3343,15 @@ if (btnModPedidos) {
 // MÓDULO 4 ADMIN: KPIS Y ESTADÍSTICAS
 // ==========================================
 
-async function cargarKPIsAdmin() {
+async function cargarKPIsAdmin(silencioso = false) {
     const contenedor = document.getElementById('mod-kpi');
     if (!contenedor) return;
 
-    contenedor.innerHTML = '<div class="flex justify-center py-8"><i data-lucide="loader-2" class="w-6 h-6 text-indigo-600 animate-spin"></i></div>';
-    if (window.lucide) lucide.createIcons();
+    // Solo mostramos la animación de carga la primera vez (cuando silencioso es false)
+    if (!silencioso) {
+        contenedor.innerHTML = '<div class="flex justify-center py-8"><i data-lucide="loader-2" class="w-6 h-6 text-indigo-600 animate-spin"></i></div>';
+        if (window.lucide) lucide.createIcons();
+    }
 
     try {
         const res = await fetch('/api/admin/kpis');
@@ -3444,7 +3447,9 @@ async function cargarKPIsAdmin() {
 
     } catch (err) {
         console.error("Error al cargar KPIs:", err);
-        contenedor.innerHTML = '<p class="text-red-500 text-[11px]">Error al conectar con el servidor de estadísticas.</p>';
+        if (!silencioso) {
+            contenedor.innerHTML = '<p class="text-red-500 text-[11px]">Error al conectar con el servidor de estadísticas.</p>';
+        }
     }
 }
 
@@ -3466,7 +3471,7 @@ if (btnModKpi) {
         intervaloKPIs = setInterval(() => {
             const modKpi = document.getElementById('mod-kpi');
             if (modKpi && !modKpi.classList.contains('hidden')) {
-                cargarKPIsAdmin();
+                cargarKPIsAdmin(true);
             } else {
                 clearInterval(intervaloKPIs);
             }
