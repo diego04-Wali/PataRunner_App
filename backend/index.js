@@ -1031,6 +1031,52 @@ app.post('/api/admin/productos', async (req, res) => {
         res.status(500).json({ error: 'Error al guardar el producto' });
     }
 });
+
+// --- RUTA: Crear un Reporte / Incidencia (Usuario) ---
+app.post('/api/reportes', async (req, res) => {
+    const { id_pedido, id_usuario, motivo } = req.body;
+    try {
+        const nuevoReporte = await pool.query(
+            'INSERT INTO reportes (id_pedido, id_usuario, motivo) VALUES ($1, $2, $3) RETURNING *',
+            [id_pedido || null, id_usuario, motivo]
+        );
+        res.status(201).json({ success: true, mensaje: 'Reporte enviado con éxito', reporte: nuevoReporte.rows[0] });
+    } catch (error) {
+        console.error("Error al registrar reporte:", error);
+        res.status(500).json({ success: false, error: 'Error al enviar el reporte' });
+    }
+});
+
+// --- RUTA: Obtener todos los Reportes (Admin) ---
+app.get('/api/admin/reportes', async (req, res) => {
+    try {
+        const query = `
+            SELECT r.id_reporte, r.id_pedido, r.motivo, r.estado, r.fecha_creacion,
+                   u.nombre_completo AS reportador, u.codigo_alumno AS codigo_reportador
+            FROM reportes r
+            LEFT JOIN usuarios u ON r.id_usuario = u.id_usuario
+            ORDER BY r.fecha_creacion DESC
+        `;
+        const resultado = await pool.query(query);
+        res.json(resultado.rows);
+    } catch (error) {
+        console.error("Error al obtener reportes:", error);
+        res.status(500).json({ error: 'Error al cargar los reportes' });
+    }
+});
+
+// --- RUTA: Actualizar Estado del Reporte (Admin) ---
+app.patch('/api/admin/reportes/:id/estado', async (req, res) => {
+    const { id } = req.params;
+    const { estado } = req.body; // 'Resuelto' o 'Desestimado'
+    try {
+        await pool.query('UPDATE reportes SET estado = $1 WHERE id_reporte = $2', [estado, id]);
+        res.json({ success: true, message: `Reporte marcado como ${estado}` });
+    } catch (error) {
+        console.error("Error al actualizar reporte:", error);
+        res.status(500).json({ success: false, error: 'Error al actualizar el estado' });
+    }
+});
 // Iniciar servidor
 app.listen(port, () => {
     console.log(`Servidor ejecutándose en el puerto ${port}`);
