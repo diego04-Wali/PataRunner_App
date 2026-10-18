@@ -2158,12 +2158,18 @@ window.anularPedido = async function(id_pedido) {
 
 // ================= BOTONES DEL MODAL DE CANCELACIÓN =================
 window.cerrarModalCancelacion = function() {
-    // 1. Ocultar la ventana flotante
-    document.getElementById('modal-cancelacion').classList.add('hidden');
+    const modal = document.getElementById('modal-cancelacion');
+    if (modal) {
+        modal.classList.add('hidden');
+        
+        // Volvemos a mostrar el botón para cuando el modal se vuelva a usar
+        const btnRepublicar = document.getElementById('republicar-btn') || modal.querySelector('button[onclick*="republicar"]');
+        if (btnRepublicar) btnRepublicar.classList.remove('hidden');
+    }
     
-    // 2. Refrescar la lista de pedidos del Runner para limpiar el pedido anulado
-    if (typeof cargarEntregasActivas === 'function') {
-        cargarEntregasActivas();
+    // Refrescamos los pedidos del alumno
+    if (typeof cargarMisPedidos === 'function') {
+        cargarMisPedidos();
     }
 };
 
@@ -2385,14 +2391,44 @@ setInterval(async () => {
                     // Lógica que ya tenías para cuando el pedido ya estaba "En Camino"
                     if (pedidoAyer.estado === 'En Camino') {
                         
-                        // CASO A: El Runner abandonó o canceló el pedido
-                        if (pedidoHoy.estado === 'Pendiente' || pedidoHoy.estado === 'Cancelado') {
-                            const modal = document.getElementById('modal-cancelacion');
-                            if (modal) modal.classList.remove('hidden');
-                            
-                            window.pedidoCanceladoTemporal = pedidoHoy.id_pedido;
-                            if (typeof cargarMisPedidos === 'function') cargarMisPedidos();
-                        }
+                       // CASO A: El Runner abandonó o la cuenta fue restringida (El pedido ya regresó a 'Pendiente')
+if (pedidoHoy.estado === 'Pendiente') {
+            // ESCENARIO 1: El pedido ya se republicó automáticamente (ej. Admin quitó el rol de Runner)
+            const modal = document.getElementById('modal-cancelacion');
+            if (modal) {
+                const textoModal = modal.querySelector('p');
+                if (textoModal) {
+                    textoModal.textContent = "Tu Runner tuvo un inconveniente. Tu pedido se ha republicado automáticamente y ya estamos buscando un nuevo compañero.";
+                }
+
+                // Ocultamos el botón "Republicar" porque el pedido ya está activo en la bolsa
+                const btnRepublicar = document.getElementById('republicar-btn') || modal.querySelector('button[onclick*="republicar"]');
+                if (btnRepublicar) btnRepublicar.classList.add('hidden');
+
+                modal.classList.remove('hidden');
+            }
+            if (typeof cargarMisPedidos === 'function') cargarMisPedidos();
+
+        } else if (pedidoHoy.estado === 'Cancelado') {
+            // ESCENARIO 2: El Runner canceló manualmente y requiere confirmación del alumno
+            const modal = document.getElementById('modal-cancelacion');
+            if (modal) {
+                window.pedidoCanceladoTemporal = pedidoHoy.id_pedido;
+
+                const textoModal = modal.querySelector('p');
+                if (textoModal) {
+                    textoModal.textContent = "Tu Runner canceló la entrega. ¿Deseas volver a publicar tu pedido para que otro Runner lo tome?";
+                }
+
+                // Mostramos el botón "Republicar" para que el alumno decida si volver a pedir
+                const btnRepublicar = document.getElementById('republicar-btn') || modal.querySelector('button[onclick*="republicar"]');
+                if (btnRepublicar) btnRepublicar.classList.remove('hidden');
+
+                modal.classList.remove('hidden');
+            }
+            if (typeof cargarMisPedidos === 'function') cargarMisPedidos();
+        }
+}
                         
                         // CASO B: El Runner ENTREGÓ el pedido
                         if (pedidoHoy.estado === 'Entregado') {
