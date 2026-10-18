@@ -3475,7 +3475,7 @@ if (btnModKpi) {
             } else {
                 clearInterval(intervaloKPIs);
             }
-        }, 10000);
+        }, 5000);
     });
 }
 
