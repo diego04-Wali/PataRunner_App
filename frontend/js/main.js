@@ -3600,7 +3600,7 @@ async function cargarTiendasAdmin(silencioso = false) {
             } else {
                 productosTienda.forEach(p => {
                     const precio = Number(p.precio).toFixed(2);
-                    listaProductosHTML += `
+                   listaProductosHTML += `
     <div class="flex items-center justify-between p-2 bg-slate-50 border border-slate-100 rounded-lg text-xs mb-1.5">
         <div class="flex items-center gap-2 min-w-0 pr-2">
             <span class="font-bold text-slate-800 truncate">${p.nombre}</span>
@@ -3609,9 +3609,14 @@ async function cargarTiendasAdmin(silencioso = false) {
                 Stock: ${p.stock !== undefined && p.stock !== null ? p.stock : 0}
             </span>
         </div>
-        <button onclick="eliminarProductoAdmin(${p.id_producto})" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-100 px-2 py-1 rounded text-[10px] font-semibold transition-colors">
-            Eliminar
-        </button>
+        <div class="flex items-center gap-1">
+            <button onclick="editarStockAdmin(${p.id_producto}, ${p.stock || 0})" class="text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 px-2 py-1 rounded text-[10px] font-semibold transition-colors">
+                ✏️ Stock
+            </button>
+            <button onclick="eliminarProductoAdmin(${p.id_producto})" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-100 px-2 py-1 rounded text-[10px] font-semibold transition-colors">
+                Eliminar
+            </button>
+        </div>
     </div>
 `;
                 });
@@ -3883,3 +3888,36 @@ document.addEventListener('submit', async function(e) {
         }
     }
 });
+
+// Editar/Reabastecer stock desde el Panel Admin
+window.editarStockAdmin = async function(idProducto, stockActual) {
+    const nuevoStock = prompt("Ingresa la nueva cantidad de stock para este producto:", stockActual);
+    
+    if (nuevoStock === null || nuevoStock.trim() === "") return;
+
+    const cantidad = parseInt(nuevoStock);
+    if (isNaN(cantidad) || cantidad < 0) {
+        alert("Por favor, ingresa un número válido mayor o igual a 0.");
+        return;
+    }
+
+    try {
+        const res = await fetch(`/api/admin/productos/${idProducto}/stock`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ stock: cantidad })
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+            alert('¡Stock actualizado con éxito!');
+            cargarTiendasAdmin(true); // Refresca el panel admin
+            if (typeof cargarCatalogo === 'function') cargarCatalogo(); // Refresca el catálogo del alumno
+        } else {
+            alert('Error: ' + (data.error || 'No se pudo actualizar el stock.'));
+        }
+    } catch (err) {
+        console.error("Error al actualizar stock:", err);
+        alert('Ocurrió un error de conexión.');
+    }
+};

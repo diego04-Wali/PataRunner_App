@@ -1051,7 +1051,23 @@ app.post('/api/admin/productos', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+// --- RUTA ADMIN: Actualizar solo el stock de un producto ---
+app.patch('/api/admin/productos/:id/stock', async (req, res) => {
+    const { id } = req.params;
+    const { stock } = req.body;
 
+    try {
+        await pool.query(
+            'UPDATE productos SET stock = $1 WHERE id_producto = $2',
+            [parseInt(stock) || 0, id]
+        );
+
+        res.json({ success: true, message: 'Stock actualizado con éxito.' });
+    } catch (error) {
+        console.error('Error al actualizar el stock:', error.message);
+        res.status(500).json({ error: 'Error interno al actualizar el stock.' });
+    }
+});
 // --- RUTA: Crear un Reporte / Incidencia (Usuario) ---
 app.post('/api/reportes', async (req, res) => {
     const { id_pedido, id_usuario, motivo } = req.body;
