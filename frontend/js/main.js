@@ -4112,3 +4112,72 @@ window.eliminarFotoGaleria = async function(idFoto) {
         console.error('Error al eliminar foto:', err);
     }
 };
+
+let tempFotoPerfilBase64 = null;
+
+// 1. Mostrar vista previa al seleccionar una imagen
+window.previsualizarFotoPerfil = function(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        tempFotoPerfilBase64 = e.target.result;
+        
+        const imgConfirm = document.getElementById('img-preview-confirm');
+        if (imgConfirm) imgConfirm.src = tempFotoPerfilBase64;
+
+        const modal = document.getElementById('modal-preview-foto');
+        if (modal) modal.classList.remove('hidden');
+    };
+    reader.readAsDataURL(file);
+};
+
+// 2. Cancelar y cerrar la vista previa
+window.cancelarFotoPerfil = function() {
+    tempFotoPerfilBase64 = null;
+    const input = document.getElementById('input-foto-perfil');
+    if (input) input.value = '';
+    
+    const modal = document.getElementById('modal-preview-foto');
+    if (modal) modal.classList.add('hidden');
+};
+
+// 3. Confirmar y guardar foto en la Base de Datos
+window.guardarFotoPerfilConfirmada = async function() {
+    const usuarioStr = sessionStorage.getItem('usuario');
+    if (!usuarioStr || !tempFotoPerfilBase64) return;
+
+    const usuario = JSON.parse(usuarioStr);
+
+    try {
+        const res = await fetch('/api/usuarios/perfil', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                id_usuario: usuario.id_usuario,
+                nombre_completo: usuario.nombre_completo,
+                carrera: usuario.carrera,
+                foto_perfil: tempFotoPerfilBase64
+            })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+            // Actualizar vista de perfil e información local
+            const imgPreview = document.getElementById('profile-img-preview');
+            if (imgPreview) imgPreview.src = tempFotoPerfilBase64;
+
+            usuario.foto_perfil = tempFotoPerfilBase64;
+            sessionStorage.setItem('usuario', JSON.stringify(usuario));
+
+            alert('¡Foto de perfil guardada con éxito!');
+            cancelarFotoPerfil();
+        } else {
+            alert('Error: ' + (data.error || 'No se pudo guardar la foto'));
+        }
+    } catch (err) {
+        console.error('Error al guardar foto de perfil:', err);
+        alert('Error de conexión al guardar la foto.');
+    }
+};
