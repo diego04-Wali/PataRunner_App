@@ -3791,21 +3791,11 @@ let intervaloTiendas = null;
 const btnModTiendas = document.getElementById('btn-mod-tiendas');
 if (btnModTiendas) {
     btnModTiendas.addEventListener('click', () => {
-        // Carga inicial con animación
+        // Carga manual únicamente al hacer clic en la pestaña
         cargarTiendasAdmin();
 
-        // Limpiamos intervalos previos si existían
+        // Si existía un intervalo previo, lo cancelamos
         if (intervaloTiendas) clearInterval(intervaloTiendas);
-
-        // Auto-actualizar en segundo plano cada 5 segundos de forma silenciosa
-        intervaloTiendas = setInterval(() => {
-            const modTiendas = document.getElementById('mod-tiendas');
-            if (modTiendas && !modTiendas.classList.contains('hidden')) {
-                cargarTiendasAdmin(true);
-            } else {
-                clearInterval(intervaloTiendas);
-            }
-        }, 5000);
     });
 }
 
