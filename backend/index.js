@@ -106,13 +106,17 @@ app.delete('/api/admin/productos/:id', async (req, res) => {
         res.status(500).json({ success: false, error: 'Error en la base de datos' });
     }
 });
-// --- RUTA: Obtener todos los Productos ---
+// --- RUTA: Obtener todos los Productos con el nombre de su Tienda ---
 app.get('/api/productos', async (req, res) => {
     try {
-        // Consultamos toda la tabla de productos
-        const todosLosProductos = await pool.query("SELECT * FROM productos WHERE disponible = true ORDER BY id_producto ASC");
+        const todosLosProductos = await pool.query(`
+            SELECT p.*, t.nombre AS nombre_tienda, t.ubicacion AS ubicacion_tienda
+            FROM productos p
+            LEFT JOIN tiendas t ON p.id_tienda = t.id_tienda
+            WHERE p.disponible = true 
+            ORDER BY p.id_producto ASC
+        `);
         
-        // Devolvemos la lista en formato JSON
         res.status(200).json(todosLosProductos.rows);
     } catch (error) {
         console.error(error.message);
@@ -919,8 +923,6 @@ app.patch('/api/admin/reportes/:id/estado', async (req, res) => {
     }
 });
 
-// ==========================================
-// MÓDULO 4 ADMIN: KPIs Y ESTADÍSTICAS DEL DÍA
 // ==========================================
 // MÓDULO 4 ADMIN: KPIS Y ESTADÍSTICAS DEL DÍA
 app.get('/api/admin/kpis', async (req, res) => {

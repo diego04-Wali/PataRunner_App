@@ -1929,6 +1929,29 @@ async function cargarPedidosPendientes() {
 
 // ================= LÓGICA DEL CATÁLOGO (ALUMNO) =================
 const storeEmojiMap = { "Frago Gourmet": "🥐", "LISTO!": "🏪", "Listo": "🏪", "Papelería UTP": "📎" };
+// Variable global para controlar la torre seleccionada en el modal
+window.torreModalSeleccionada = 'A';
+
+// Función para cambiar de torre y actualizar la interfaz
+window.seleccionarTorreModal = function(torre) {
+    window.torreModalSeleccionada = torre;
+    
+    const btnA = document.getElementById('btn-torre-a');
+    const btnB = document.getElementById('btn-torre-b');
+    
+    if (btnA && btnB) {
+        if (torre === 'A') {
+            btnA.className = "flex-1 py-1.5 rounded-lg bg-white text-blue-600 shadow-sm transition-all flex items-center justify-center gap-1 font-bold";
+            btnB.className = "flex-1 py-1.5 rounded-lg text-slate-500 hover:text-slate-700 transition-all flex items-center justify-center gap-1 font-normal";
+        } else {
+            btnB.className = "flex-1 py-1.5 rounded-lg bg-white text-blue-600 shadow-sm transition-all flex items-center justify-center gap-1 font-bold";
+            btnA.className = "flex-1 py-1.5 rounded-lg text-slate-500 hover:text-slate-700 transition-all flex items-center justify-center gap-1 font-normal";
+        }
+    }
+    
+    // Recargamos el catálogo con el nuevo filtro
+    cargarCatalogo();
+};
 
 async function cargarCatalogo() {
     const contenedorLista = document.getElementById('product-list');
@@ -1955,6 +1978,12 @@ async function cargarCatalogo() {
         if (catActiva && catActiva !== 'todos') {
             productosFiltrados = productos.filter(p => p.categoria && p.categoria.toLowerCase() === catActiva.toLowerCase());
         }
+        // Filtrar productos según la Torre seleccionada (A vs B)
+        const esTorreB = window.torreModalSeleccionada === 'B';
+        productosFiltrados = productosFiltrados.filter(p => {
+            const esTiendaTorreB = p.nombre_tienda && p.nombre_tienda.includes('(Torre B)');
+            return esTorreB ? esTiendaTorreB : !esTiendaTorreB;
+        });
 
         if (productosFiltrados.length === 0) {
             if (contenedorTabs) contenedorTabs.innerHTML = '';
