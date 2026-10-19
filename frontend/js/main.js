@@ -1985,7 +1985,7 @@ async function cargarCatalogo() {
         if (selectorTorres) {
             if (catActiva && catActiva.toLowerCase() === 'almuerzo') {
                 selectorTorres.classList.add('hidden'); // Ocultar selector en Almuerzo
-                window.torreModalSeleccionada = 'A';     // Forzar Torre A siempre
+                window.torreModalSeleccionada = 'A';    // Forzar Torre A siempre
             } else {
                 selectorTorres.classList.remove('hidden'); // Mostrar selector en Snacks y Útiles
             }
@@ -2005,6 +2005,43 @@ async function cargarCatalogo() {
                 return esTorreB ? esTiendaTorreB : !esTiendaTorreB;
             });
         }
+
+        if (productosFiltrados.length === 0) {
+            if (contenedorTabs) contenedorTabs.innerHTML = '';
+            contenedorLista.innerHTML = '<p class="text-[13px] text-slate-400 text-center py-6">No hay productos disponibles en esta sección.</p>';
+            return;
+        }
+
+        // Obtener SOLO las tiendas que contienen productos para esta categoría
+        const tiendasUnicas = [...new Set(productosFiltrados.map(p => p.nombre_tienda))];
+
+        if (contenedorTabs) {
+            let tabsHTML = '';
+            tiendasUnicas.forEach((tienda, index) => {
+                const isActive = index === 0;
+                const emojiIcon = storeEmojiMap[tienda] || '🏪';
+                tabsHTML += `
+                    <button onclick="renderizarTienda('${tienda}')" class="store-tab-btn flex flex-col items-center gap-1 shrink-0" data-store="${tienda}">
+                        <div class="w-12 h-12 rounded-full flex items-center justify-center text-[22px] bg-white border-2 ${isActive ? 'border-blue-600' : 'border-slate-200 opacity-60'} shadow-sm transition-all">
+                            ${emojiIcon}
+                        </div>
+                        <span class="text-[10px] font-semibold ${isActive ? 'text-blue-600 font-bold' : 'text-slate-400'}">${tienda}</span>
+                    </button>
+                `;
+            });
+            contenedorTabs.innerHTML = tabsHTML;
+        }
+
+        // Renderizar por defecto la primera tienda de esta categoría
+        if (tiendasUnicas.length > 0) {
+            renderizarTienda(tiendasUnicas[0]);
+        }
+
+    } catch (error) {
+        console.error("Error al cargar el catálogo:", error);
+        contenedorLista.innerHTML = '<p class="text-red-500 text-center py-4 text-[13px]">Error de conexión al cargar el catálogo.</p>';
+    }
+}
 
 // Hacemos las funciones globales para usarlas desde el HTML
 window.abrirChat = abrirChat;
