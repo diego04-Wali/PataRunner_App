@@ -4013,6 +4013,7 @@ window.guardarPerfilUsuario = async function(e) {
 
             const passInput = document.getElementById('edit-contrasena');
             if (passInput) passInput.value = '';
+            cerrarModalEditarPerfil();
             cargarDatosPerfil();
         } else {
             alert('Error: ' + (data.error || 'No se pudo actualizar'));
@@ -4022,7 +4023,16 @@ window.guardarPerfilUsuario = async function(e) {
         alert('Error de conexión al actualizar el perfil.');
     }
 };
+// Abrir y cerrar modal de editar perfil
+window.abrirModalEditarPerfil = function() {
+    const modal = document.getElementById('modal-editar-perfil');
+    if (modal) modal.classList.remove('hidden');
+};
 
+window.cerrarModalEditarPerfil = function() {
+    const modal = document.getElementById('modal-editar-perfil');
+    if (modal) modal.classList.add('hidden');
+};
 // 4. Cargar la Galería de Fotos
 window.cargarGaleriaFotos = async function(idUsuario) {
     const contenedor = document.getElementById('grid-galeria-fotos');
