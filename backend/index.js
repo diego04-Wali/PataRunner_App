@@ -922,17 +922,18 @@ app.patch('/api/admin/reportes/:id/estado', async (req, res) => {
 // ==========================================
 // MÓDULO 4 ADMIN: KPIs Y ESTADÍSTICAS DEL DÍA
 // ==========================================
+// MÓDULO 4 ADMIN: KPIS Y ESTADÍSTICAS DEL DÍA
 app.get('/api/admin/kpis', async (req, res) => {
     try {
-        // 1. Conteo de pedidos por estado (usando fecha_pedido)
+        // 1. Conteo de pedidos por estado ajustado a la hora de Perú (-05:00)
         const resPedidos = await pool.query(`
             SELECT 
-                COUNT(*) FILTER (WHERE DATE(fecha_pedido) = CURRENT_DATE) AS total_hoy,
-                COUNT(*) FILTER (WHERE DATE(fecha_pedido) = CURRENT_DATE AND estado = 'Entregado') AS entregados_hoy,
-                COUNT(*) FILTER (WHERE DATE(fecha_pedido) = CURRENT_DATE AND estado = 'En Camino') AS en_camino_hoy,
-                COUNT(*) FILTER (WHERE DATE(fecha_pedido) = CURRENT_DATE AND estado = 'Pendiente') AS pendientes_hoy,
-                COUNT(*) FILTER (WHERE DATE(fecha_pedido) = CURRENT_DATE AND estado = 'Cancelado') AS cancelados_hoy,
-                COALESCE(SUM(tarifa_entrega) FILTER (WHERE DATE(fecha_pedido) = CURRENT_DATE AND estado = 'Entregado'), 0) AS ganancias_runners_hoy
+                COUNT(*) FILTER (WHERE (fecha_pedido AT TIME ZONE 'America/Lima')::date = (NOW() AT TIME ZONE 'America/Lima')::date) AS total_hoy,
+                COUNT(*) FILTER (WHERE (fecha_pedido AT TIME ZONE 'America/Lima')::date = (NOW() AT TIME ZONE 'America/Lima')::date AND estado = 'Entregado') AS entregados_hoy,
+                COUNT(*) FILTER (WHERE (fecha_pedido AT TIME ZONE 'America/Lima')::date = (NOW() AT TIME ZONE 'America/Lima')::date AND estado = 'En Camino') AS en_camino_hoy,
+                COUNT(*) FILTER (WHERE (fecha_pedido AT TIME ZONE 'America/Lima')::date = (NOW() AT TIME ZONE 'America/Lima')::date AND estado = 'Pendiente') AS pendientes_hoy,
+                COUNT(*) FILTER (WHERE (fecha_pedido AT TIME ZONE 'America/Lima')::date = (NOW() AT TIME ZONE 'America/Lima')::date AND estado = 'Cancelado') AS cancelados_hoy,
+                COALESCE(SUM(tarifa_entrega) FILTER (WHERE (fecha_pedido AT TIME ZONE 'America/Lima')::date = (NOW() AT TIME ZONE 'America/Lima')::date AND estado = 'Entregado'), 0) AS ganancias_runners_hoy
             FROM pedidos;
         `);
 
@@ -944,16 +945,16 @@ app.get('/api/admin/kpis', async (req, res) => {
             FROM usuarios;
         `);
 
-        // 3. Tienda con más ventas hoy (usando detalle_pedido en singular)
+        // 3. Tienda con más ventas hoy
         let topTiendaNombre = 'Sin ventas aún';
         try {
             const resTopTienda = await pool.query(`
-                SELECT t.nombre, COUNT(dp.id_pedido) as total_ventas
+                SELECT t.nombre, COUNT(dp.id_pedido) AS total_ventas
                 FROM detalle_pedido dp
                 JOIN productos p ON dp.id_producto = p.id_producto
                 JOIN tiendas t ON p.id_tienda = t.id_tienda
                 JOIN pedidos ped ON dp.id_pedido = ped.id_pedido
-                WHERE DATE(ped.fecha_pedido) = CURRENT_DATE
+                WHERE (ped.fecha_pedido AT TIME ZONE 'America/Lima')::date = (NOW() AT TIME ZONE 'America/Lima')::date
                 GROUP BY t.nombre
                 ORDER BY total_ventas DESC
                 LIMIT 1;
