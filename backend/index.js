@@ -688,7 +688,22 @@ app.put('/api/pedidos/:id/cancelar', async (req, res) => {
             return res.status(400).json({ error: 'El pedido ya fue aceptado por un Runner y no se puede cancelar.' });
         }
 
-        // 2. Si sigue pendiente, actualizamos el estado a "Cancelado"
+       // 2. Devolver el stock de los productos del pedido
+        const detalles = await pool.query(
+            'SELECT id_producto, cantidad FROM detalle_pedido WHERE id_pedido = $1',
+            [id]
+        );
+
+        for (let item of detalles.rows) {
+            if (item.id_producto) {
+                await pool.query(
+                    'UPDATE productos SET stock = stock + $1 WHERE id_producto = $2',
+                    [item.cantidad || 1, item.id_producto]
+                );
+            }
+        }
+
+        // 3. Cambiar el estado a Cancelado
         await pool.query("UPDATE pedidos SET estado = 'Cancelado' WHERE id_pedido = $1", [id]);
         
         res.status(200).json({ mensaje: 'Pedido cancelado exitosamente.' });
