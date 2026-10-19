@@ -1113,6 +1113,89 @@ app.patch('/api/admin/reportes/:id/estado', async (req, res) => {
         res.status(500).json({ success: false, error: 'Error al actualizar el estado' });
     }
 });
+
+// --- RUTAS DE PERFIL Y GALERÍA DE USUARIO ---
+
+// 1. Actualizar Datos del Perfil (Nombre, Carrera, Contraseña opcional, Foto de Perfil)
+app.put('/api/usuarios/perfil', async (req, res) => {
+    const { id_usuario, nombre_completo, carrera, contrasena, foto_perfil } = req.body;
+
+    if (!id_usuario) {
+        return res.status(400).json({ error: 'ID de usuario requerido.' });
+    }
+
+    try {
+        if (contrasena && contrasena.trim() !== '') {
+            // Si proporciona una nueva contraseña
+            await pool.query(
+                `UPDATE usuarios 
+                 SET nombre_completo = $1, carrera = $2, contrasena = $3, foto_perfil = COALESCE($4, foto_perfil)
+                 WHERE id_usuario = $5`,
+                [nombre_completo, carrera, contrasena, foto_perfil, id_usuario]
+            );
+        } else {
+            // Si NO cambia la contraseña
+            await pool.query(
+                `UPDATE usuarios 
+                 SET nombre_completo = $1, carrera = $2, foto_perfil = COALESCE($3, foto_perfil)
+                 WHERE id_usuario = $4`,
+                [nombre_completo, carrera, foto_perfil, id_usuario]
+            );
+        }
+
+        res.json({ success: true, message: 'Perfil actualizado con éxito.' });
+    } catch (error) {
+        console.error('Error al actualizar perfil:', error.message);
+        res.status(500).json({ error: 'Error interno al actualizar perfil.' });
+    }
+});
+
+// 2. Obtener la Galería de Fotos del Usuario
+app.get('/api/usuarios/fotos/:id_usuario', async (req, res) => {
+    const { id_usuario } = req.params;
+    try {
+        const result = await pool.query(
+            'SELECT * FROM fotos_usuario WHERE id_usuario = $1 ORDER BY fecha_subida DESC',
+            [id_usuario]
+        );
+        res.json(result.rows);
+    } catch (error) {
+        console.error('Error al obtener fotos:', error.message);
+        res.status(500).json({ error: 'Error al obtener fotos.' });
+    }
+});
+
+// 3. Subir Nueva Foto a la Galería
+app.post('/api/usuarios/fotos', async (req, res) => {
+    const { id_usuario, url_foto } = req.body;
+    if (!id_usuario || !url_foto) {
+        return res.status(400).json({ error: 'Usuario y foto requeridos.' });
+    }
+
+    try {
+        const result = await pool.query(
+            'INSERT INTO fotos_usuario (id_usuario, url_foto) VALUES ($1, $2) RETURNING *',
+            [id_usuario, url_foto]
+        );
+        res.json({ success: true, foto: result.rows[0] });
+    } catch (error) {
+        console.error('Error al subir foto:', error.message);
+        res.status(500).json({ error: 'Error al guardar la foto.' });
+    }
+});
+
+// 4. Eliminar Foto de la Galería
+app.delete('/api/usuarios/fotos/:id_foto', async (req, res) => {
+    const { id_foto } = req.params;
+    try {
+        await pool.query('DELETE FROM fotos_usuario WHERE id_foto = $1', [id_foto]);
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error al eliminar foto:', error.message);
+        res.status(500).json({ error: 'Error al eliminar la foto.' });
+    }
+});
+
 // Iniciar servidor
 app.listen(port, () => {
     console.log(`Servidor ejecutándose en el puerto ${port}`);

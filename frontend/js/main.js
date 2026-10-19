@@ -3928,3 +3928,177 @@ window.editarStockAdmin = async function(idProducto, stockActual) {
         alert('Ocurrió un error de conexión.');
     }
 };
+
+// ==========================================
+// --- LÓGICA DE PERFIL Y GALERÍA DE FOTOS ---
+// ==========================================
+
+let fotoPerfilTempBase64 = null;
+
+// 1. Convertir foto de perfil seleccionada a Base64 para vista previa
+window.convertirFotoPerfilABase64 = function(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        fotoPerfilTempBase64 = e.target.result;
+        const imgPreview = document.getElementById('profile-img-preview');
+        if (imgPreview) imgPreview.src = fotoPerfilTempBase64;
+    };
+    reader.readAsDataURL(file);
+};
+
+// 2. Cargar Datos del Perfil y Galería
+window.cargarDatosPerfil = async function() {
+    const usuarioStr = sessionStorage.getItem('usuario');
+    if (!usuarioStr) return;
+
+    const usuario = JSON.parse(usuarioStr);
+    
+    const editNombre = document.getElementById('edit-nombre');
+    const editCarrera = document.getElementById('edit-carrera');
+    const displayName = document.getElementById('profile-display-name');
+    const displayCarrera = document.getElementById('profile-display-carrera');
+    const imgPreview = document.getElementById('profile-img-preview');
+
+    if (editNombre) editNombre.value = usuario.nombre_completo || '';
+    if (editCarrera) editCarrera.value = usuario.carrera || '';
+    if (displayName) displayName.textContent = usuario.nombre_completo || 'Estudiante';
+    if (displayCarrera) displayCarrera.textContent = usuario.carrera || 'Estudiante UTP';
+    
+    if (imgPreview && usuario.foto_perfil) {
+        imgPreview.src = usuario.foto_perfil;
+    }
+
+    // Cargar fotos de la galería del usuario
+    if (usuario.id_usuario) {
+        cargarGaleriaFotos(usuario.id_usuario);
+    }
+};
+
+// 3. Guardar Cambios del Perfil (Nombre, Carrera, Contraseña, Foto)
+window.guardarPerfilUsuario = async function(e) {
+    e.preventDefault();
+    const usuarioStr = sessionStorage.getItem('usuario');
+    if (!usuarioStr) return;
+
+    const usuario = JSON.parse(usuarioStr);
+    const nombre = document.getElementById('edit-nombre').value.trim();
+    const carrera = document.getElementById('edit-carrera').value.trim();
+    const contrasena = document.getElementById('edit-contrasena').value.trim();
+
+    try {
+        const res = await fetch('/api/usuarios/perfil', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                id_usuario: usuario.id_usuario,
+                nombre_completo: nombre,
+                carrera: carrera,
+                contrasena: contrasena,
+                foto_perfil: fotoPerfilTempBase64 || usuario.foto_perfil
+            })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+            alert('¡Perfil actualizado con éxito!');
+            
+            // Actualizar sesión local
+            usuario.nombre_completo = nombre;
+            usuario.carrera = carrera;
+            if (fotoPerfilTempBase64) usuario.foto_perfil = fotoPerfilTempBase64;
+            sessionStorage.setItem('usuario', JSON.stringify(usuario));
+
+            const passInput = document.getElementById('edit-contrasena');
+            if (passInput) passInput.value = '';
+            cargarDatosPerfil();
+        } else {
+            alert('Error: ' + (data.error || 'No se pudo actualizar'));
+        }
+    } catch (err) {
+        console.error('Error al actualizar perfil:', err);
+        alert('Error de conexión al actualizar el perfil.');
+    }
+};
+
+// 4. Cargar la Galería de Fotos
+window.cargarGaleriaFotos = async function(idUsuario) {
+    const contenedor = document.getElementById('grid-galeria-fotos');
+    if (!contenedor) return;
+
+    try {
+        const res = await fetch(`/api/usuarios/fotos/${idUsuario}`);
+        const fotos = await res.json();
+
+        if (!Array.isArray(fotos) || fotos.length === 0) {
+            contenedor.innerHTML = '<p class="text-[11px] text-slate-400 col-span-3 text-center py-4">Sin fotos subidas aún.</p>';
+            return;
+        }
+
+        contenedor.innerHTML = fotos.map(f => `
+            <div class="relative group aspect-square rounded-lg overflow-hidden border border-slate-200 shadow-sm">
+                <img src="${f.url_foto}" class="w-full h-full object-cover" alt="Foto usuario">
+                <button onclick="eliminarFotoGaleria(${f.id_foto})" class="absolute top-1 right-1 bg-red-600 text-white p-1 rounded-full opacity-90 hover:opacity-100 transition shadow">
+                    <i data-lucide="trash-2" class="w-3 h-3"></i>
+                </button>
+            </div>
+        `).join('');
+
+        if (window.lucide) lucide.createIcons();
+    } catch (err) {
+        console.error('Error al cargar galería:', err);
+    }
+};
+
+// 5. Subir Foto a la Galería
+window.subirFotoGaleria = function(event) {
+    const file = event.target.files[0];
+    const usuarioStr = sessionStorage.getItem('usuario');
+    if (!file || !usuarioStr) return;
+
+    const usuario = JSON.parse(usuarioStr);
+    const reader = new FileReader();
+
+    reader.onload = async function(e) {
+        const base64Foto = e.target.result;
+
+        try {
+            const res = await fetch('/api/usuarios/fotos', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id_usuario: usuario.id_usuario,
+                    url_foto: base64Foto
+                })
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                cargarGaleriaFotos(usuario.id_usuario);
+            } else {
+                alert('Error al subir la foto.');
+            }
+        } catch (err) {
+            console.error('Error al subir foto:', err);
+        }
+    };
+    reader.readAsDataURL(file);
+};
+
+// 6. Eliminar Foto de la Galería
+window.eliminarFotoGaleria = async function(idFoto) {
+    if (!confirm('¿Deseas eliminar esta foto de tu galería?')) return;
+
+    try {
+        const res = await fetch(`/api/usuarios/fotos/${idFoto}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) {
+            const usuario = JSON.parse(sessionStorage.getItem('usuario'));
+            cargarGaleriaFotos(usuario.id_usuario);
+        }
+    } catch (err) {
+        console.error('Error al eliminar foto:', err);
+    }
+};
