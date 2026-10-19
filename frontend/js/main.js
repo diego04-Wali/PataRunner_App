@@ -4205,3 +4205,21 @@ window.guardarFotoPerfilConfirmada = async function() {
         alert('Error de conexión al guardar la foto.');
     }
 };
+// Mostrar / ocultar contraseña en el formulario de registro
+window.toggleRegisterPassword = function() {
+    const input = document.getElementById('register-password');
+    const icon = document.getElementById('toggle-register-icon');
+    if (!input) return;
+
+    if (input.type === 'password') {
+        input.type = 'text';
+        if (icon) icon.setAttribute('data-lucide', 'eye-off');
+    } else {
+        input.type = 'password';
+        if (icon) icon.setAttribute('data-lucide', 'eye');
+    }
+
+    if (window.lucide && typeof window.lucide.createIcons === 'function') {
+        window.lucide.createIcons();
+    }
+};
