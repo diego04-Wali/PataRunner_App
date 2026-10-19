@@ -383,6 +383,27 @@
     </div>
 </div>
 
+<!-- REPORTAR PROBLEMA Y CERRAR SESIÓN -->
+    <div class="space-y-3 pt-2">
+        <button onclick="abrirModalReporte()" class="w-full flex items-center justify-between p-3.5 bg-white border border-slate-200 rounded-xl shadow-sm hover:bg-slate-50 transition-colors">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-red-50 text-red-500 flex items-center justify-center font-bold text-base shrink-0">
+                    🚨
+                </div>
+                <div class="text-left">
+                    <p class="text-xs font-bold text-slate-800">Reportar un problema</p>
+                    <p class="text-[10px] text-slate-400">Envía incidencias al administrador</p>
+                </div>
+            </div>
+            <span class="text-slate-300 font-bold text-xs">❯</span>
+        </button>
+
+        <button id="logout-btn" class="w-full py-3 rounded-xl border border-red-200 text-red-600 font-medium text-[13px] bg-white hover:bg-red-50 transition-colors shadow-sm">
+            Cerrar sesión
+        </button>
+    </div>
+
+</div>
       </div> <!-- FIN CONTENIDO SCROLLABLE PRINCIPAL -->
 
       <!-- ===== NAV BAR INFERIOR ===== -->
