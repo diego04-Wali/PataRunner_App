@@ -1116,60 +1116,30 @@ app.patch('/api/admin/reportes/:id/estado', async (req, res) => {
 
 // --- RUTAS DE PERFIL Y GALERÍA DE USUARIO ---
 
-// 1. Actualizar Datos del Perfil (Nombre, Carrera, Contraseña opcional, Foto de Perfil)
+// Actualizar Datos del Perfil en PostgreSQL
 app.put('/api/usuarios/perfil', async (req, res) => {
-    const { id_usuario, nombre_completo, carrera, contrasena, foto_perfil } = req.body;
+    const { id_usuario, nombre_completo, carrera, foto_perfil } = req.body;
 
     if (!id_usuario) {
         return res.status(400).json({ error: 'ID de usuario requerido.' });
     }
 
     try {
-        // Garantizamos que si foto_perfil no viene en el body, se envíe null para evitar errores en pg
-        const fotoFinal = foto_perfil || null;
+        const fotoFinal = (foto_perfil !== undefined && foto_perfil !== null) ? foto_perfil : null;
 
-        if (contrasena && contrasena.trim() !== '') {
-            // Si proporciona una nueva contraseña
-            await pool.query(
-                `UPDATE usuarios 
-                 SET nombre_completo = $1, 
-                     carrera = $2, 
-                     contrasena = $3, 
-                     foto_perfil = COALESCE($4, foto_perfil)
-                 WHERE id_usuario = $5`,
-                [nombre_completo, carrera, contrasena.trim(), fotoFinal, id_usuario]
-            );
-        } else {
-            // Si NO cambia la contraseña
-            await pool.query(
-                `UPDATE usuarios 
-                 SET nombre_completo = $1, 
-                     carrera = $2, 
-                     foto_perfil = COALESCE($3, foto_perfil)
-                 WHERE id_usuario = $4`,
-                [nombre_completo, carrera, fotoFinal, id_usuario]
-            );
-        }
+        await pool.query(
+            `UPDATE usuarios 
+             SET nombre_completo = $1, 
+                 carrera = $2, 
+                 foto_perfil = COALESCE($3, foto_perfil)
+             WHERE id_usuario = $4`,
+            [nombre_completo, carrera, fotoFinal, id_usuario]
+        );
 
         res.json({ success: true, message: 'Perfil actualizado con éxito.' });
     } catch (error) {
-        console.error('Error detallado al actualizar perfil:', error);
+        console.error('Error al actualizar perfil en backend:', error);
         res.status(500).json({ error: 'Error interno al actualizar perfil: ' + error.message });
-    }
-});
-
-// 2. Obtener la Galería de Fotos del Usuario
-app.get('/api/usuarios/fotos/:id_usuario', async (req, res) => {
-    const { id_usuario } = req.params;
-    try {
-        const result = await pool.query(
-            'SELECT * FROM fotos_usuario WHERE id_usuario = $1 ORDER BY fecha_subida DESC',
-            [id_usuario]
-        );
-        res.json(result.rows);
-    } catch (error) {
-        console.error('Error al obtener fotos:', error.message);
-        res.status(500).json({ error: 'Error al obtener fotos.' });
     }
 });
 
