@@ -1125,28 +1125,36 @@ app.put('/api/usuarios/perfil', async (req, res) => {
     }
 
     try {
+        // Garantizamos que si foto_perfil no viene en el body, se envíe null para evitar errores en pg
+        const fotoFinal = foto_perfil || null;
+
         if (contrasena && contrasena.trim() !== '') {
             // Si proporciona una nueva contraseña
             await pool.query(
                 `UPDATE usuarios 
-                 SET nombre_completo = $1, carrera = $2, contrasena = $3, foto_perfil = COALESCE($4, foto_perfil)
+                 SET nombre_completo = $1, 
+                     carrera = $2, 
+                     contrasena = $3, 
+                     foto_perfil = COALESCE($4, foto_perfil)
                  WHERE id_usuario = $5`,
-                [nombre_completo, carrera, contrasena, foto_perfil, id_usuario]
+                [nombre_completo, carrera, contrasena.trim(), fotoFinal, id_usuario]
             );
         } else {
             // Si NO cambia la contraseña
             await pool.query(
                 `UPDATE usuarios 
-                 SET nombre_completo = $1, carrera = $2, foto_perfil = COALESCE($3, foto_perfil)
+                 SET nombre_completo = $1, 
+                     carrera = $2, 
+                     foto_perfil = COALESCE($3, foto_perfil)
                  WHERE id_usuario = $4`,
-                [nombre_completo, carrera, foto_perfil, id_usuario]
+                [nombre_completo, carrera, fotoFinal, id_usuario]
             );
         }
 
         res.json({ success: true, message: 'Perfil actualizado con éxito.' });
     } catch (error) {
-        console.error('Error al actualizar perfil:', error.message);
-        res.status(500).json({ error: 'Error interno al actualizar perfil.' });
+        console.error('Error detallado al actualizar perfil:', error);
+        res.status(500).json({ error: 'Error interno al actualizar perfil: ' + error.message });
     }
 });
 
