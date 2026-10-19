@@ -59,8 +59,15 @@
                       <i data-lucide="eye" id="toggle-icon" class="w-5 h-5"></i>
                   </button>
               </div>
+
+              <!-- CÓDIGO DE RECUPERACIÓN DE CONTRASEÑA -->
+              <div class="text-right">
+                  <button type="button" onclick="recuperarContrasenaModal()" class="text-[11px] font-semibold text-blue-600 hover:underline">
+                      ¿Olvidaste tu contraseña?
+                  </button>
+              </div>
               
-              <button id="login-btn" class="bg-slate-900 text-white font-bold py-3.5 px-4 rounded-xl mt-2 hover:bg-blue-600 transition-colors w-full">Iniciar sesión</button>
+              <button id="login-btn" class="bg-slate-900 text-white font-bold py-3.5 px-4 rounded-xl mt-1 hover:bg-blue-600 transition-colors w-full">Iniciar sesión</button>
               
               <p class="text-center text-[12px] text-slate-500 mt-4">
                   ¿No tienes una cuenta? <button type="button" id="show-register-btn" class="text-blue-600 font-semibold hover:underline">Crear cuenta</button>
@@ -696,28 +703,23 @@
         </form>
     </div>
 </div>
-<!-- MODAL: EDITAR PERFIL -->
+<!-- MODAL: EDITAR MI PERFIL -->
 <div id="modal-editar-perfil" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl relative">
+    <div class="bg-white rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl">
         <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-            <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wide">Editar Mis Datos</h3>
-            <button onclick="cerrarModalEditarPerfil()" class="text-slate-400 hover:text-slate-600 text-sm font-bold p-1">✕</button>
+            <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wide">Editar mis datos</h3>
+            <button onclick="cerrarModalEditarPerfil()" class="text-slate-400 hover:text-slate-600 text-lg font-bold">&times;</button>
         </div>
 
-        <form id="form-editar-perfil" onsubmit="guardarPerfilUsuario(event)" class="space-y-3">
+        <form onsubmit="guardarPerfilUsuario(event)" class="space-y-3">
             <div>
-                <label class="text-[11px] font-semibold text-slate-600">Nombre Completo</label>
-                <input type="text" id="edit-nombre" class="w-full text-xs p-2.5 rounded-lg border border-slate-200 mt-1 focus:outline-none focus:border-indigo-600" required>
+                <label class="block text-[11px] font-semibold text-slate-600 mb-1">Nombre Completo</label>
+                <input type="text" id="edit-nombre" required class="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-600">
             </div>
 
             <div>
-                <label class="text-[11px] font-semibold text-slate-600">Carrera Profesional</label>
-                <input type="text" id="edit-carrera" placeholder="Ej: Ingeniería de Sistemas" class="w-full text-xs p-2.5 rounded-lg border border-slate-200 mt-1 focus:outline-none focus:border-indigo-600">
-            </div>
-
-            <div>
-                <label class="text-[11px] font-semibold text-slate-600">Nueva Contraseña (Opcional)</label>
-                <input type="password" id="edit-contrasena" placeholder="Dejar en blanco para mantener la actual" class="w-full text-xs p-2.5 rounded-lg border border-slate-200 mt-1 focus:outline-none focus:border-indigo-600">
+                <label class="block text-[11px] font-semibold text-slate-600 mb-1">Carrera Profesional</label>
+                <input type="text" id="edit-carrera" required class="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-600">
             </div>
 
             <div class="flex gap-2 pt-2">

@@ -3977,7 +3977,7 @@ window.cargarDatosPerfil = async function() {
     }
 };
 
-// 3. Guardar Cambios del Perfil (Nombre, Carrera, Contraseña, Foto)
+// Guardar Cambios del Perfil (Nombre y Carrera en PostgreSQL)
 window.guardarPerfilUsuario = async function(e) {
     e.preventDefault();
     const usuarioStr = sessionStorage.getItem('usuario');
@@ -3986,7 +3986,6 @@ window.guardarPerfilUsuario = async function(e) {
     const usuario = JSON.parse(usuarioStr);
     const nombre = document.getElementById('edit-nombre').value.trim();
     const carrera = document.getElementById('edit-carrera').value.trim();
-    const contrasena = document.getElementById('edit-contrasena').value.trim();
 
     try {
         const res = await fetch('/api/usuarios/perfil', {
@@ -3996,8 +3995,7 @@ window.guardarPerfilUsuario = async function(e) {
                 id_usuario: usuario.id_usuario,
                 nombre_completo: nombre,
                 carrera: carrera,
-                contrasena: contrasena,
-                foto_perfil: fotoPerfilTempBase64 || usuario.foto_perfil
+                foto_perfil: usuario.foto_perfil || null
             })
         });
 
@@ -4005,18 +4003,15 @@ window.guardarPerfilUsuario = async function(e) {
         if (data.success) {
             alert('¡Perfil actualizado con éxito!');
             
-            // Actualizar sesión local
+            // Actualizar datos locales y vista
             usuario.nombre_completo = nombre;
             usuario.carrera = carrera;
-            if (fotoPerfilTempBase64) usuario.foto_perfil = fotoPerfilTempBase64;
             sessionStorage.setItem('usuario', JSON.stringify(usuario));
 
-            const passInput = document.getElementById('edit-contrasena');
-            if (passInput) passInput.value = '';
             cerrarModalEditarPerfil();
             cargarDatosPerfil();
         } else {
-            alert('Error: ' + (data.error || 'No se pudo actualizar'));
+            alert('Error al actualizar datos: ' + (data.error || ''));
         }
     } catch (err) {
         console.error('Error al actualizar perfil:', err);

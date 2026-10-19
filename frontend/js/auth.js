@@ -13,7 +13,7 @@ window.fetch = function(...args) {
 };
   // Importamos Firebase desde su CDN oficial
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendEmailVerification } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword,sendPasswordResetEmail, createUserWithEmailAndPassword, sendEmailVerification } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
   const firebaseConfig = {
     apiKey: "AIzaSyBzWJYQIzZMkE_TzfgUtRRhh9t_ycIorIk",
     authDomain: "patarunner-1b348.firebaseapp.com",
@@ -381,3 +381,29 @@ if (btnRegister) {
         }
     });
 }
+
+// Recuperación de Contraseña mediante correo institucional con Firebase Auth
+window.recuperarContrasenaModal = async function() {
+    const correo = prompt('Ingresa tu correo institucional UTP para enviarte un enlace de recuperación:');
+    
+    if (!correo || correo.trim() === '') return;
+
+    const correoLimpio = correo.trim().toLowerCase();
+
+    if (!correoLimpio.endsWith('@utp.edu.pe')) {
+        alert('Por favor, ingresa un correo institucional válido (@utp.edu.pe).');
+        return;
+    }
+
+    try {
+        await sendPasswordResetEmail(auth, correoLimpio);
+        alert('¡Correo de recuperación enviado! Revisa tu bandeja de entrada o spam de tu correo institucional UTP para restablecer tu contraseña.');
+    } catch (error) {
+        console.error('Error al enviar correo de recuperación:', error);
+        if (error.code === 'auth/user-not-found') {
+            alert('El correo ingresado no está registrado en PataRunner.');
+        } else {
+            alert('No se pudo enviar el correo de recuperación: ' + error.message);
+        }
+    }
+};
