@@ -2102,7 +2102,9 @@ function renderizarTienda(nombreTienda) {
                 : `<div class="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center text-2xl shrink-0">${obtenerEmoji(producto.nombre)}</div>`;
 
             const nombreEscapado = producto.nombre.replace(/'/g, "\\'");
-
+const badgePocasUnidades = (producto.stock !== undefined && producto.stock !== null && producto.stock <= 5 && producto.stock > 0)
+    ? `<span class="text-[9px] font-bold bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full inline-block mt-1">⚠️ Pocas unidades (${producto.stock})</span>`
+    : '';
             htmlFinal += `
                 <div class="bg-white border border-slate-100 rounded-2xl p-3 flex items-center justify-between shadow-sm mb-2">
                     <div class="flex items-center gap-3 flex-1 pr-2">
@@ -2111,6 +2113,7 @@ function renderizarTienda(nombreTienda) {
                             <h3 class="text-xs font-bold text-slate-800">${producto.nombre}</h3>
                             ${producto.descripcion ? `<p class="text-[11px] text-slate-400 leading-snug mt-0.5">${producto.descripcion}</p>` : ''}
                             <p class="text-[11px] font-mono-stat font-semibold text-blue-600 mt-1">S/ ${precioFormateado}</p>
+                            ${badgePocasUnidades}
                         </div>
                     </div>
                     <button onclick="agregarAlCarrito(${producto.id_producto}, '${nombreEscapado}', ${producto.precio})" class="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm shrink-0 hover:bg-blue-700 transition-colors">
@@ -3594,16 +3597,19 @@ async function cargarTiendasAdmin(silencioso = false) {
                 productosTienda.forEach(p => {
                     const precio = Number(p.precio).toFixed(2);
                     listaProductosHTML += `
-                        <div class="flex items-center justify-between p-2 bg-slate-50 border border-slate-100 rounded-lg text-xs mb-1.5">
-                            <div class="flex items-center gap-2 min-w-0 pr-2">
-                                <span class="font-bold text-slate-800 truncate">${p.nombre}</span>
-                                <span class="text-[10px] text-slate-400 font-mono">S/ ${precio}</span>
-                            </div>
-                            <button onclick="eliminarProductoAdmin(${p.id_producto})" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-100 px-2 py-1 rounded text-[10px] font-semibold transition-colors shrink-0">
-                                🗑️ Eliminar
-                            </button>
-                        </div>
-                    `;
+    <div class="flex items-center justify-between p-2 bg-slate-50 border border-slate-100 rounded-lg text-xs mb-1.5">
+        <div class="flex items-center gap-2 min-w-0 pr-2">
+            <span class="font-bold text-slate-800 truncate">${p.nombre}</span>
+            <span class="text-[10px] text-slate-400 font-mono">S/ ${precio}</span>
+            <span class="text-[9px] font-semibold px-1.5 py-0.5 rounded ${p.stock <= 5 ? 'bg-amber-100 text-amber-700' : 'bg-slate-200 text-slate-600'}">
+                Stock: ${p.stock !== undefined && p.stock !== null ? p.stock : 0}
+            </span>
+        </div>
+        <button onclick="eliminarProductoAdmin(${p.id_producto})" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-100 px-2 py-1 rounded text-[10px] font-semibold transition-colors">
+            Eliminar
+        </button>
+    </div>
+`;
                 });
             }
 
@@ -3728,12 +3734,13 @@ document.addEventListener('submit', async (e) => {
         const subcategoria = document.getElementById('input-subcategoria-producto') ? document.getElementById('input-subcategoria-producto').value.trim() : '';
         const descripcion = document.getElementById('input-desc-producto').value.trim();
         const imagen = document.getElementById('input-imagen-producto').value.trim();
+        const stock = parseInt(document.getElementById('input-stock-producto').value) || 0;
 
         try {
             const res = await fetch('/api/admin/productos', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id_tienda, nombre, precio, categoria, subcategoria, descripcion, imagen })
+                body: JSON.stringify({ id_tienda, nombre, precio, categoria, subcategoria, descripcion, imagen, stock })
             });
             const data = await res.json();
             if (data.success) {

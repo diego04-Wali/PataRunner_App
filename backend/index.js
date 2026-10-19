@@ -1016,22 +1016,15 @@ app.post('/api/admin/tiendas', async (req, res) => {
 });
 
 app.post('/api/admin/productos', async (req, res) => {
-    const { id_tienda, nombre, descripcion, precio, categoria, subcategoria, imagen } = req.body;
-
-    if (!id_tienda || !nombre || !precio) {
-        return res.status(400).json({ error: 'Tienda, nombre y precio son obligatorios.' });
-    }
-
+    const { id_tienda, nombre, precio, categoria, subcategoria, descripcion, imagen, stock } = req.body;
     try {
-        const result = await pool.query(
-            `INSERT INTO productos (id_tienda, nombre, descripcion, precio, disponible, categoria, subcategoria, imagen) 
-             VALUES ($1, $2, $3, $4, true, $5, $6, $7) RETURNING *`,
-            [id_tienda, nombre, descripcion || '', precio, categoria || 'Snack', subcategoria || 'General', imagen || null]
+        await pool.query(
+            'INSERT INTO productos (id_tienda, nombre, precio, categoria, subcategoria, descripcion, imagen, stock) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
+            [id_tienda, nombre, precio, categoria, subcategoria, descripcion, imagen, stock || 0]
         );
-        res.json({ success: true, message: 'Producto agregado exitosamente al catálogo.', producto: result.rows[0] });
-    } catch (err) {
-        console.error('Error al registrar producto:', err);
-        res.status(500).json({ error: 'Error al guardar el producto' });
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
 });
 
