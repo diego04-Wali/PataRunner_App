@@ -199,7 +199,9 @@ app.post('/api/pedidos', async (req, res) => {
         // 2. Si el frontend nos envió productos en el carrito, los guardamos uno por uno
         if (carrito && carrito.length > 0) {
     for (let item of carrito) {
-        let productoIdSeguro = item.id_producto;
+        // Capturar ID independientemente de si el frontend envía 'id' o 'id_producto'
+        let productoIdSeguro = item.id_producto || item.id;
+        let cantidadComprada = parseInt(item.cantidad || item.qty) || 1;
 
         if (productoIdSeguro === 'favor_personalizado' || (typeof productoIdSeguro === 'string' && productoIdSeguro.startsWith('otro'))) {
             productoIdSeguro = null;
@@ -209,14 +211,14 @@ app.post('/api/pedidos', async (req, res) => {
         await pool.query(
             `INSERT INTO detalle_pedido (id_pedido, id_producto, cantidad, precio_unitario, subtotal)
              VALUES ($1, $2, $3, $4, $5)`,
-            [nuevoIdPedido, productoIdSeguro, item.cantidad, item.precio_unitario, item.subtotal]
+            [nuevoIdPedido, productoIdSeguro, cantidadComprada, item.precio_unitario || item.price, item.subtotal || (item.price * cantidadComprada)]
         );
 
-        // 2. Descontar el stock automáticamente en la base de datos
+        // 2. Descontar el stock en la base de datos
         if (productoIdSeguro) {
             await pool.query(
                 'UPDATE productos SET stock = GREATEST(0, stock - $1) WHERE id_producto = $2',
-                [item.cantidad || item.qty || 1, productoIdSeguro]
+                [cantidadComprada, productoIdSeguro]
             );
         }
     }

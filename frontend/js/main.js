@@ -1161,11 +1161,15 @@ try {
             const datos = await respuesta.json();
 
             if (respuesta.ok) {
-                // Éxito: Mostrar alerta y cerrar el carrito
-                alert(datos.mensaje);
-                cargarMisPedidos(); 
-                document.getElementById('cart-modal').classList.add('hidden');
-                
+    // Éxito: Mostrar alerta y cerrar el carrito
+    alert(datos.mensaje);
+    cargarMisPedidos();
+
+    // REFRESCAR EL CATÁLOGO Y EL STOCK EN TIEMPO REAL
+    if (typeof cargarCatalogo === 'function') await cargarCatalogo();
+    if (typeof cargarTiendasAdmin === 'function') await cargarTiendasAdmin(true);
+
+    document.getElementById('cart-modal').classList.add('hidden');
                 // Limpiar los campos para el próximo pedido
                 document.getElementById("cart-location-input").value = "";
                 document.getElementById("cart-fee-input").value = "";
