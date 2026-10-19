@@ -1963,6 +1963,15 @@ async function cargarCatalogo() {
 
     if (!contenedorLista) return;
 
+    // Limpiar catálogo y pestañas anteriores de inmediato
+    if (contenedorTabs) contenedorTabs.innerHTML = '';
+    contenedorLista.innerHTML = `
+        <div class="flex flex-col items-center justify-center py-10 text-slate-400">
+            <div class="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mb-2"></div>
+            <p class="text-xs font-medium">Cargando catálogo...</p>
+        </div>
+    `;
+
     try {
         const respuesta = await fetch('/api/productos');
         const productos = await respuesta.json();
