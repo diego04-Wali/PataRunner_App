@@ -100,7 +100,7 @@ if (loginBtn) {
             sessionStorage.setItem('token', token);
 
             // 6. Tocamos la puerta de tu servidor local (Tu backend)
-            const response = await fetch('https://unopposed-cosmetics-sudden.ngrok-free.dev/api/login', {
+            const response = await fetch('/api/login', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -230,7 +230,7 @@ if (btnPostularRunner) {
         try {
             const token = await user.getIdToken();
 
-            const response = await fetch('https://unopposed-cosmetics-sudden.ngrok-free.dev/api/usuarios/rol', {
+            const response = await fetch('/api/usuarios/rol', {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -326,7 +326,7 @@ if (btnRegister) {
 
             try {
                 // Hacemos la petición a tu servidor Node.js
-                const respuestaBD = await fetch('https://unopposed-cosmetics-sudden.ngrok-free.dev/api/registro', {
+                const respuestaBD = await fetch('/api/registro', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
