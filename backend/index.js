@@ -198,22 +198,29 @@ app.post('/api/pedidos', async (req, res) => {
 
         // 2. Si el frontend nos envió productos en el carrito, los guardamos uno por uno
         if (carrito && carrito.length > 0) {
-            for (let item of carrito) {
-                let productoIdSeguro = item.id_producto;
+    for (let item of carrito) {
+        let productoIdSeguro = item.id_producto;
 
-                // Si el ID es el de nuestro favor personalizado, lo dejamos nulo para PostgreSQL
-                if (productoIdSeguro === 'favor_personalizado' || (typeof productoIdSeguro === 'string' && productoIdSeguro.startsWith('otro'))) {
-                    productoIdSeguro = null;
-                }
-
-                await pool.query(
-                    `INSERT INTO detalle_pedido (id_pedido, id_producto, cantidad, precio_unitario, subtotal)
-                     VALUES ($1, $2, $3, $4, $5)`,
-                    [nuevoIdPedido, productoIdSeguro, item.cantidad, item.precio_unitario, item.subtotal]
-                );
-            }
+        if (productoIdSeguro === 'favor_personalizado' || (typeof productoIdSeguro === 'string' && productoIdSeguro.startsWith('otro'))) {
+            productoIdSeguro = null;
         }
 
+        // 1. Guardar detalle del pedido
+        await pool.query(
+            `INSERT INTO detalle_pedido (id_pedido, id_producto, cantidad, precio_unitario, subtotal)
+             VALUES ($1, $2, $3, $4, $5)`,
+            [nuevoIdPedido, productoIdSeguro, item.cantidad, item.precio_unitario, item.subtotal]
+        );
+
+        // 2. Descontar el stock automáticamente en la base de datos
+        if (productoIdSeguro) {
+            await pool.query(
+                'UPDATE productos SET stock = GREATEST(0, stock - $1) WHERE id_producto = $2',
+                [item.cantidad || item.qty || 1, productoIdSeguro]
+            );
+        }
+    }
+}
         res.status(201).json({
             mensaje: '¡Pedido completo creado con éxito! Esperando a un Runner...',
             pedido: pedidoInsertado
