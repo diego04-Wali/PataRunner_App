@@ -4115,20 +4115,49 @@ window.eliminarFotoGaleria = async function(idFoto) {
 
 let tempFotoPerfilBase64 = null;
 
-// 1. Mostrar vista previa al seleccionar una imagen
+// 1. Previsualizar y comprimir la foto de perfil
 window.previsualizarFotoPerfil = function(event) {
     const file = event.target.files[0];
     if (!file) return;
 
     const reader = new FileReader();
     reader.onload = function(e) {
-        tempFotoPerfilBase64 = e.target.result;
-        
-        const imgConfirm = document.getElementById('img-preview-confirm');
-        if (imgConfirm) imgConfirm.src = tempFotoPerfilBase64;
+        const img = new Image();
+        img.onload = function() {
+            // Crear un canvas para redimensionar la imagen a 250x250px
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const maxSize = 250;
 
-        const modal = document.getElementById('modal-preview-foto');
-        if (modal) modal.classList.remove('hidden');
+            let width = img.width;
+            let height = img.height;
+
+            if (width > height) {
+                if (width > maxSize) {
+                    height *= maxSize / width;
+                    width = maxSize;
+                }
+            } else {
+                if (height > maxSize) {
+                    width *= maxSize / height;
+                    height = maxSize;
+                }
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            ctx.drawImage(img, 0, 0, width, height);
+
+            // Generar una imagen comprimida en JPEG (calidad 70%)
+            tempFotoPerfilBase64 = canvas.toDataURL('image/jpeg', 0.7);
+
+            const imgConfirm = document.getElementById('img-preview-confirm');
+            if (imgConfirm) imgConfirm.src = tempFotoPerfilBase64;
+
+            const modal = document.getElementById('modal-preview-foto');
+            if (modal) modal.classList.remove('hidden');
+        };
+        img.src = e.target.result;
     };
     reader.readAsDataURL(file);
 };
