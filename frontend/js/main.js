@@ -3557,12 +3557,14 @@ if (btnModKpi) {
 
 let listaTiendasGlobal = [];
 
-async function cargarTiendasAdmin() {
+async function cargarTiendasAdmin(silencioso = false) {
     const contenedor = document.getElementById('contenedor-tiendas-admin');
     if (!contenedor) return;
 
+   if (!silencioso) {
     contenedor.innerHTML = '<div class="flex justify-center py-8"><i data-lucide="loader-2" class="w-6 h-6 text-indigo-600 animate-spin"></i></div>';
     if (window.lucide) lucide.createIcons();
+}
 
     try {
         const [resTiendas, resProductos] = await Promise.all([
@@ -3708,7 +3710,7 @@ document.addEventListener('submit', async (e) => {
                 alert('¡Tienda agregada con éxito!');
                 document.getElementById('form-nueva-tienda').reset();
                 cerrarModalNuevaTienda();
-                cargarTiendasAdmin();
+                cargarTiendasAdmin(true);
             } else {
                 alert('Error: ' + data.error);
             }
@@ -3738,6 +3740,7 @@ document.addEventListener('submit', async (e) => {
                 alert('¡Producto agregado al catálogo correctamente!');
                 document.getElementById('form-nuevo-producto').reset();
                 cerrarModalNuevoProducto();
+                cargarTiendasAdmin(true);
                 if (typeof cargarCatalogo === 'function') cargarCatalogo();
             } else {
                 alert('Error: ' + data.error);
@@ -3749,11 +3752,27 @@ document.addEventListener('submit', async (e) => {
     }
 );
 
-// Escuchar clic en la pestaña 5 (Catálogo)
+// Listener para cargar Tiendas/Catálogo al hacer clic y activar refresco automático silencioso
+let intervaloTiendas = null;
+
 const btnModTiendas = document.getElementById('btn-mod-tiendas');
 if (btnModTiendas) {
     btnModTiendas.addEventListener('click', () => {
+        // Carga inicial con animación
         cargarTiendasAdmin();
+
+        // Limpiamos intervalos previos si existían
+        if (intervaloTiendas) clearInterval(intervaloTiendas);
+
+        // Auto-actualizar en segundo plano cada 5 segundos de forma silenciosa
+        intervaloTiendas = setInterval(() => {
+            const modTiendas = document.getElementById('mod-tiendas');
+            if (modTiendas && !modTiendas.classList.contains('hidden')) {
+                cargarTiendasAdmin(true);
+            } else {
+                clearInterval(intervaloTiendas);
+            }
+        }, 5000);
     });
 }
 
