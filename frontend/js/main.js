@@ -559,6 +559,7 @@ cart.push({ id: "favor_personalizado", category: "otro", name: text, price, qty:
     return {
       student: activeOrder.runnerName,
       initials: activeOrder.runner.initials,
+      foto: activeOrder.runnerFoto || activeOrder.runner_foto || "",
       item: activeOrder.item,
       route: activeOrder.route,
       price: activeOrder.price,
@@ -959,8 +960,17 @@ function openChatModal(data) {
     }, 1000);
 
     const key = data.student;
-    document.getElementById("chat-student-avatar").textContent = data.initials || "??";
-    document.getElementById("chat-student-name").textContent = data.student || "Alumno";
+    const nombreUsuario = data.student || "Usuario";
+  document.getElementById("chat-student-name").textContent = nombreUsuario;
+
+  // Actualizar avatar con foto o iniciales dinámicas
+  const avatarContainer = document.getElementById("chat-student-avatar");
+  if (data.foto && data.foto.trim() !== '') {
+      avatarContainer.innerHTML = `<img src="${data.foto}" alt="${nombreUsuario}" class="w-full h-full object-cover">`;
+  } else {
+      const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(nombreUsuario)}&background=2563eb&color=fff`;
+      avatarContainer.innerHTML = `<img src="${avatarUrl}" alt="${nombreUsuario}" class="w-full h-full object-cover">`;
+  }
     document.getElementById("chat-order-summary").textContent = `${data.item} · ${data.route}`;
 
     chatModal.dataset.activeStudent = key;

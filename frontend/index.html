@@ -550,7 +550,9 @@
         <div class="w-full h-[86%] bg-white rounded-t-[28px] flex flex-col overflow-hidden shadow-2xl">
           <div class="flex items-center gap-3 px-4 py-3 border-b border-slate-100 shrink-0">
             <button id="chat-close-btn" onclick="cerrarChat()" class="text-slate-400"><i data-lucide="chevron-down" class="w-5 h-5"></i></button>
-            <div id="chat-student-avatar" class="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white text-[12px] font-semibold shrink-0">AR</div>
+            <div id="chat-student-avatar" class="w-9 h-9 rounded-full bg-blue-600 overflow-hidden flex items-center justify-center text-white text-[12px] font-semibold shrink-0 border border-slate-200">
+    <!-- Se llena dinámicamente desde JS -->
+</div>
             <div class="flex-1 min-w-0">
               <p id="chat-student-name" class="text-[13px] font-semibold text-slate-900 truncate">Andrea Ruiz</p>
               <p id="chat-order-summary" class="text-[10.5px] text-slate-500 truncate">Snack · Cafetería → Aula 210</p>
