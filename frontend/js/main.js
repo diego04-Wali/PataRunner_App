@@ -750,10 +750,10 @@ window.abrirModalCalificacion = function(id_pedido, id_runner, nombre_runner) {
   function renderAcceptedButtons(card) {
     const wrap = card.querySelector(".card-actions");
     wrap.innerHTML = `
-      <button class="accept-btn text-[12px] font-semibold px-3 py-1.5 rounded-full bg-emerald-100 text-emerald-700">Abrir chat</button>
-      <button class="cancel-order-btn text-[12px] font-semibold px-3 py-1.5 rounded-full border border-red-200 text-red-600">Cancelar</button>
+        <button onclick="openChatModal({ ...this.closest('.runner-order-card').dataset, foto: this.closest('.runner-order-card').dataset.foto || '' })" class="accept-btn text-[12px] font-semibold px-3 py-1.5 rounded-full bg-emerald-100 text-emerald-700">Abrir chat</button>
+        <button class="cancel-order-btn text-[12px] font-semibold px-3 py-1.5 rounded-full border border-red-200 text-red-600">Cancelar</button>
     `;
-  }
+}
 
   function cancelOrderCard(card) {
     card.classList.remove("border-emerald-200", "bg-emerald-50/50");
