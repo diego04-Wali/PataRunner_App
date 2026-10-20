@@ -957,7 +957,6 @@ function openChatModal(data) {
                 
                 const currentKey = chatModal.dataset.activeStudent;
                 if (currentKey && chatStore[currentKey]) {
-                    renderPaymentCard(currentKey);
                 }
             }
         } catch (e) { console.log("Error sincronizando:", e); }
