@@ -1030,7 +1030,7 @@ if (logoutBtn) {
     });
 }
 
-aasync function sendChatMessage() {
+async function sendChatMessage() {
     const chatInput = document.getElementById("chat-input");
     const text = chatInput ? chatInput.value.trim() : "";
     
