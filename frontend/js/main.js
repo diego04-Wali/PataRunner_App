@@ -938,6 +938,7 @@ if (btnPostularVerde) {
  let intervaloChatActual = null;
 
 function openChatModal(data) {
+    console.log("DATOS RECIBIDOS EN EL CHAT:", data);
     if (intervaloChatActual) clearInterval(intervaloChatActual);
 
     const isRunner = sessionStorage.getItem('isRunnerStatus') === 'true';
