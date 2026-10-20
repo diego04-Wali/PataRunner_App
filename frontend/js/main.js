@@ -938,6 +938,7 @@ if (btnPostularVerde) {
  let intervaloChatActual = null;
 
 function openChatModal(data) {
+    pedidoChatActual = data.id_pedido || data.id || (data.item ? data.item.match(/\d+/)?.[0] : null);
     console.log("DATOS RECIBIDOS EN EL CHAT:", data);
 
     // GUARDAR ID DE INMEDIATO EN LA VARIABLE GLOBAL
