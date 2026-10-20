@@ -965,6 +965,9 @@ function openChatModal(data) {
     const key = data.student;
     const nombreUsuario = data.student || "Usuario";
   document.getElementById("chat-student-name").textContent = nombreUsuario;
+  // Agrega esta línea alrededor de la línea 980 en openChatModal:
+chatModal.dataset.idPedido = data.id_pedido || data.id || '';
+window.idPedidoActual = data.id_pedido || data.id || null;
 
   // Actualizar avatar con foto o iniciales dinámicas
   const avatarContainer = document.getElementById("chat-student-avatar");
@@ -1424,9 +1427,9 @@ async function cargarMisPedidos() {
 
     <!-- Contenedor inferior de botones con línea separadora -->
     <div class="flex items-center justify-between mt-3 pt-3 border-t ${esEnCamino ? 'border-emerald-100' : 'border-blue-200/50'}">
-        <button onclick="openChatModal({ student: '${nombreRunner}', foto: '${pedido.runner_foto || ''}', route: '${pedido.ubicacion_entrega || ''}', item: 'Pedido #${pedido.id_pedido}' })" class="text-emerald-700 hover:text-emerald-900 text-xs font-semibold flex items-center gap-1">
-            Ver detalles <i data-lucide="chevron-right" class="w-3 h-3"></i>
-        </button>
+        <button onclick="openChatModal({ id_pedido: ${pedido.id_pedido}, student: '${nombreRunner}', foto: '${pedido.runner_foto || ''}', route: '${pedido.ubicacion_entrega || ''}', item: 'Pedido #${pedido.id_pedido}' })" class="text-emerald-700 hover:text-emerald-900 text-xs font-semibold flex items-center gap-1">
+    Ver detalles <i data-lucide="chevron-right" class="w-3 h-3"></i>
+</button>
         ${botonCancelar}
     </div>
 </div>
@@ -1488,7 +1491,7 @@ async function cargarEntregasActivas() {
         <p class="text-[12px] text-slate-600 mt-1">Cliente: <strong>${pedido.nombre_cliente}</strong></p>
 
         <div class="mt-4 pt-3 border-t border-emerald-200/60 flex gap-2">
-            <button onclick="openChatModal({ ...this.closest('.runner-order-card').dataset, foto: this.closest('.runner-order-card').dataset.foto || '' })" class="flex-1 py-2.5 rounded-xl bg-blue-50 border border-blue-200 text-blue-700 text-[13px] font-semibold hover:bg-blue-100 transition-colors flex items-center justify-center gap-1.5">
+            <button onclick="openChatModal({ id_pedido: ${pedido.id_pedido}, student: '${pedido.nombre_cliente}', foto: '${pedido.alumno_foto || ''}', route: '${pedido.ubicacion_entrega}', item: 'Pedido #${pedido.id_pedido}' })" class="flex-1 py-2.5 rounded-xl bg-blue-50 border border-blue-200 text-blue-700 text-[13px] font-semibold hover:bg-blue-100 transition-colors flex items-center justify-center gap-1.5">
     <i data-lucide="message-square" class="w-4 h-4"></i> Chat
 </button>
             <button onclick="marcarEntregado(${pedido.id_pedido})" class="flex-1 py-2.5 rounded-xl bg-emerald-600 text-white text-[13px] font-semibold hover:bg-emerald-700 transition-colors">
