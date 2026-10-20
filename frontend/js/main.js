@@ -798,7 +798,10 @@ window.abrirModalCalificacion = function(id_pedido, id_runner, nombre_runner) {
         card.classList.add("border-emerald-200", "bg-emerald-50/50");
         renderAcceptedButtons(card);
       }
-      openChatModal(card.dataset);
+      openChatModal({
+    ...card.dataset,
+    foto: card.dataset.foto || card.dataset.alumnoFoto || ""
+});
       return;
     }
     const cancelBtn = e.target.closest(".cancel-order-btn");
@@ -1256,7 +1259,12 @@ async function cargarPedidosDisponibles() {
         // --------------------------------------------------------
 
         const tarjeta = `
-            <div class="runner-order-card rounded-2xl border border-slate-100 p-4 mb-3 shadow-sm">
+    <div class="runner-order-card rounded-2xl border border-slate-100 p-4 mb-3 shadow-sm"
+         data-student="${pedido.alumno_nombre || pedido.nombres || 'Alumno'}"
+         data-foto="${pedido.alumno_foto || pedido.foto_perfil || ''}"
+         data-item="Pedido #${pedido.id_pedido}"
+         data-route="${pedido.ubicacion_entrega || ''}"
+         data-price="${tarifaFormateada}">
                 <div class="flex items-center justify-between mb-3">
                     <span class="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500">
                         <i data-lucide="package" class="w-3.5 h-3.5 text-blue-600"></i> Pedido #${pedido.id_pedido}
@@ -1895,7 +1903,12 @@ async function cargarPedidosPendientes() {
         // --------------------------------------------------------
 
         const tarjeta = `
-        <div class="runner-order-card rounded-2xl border border-slate-100 p-4 mb-3">
+<div class="runner-order-card rounded-2xl border border-slate-100 p-4 mb-3"
+     data-student="${pedido.alumno_nombre || pedido.nombres || 'Alumno'}"
+     data-foto="${pedido.alumno_foto || pedido.foto_perfil || ''}"
+     data-item="Pedido #${pedido.id_pedido}"
+     data-route="${pedido.ubicacion_entrega || ''}"
+     data-price="${parseFloat(pedido.tarifa_entrega).toFixed(2)}">
             <div class="flex items-center justify-between mb-2">
                 <span class="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500">
                     Pedido #${pedido.id_pedido}
