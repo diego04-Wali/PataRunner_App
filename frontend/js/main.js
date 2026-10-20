@@ -1030,52 +1030,7 @@ if (logoutBtn) {
     });
 }
 
-async function sendChatMessage() {
-    const chatInput = document.getElementById("chat-input");
-    const text = chatInput ? chatInput.value.trim() : "";
-    
-    // Leer el texto del encabezado que dice "Pedido #117 · Torre b, piso 4"
-    const orderSummary = document.getElementById("chat-order-summary");
-    const headerText = orderSummary ? orderSummary.textContent : "";
-    
-    // Extraer el número que está justo después del '#' (ej. #117 -> 117)
-    const match = headerText.match(/#(\d+)/);
-    const idPedido = match ? match[1] : (window.idPedidoActual || null);
 
-    console.log("1. Botón de enviar presionado");
-    console.log("2. Texto a enviar:", text);
-    console.log("3. ID del pedido extraído de la pantalla:", idPedido);
-
-    if (!text || !idPedido) {
-        console.warn("ENVÍO CANCELADO: Falta escribir texto o no se sabe el ID del pedido.");
-        return;
-    }
-
-    try {
-        const userStr = sessionStorage.getItem('usuario');
-        if (!userStr) return alert("Sesión no válida");
-        const userData = JSON.parse(userStr);
-
-        const res = await fetch('/api/chat', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                id_pedido: parseInt(idPedido),
-                id_remitente: userData.id_usuario,
-                id_rol: userData.id_rol || (sessionStorage.getItem('isRunnerStatus') === 'true' ? 2 : 1),
-                mensaje: text
-            })
-        });
-
-        if (res.ok) {
-            chatInput.value = ""; // Limpia la caja de texto al enviar
-        } else {
-            console.error("Error al guardar mensaje en el servidor");
-        }
-    } catch (err) {
-        console.error("Error en petición de chat:", err);
-    }
-}
   function showTab(tab) {
 ["inicio", "pedidos", "runner", "perfil", "historial-runner"].forEach(t => {        document.getElementById("tab-" + t).classList.toggle("hidden", t !== tab);
     });
@@ -4310,3 +4265,51 @@ window.toggleRegisterPassword = function() {
         window.lucide.createIcons();
     }
 };
+
+async function sendChatMessage() {
+    // 1. Apuntar directamente a la caja de texto correcta (caja-chat-verdadera)
+    const chatInput = document.getElementById("caja-chat-verdadera") || document.getElementById("chat-input");
+    const text = chatInput ? chatInput.value.trim() : "";
+    
+    // 2. Extraer el texto de la cabecera visible ("Pedido #117 · Torre b, piso 4")
+    const orderSummary = document.getElementById("chat-order-summary");
+    const headerText = orderSummary ? orderSummary.textContent : "";
+    
+    // 3. Obtener el ID obligatoriamente a prueba de fallos
+    const match = headerText.match(/#(\d+)/);
+    const idPedido = match ? match[1] : (window.idPedidoActual || pedidoChatActual);
+
+    console.log("--- INTENTO DE ENVÍO ---");
+    console.log("Texto:", text);
+    console.log("ID Pedido extraído:", idPedido);
+
+    if (!text || !idPedido) {
+        console.warn("ENVÍO CANCELADO: Falta texto o el ID del pedido es nulo.");
+        return;
+    }
+
+    try {
+        const userStr = sessionStorage.getItem('usuario');
+        if (!userStr) return alert("Sesión no válida");
+        const userData = JSON.parse(userStr);
+
+        const res = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                id_pedido: parseInt(idPedido),
+                id_remitente: userData.id_usuario,
+                id_rol: userData.id_rol || (sessionStorage.getItem('isRunnerStatus') === 'true' ? 2 : 1),
+                mensaje: text
+            })
+        });
+
+        if (res.ok) {
+            chatInput.value = ""; // Limpia la caja al enviar exitosamente
+        } else {
+            console.error("Error al guardar mensaje en el servidor");
+        }
+    } catch (err) {
+        console.error("Error en petición de chat:", err);
+    }
+}
