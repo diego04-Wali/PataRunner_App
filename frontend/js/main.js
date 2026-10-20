@@ -939,6 +939,16 @@ if (btnPostularVerde) {
 
 function openChatModal(data) {
     console.log("DATOS RECIBIDOS EN EL CHAT:", data);
+
+    // GUARDAR ID DE INMEDIATO EN LA VARIABLE GLOBAL
+    const idCalculado = data.id_pedido || data.id || (data.item ? data.item.match(/\d+/)?.[0] : null);
+    window.idPedidoActual = idCalculado ? parseInt(idCalculado) : null;
+
+    const chatModal = document.getElementById("chat-modal");
+    if (chatModal && window.idPedidoActual) {
+        chatModal.setAttribute("data-id-pedido", window.idPedidoActual);
+    }
+
     if (intervaloChatActual) clearInterval(intervaloChatActual);
 
     const isRunner = sessionStorage.getItem('isRunnerStatus') === 'true';
@@ -1020,16 +1030,17 @@ if (logoutBtn) {
     });
 }
 
-async function sendChatMessage() {
-    const chatInput = document.getElementById("chat-input"); // o el ID de tu input de texto
+aasync function sendChatMessage() {
+    const chatInput = document.getElementById("chat-input");
     const text = chatInput ? chatInput.value.trim() : "";
     
-    // Obtener id_pedido garantizando todas las fuentes posibles
     const chatModal = document.getElementById("chat-modal");
+    
+    // Obtener id_pedido asegurando todas las fuentes
     const idPedido = window.idPedidoActual 
+        || chatModal?.getAttribute("data-id-pedido")
         || chatModal?.dataset?.idPedido 
-        || chatModal?.dataset?.id_pedido 
-        || chatModal?.dataset?.id;
+        || chatModal?.dataset?.id_pedido;
 
     console.log("1. Botón de enviar presionado");
     console.log("2. Texto a enviar:", text);
