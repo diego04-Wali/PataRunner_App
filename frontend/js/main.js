@@ -1432,7 +1432,6 @@ async function cargarMisPedidos() {
     </div>
 </div>
 `;
-        `;
             contenedorActivos.innerHTML += tarjeta;
         });
 
