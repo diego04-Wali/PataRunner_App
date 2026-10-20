@@ -1036,11 +1036,11 @@ async function sendChatMessage() {
     
     const chatModal = document.getElementById("chat-modal");
     
-    // Obtener id_pedido asegurando todas las fuentes
+    // Captura el ID del pedido garantizando todas las fuentes posibles
     const idPedido = window.idPedidoActual 
-        || chatModal?.getAttribute("data-id-pedido")
         || chatModal?.dataset?.idPedido 
-        || chatModal?.dataset?.id_pedido;
+        || chatModal?.dataset?.id_pedido 
+        || chatModal?.dataset?.id;
 
     console.log("1. Botón de enviar presionado");
     console.log("2. Texto a enviar:", text);
@@ -1056,7 +1056,6 @@ async function sendChatMessage() {
         if (!userStr) return alert("Sesión no válida");
         const userData = JSON.parse(userStr);
 
-        // Petición al backend alineada con la tabla chat_pedido
         const res = await fetch('/api/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -1069,7 +1068,7 @@ async function sendChatMessage() {
         });
 
         if (res.ok) {
-            chatInput.value = ""; // Limpiar input tras enviar
+            chatInput.value = ""; // Limpia la caja de texto al enviar
         } else {
             console.error("Error al guardar mensaje en el servidor");
         }
