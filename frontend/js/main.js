@@ -1035,12 +1035,17 @@ async function sendChatMessage() {
     const text = chatInput ? chatInput.value.trim() : "";
     
     const chatModal = document.getElementById("chat-modal");
+    const orderSummaryText = document.getElementById("chat-order-summary")?.textContent || "";
     
-    // Captura el ID del pedido garantizando todas las fuentes posibles
+    // Extrae el número del pedido (#117) directamente del texto de la cabecera visible
+    const idFromHeader = orderSummaryText.match(/#(\d+)/)?.[1] || orderSummaryText.match(/\d+/)?.[0];
+
+    // Obtener id_pedido probando todas las fuentes posibles
     const idPedido = window.idPedidoActual 
         || chatModal?.dataset?.idPedido 
         || chatModal?.dataset?.id_pedido 
-        || chatModal?.dataset?.id;
+        || chatModal?.getAttribute("data-id-pedido")
+        || idFromHeader;
 
     console.log("1. Botón de enviar presionado");
     console.log("2. Texto a enviar:", text);
