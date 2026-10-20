@@ -1020,21 +1020,51 @@ if (logoutBtn) {
     });
 }
 
-function sendChatMessage() {
-    const text = chatInput.value.trim();
-    if (!text) return;
-
-    const isRunner = sessionStorage.getItem('isRunnerStatus') === 'true';
-    const miRol = isRunner ? "runner" : "alumno";
-
-    // CAMBIADO A v4
-    let chatData = JSON.parse(localStorage.getItem("chat_final_v4")) || { messages: [] };
+async function sendChatMessage() {
+    const chatInput = document.getElementById("chat-input"); // o el ID de tu input de texto
+    const text = chatInput ? chatInput.value.trim() : "";
     
-    chatData.messages.push({ text: text, sender: miRol });
-    localStorage.setItem("chat_final_v4", JSON.stringify(chatData));
+    // Obtener id_pedido garantizando todas las fuentes posibles
+    const chatModal = document.getElementById("chat-modal");
+    const idPedido = window.idPedidoActual 
+        || chatModal?.dataset?.idPedido 
+        || chatModal?.dataset?.id_pedido 
+        || chatModal?.dataset?.id;
 
-    chatInput.value = "";
-    setTimeout(() => chatMessages.scrollTop = chatMessages.scrollHeight, 50);
+    console.log("1. Botón de enviar presionado");
+    console.log("2. Texto a enviar:", text);
+    console.log("3. ID del pedido vinculado al chat:", idPedido);
+
+    if (!text || !idPedido) {
+        console.warn("ENVÍO CANCELADO: Falta escribir texto o no se sabe el ID del pedido.");
+        return;
+    }
+
+    try {
+        const userStr = sessionStorage.getItem('usuario');
+        if (!userStr) return alert("Sesión no válida");
+        const userData = JSON.parse(userStr);
+
+        // Petición al backend alineada con la tabla chat_pedido
+        const res = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                id_pedido: parseInt(idPedido),
+                id_remitente: userData.id_usuario,
+                id_rol: userData.id_rol || (sessionStorage.getItem('isRunnerStatus') === 'true' ? 2 : 1),
+                mensaje: text
+            })
+        });
+
+        if (res.ok) {
+            chatInput.value = ""; // Limpiar input tras enviar
+        } else {
+            console.error("Error al guardar mensaje en el servidor");
+        }
+    } catch (err) {
+        console.error("Error en petición de chat:", err);
+    }
 }
   function showTab(tab) {
 ["inicio", "pedidos", "runner", "perfil", "historial-runner"].forEach(t => {        document.getElementById("tab-" + t).classList.toggle("hidden", t !== tab);

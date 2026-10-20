@@ -610,22 +610,18 @@ app.get('/api/chat/:id_pedido', async (req, res) => {
 // 2. Guardar un nuevo mensaje
 app.post('/api/chat', async (req, res) => {
     try {
-        console.log("---- POST CHAT ----");
-        console.log("Datos exactos recibidos desde el Frontend:", req.body);
-        
         const { id_pedido, id_remitente, id_rol, mensaje } = req.body;
-        
-        // El RETURNING * nos devuelve el mensaje recién creado para confirmar que se insertó
-        const nuevoMensaje = await pool.query(
-            "INSERT INTO chat_pedido (id_pedido, id_remitente, id_rol, mensaje) VALUES ($1, $2, $3, $4) RETURNING *",
-            [id_pedido, id_remitente, id_rol, mensaje]
-        );
-        
-        console.log("¡ÉXITO! Mensaje guardado en PostgreSQL:", nuevoMensaje.rows[0]);
-        res.status(201).json({ mensaje: "Mensaje enviado correctamente." });
+
+        const nuevoMensaje = await pool.query(`
+            INSERT INTO chat_pedido (id_pedido, id_remitente, id_rol, mensaje)
+            VALUES ($1, $2, $3, $4)
+            RETURNING *
+        `, [id_pedido, id_remitente, id_rol, mensaje]);
+
+        res.status(201).json(nuevoMensaje.rows[0]);
     } catch (error) {
-        console.error("Error crítico en POST /chat:", error.message);
-        res.status(500).json({ error: 'Error al enviar el mensaje.' });
+        console.error("Error al guardar mensaje:", error.message);
+        res.status(500).json({ error: "Error interno al enviar el mensaje" });
     }
 });
 
