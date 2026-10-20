@@ -337,9 +337,11 @@ app.get('/api/pedidos/cliente/:id_cliente', async (req, res) => {
     try {
         const { id_cliente } = req.params;
         
-        // Hacemos un LEFT JOIN con usuarios para obtener el nombre del Runner (si es que ya aceptó el pedido)
+        // Hacemos LEFT JOIN con usuarios para obtener el nombre Y LA FOTO del Runner
         const misPedidos = await pool.query(`
-            SELECT p.*, u.nombre_completo AS nombre_runner
+            SELECT p.*, 
+                   u.nombre_completo AS nombre_runner,
+                   u.foto_perfil AS runner_foto
             FROM pedidos p
             LEFT JOIN usuarios u ON p.id_runner = u.id_usuario
             WHERE p.id_cliente = $1

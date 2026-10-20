@@ -1413,24 +1413,25 @@ async function cargarMisPedidos() {
             : `<button onclick="alert('Tu pedido ya fue aceptado por un Runner. No puedes cancelarlo de forma automática.\\n\\nPor favor, entra a \\'Ver detalles\\' y coordina directamente con tu Runner a través del chat.')" class="text-red-400 hover:text-red-500 text-xs font-semibold px-3 py-1.5 rounded-lg border border-red-100 hover:bg-red-50 transition-colors opacity-90">Cancelar pedido</button>`;
 
         const tarjeta = `
-        <div class="rounded-2xl border ${esEnCamino ? 'border-emerald-200 bg-emerald-50/50' : 'border-blue-100 bg-blue-50/50'} p-4 mb-3">
-            <div class="flex items-center justify-between mb-2">
-                <span class="text-[11px] font-semibold ${colorBadge} px-2 py-0.5 rounded-full flex items-center gap-1.5">
-                    <i data-lucide="${iconoBadge}" class="w-3 h-3"></i> ${pedido.estado}
-                </span>
-                <span class="text-[11px] font-mono-stat text-slate-400">#${pedido.id_pedido}</span>
-            </div>
-            <p class="text-[14px] font-semibold text-slate-900 mt-2">Entregar en: ${pedido.ubicacion_entrega}</p>
-            <p class="text-[12px] text-slate-600 mt-1">Runner: <strong>${nombreRunner}</strong></p>
-            
-            <!-- Contenedor inferior de botones con línea separadora -->
-            <div class="flex items-center justify-between mt-3 pt-3 border-t ${esEnCamino ? 'border-emerald-100' : 'border-blue-200/50'}">
-                <button onclick="abrirChat(${pedido.id_pedido}, '${pedido.nombre_runner || 'Buscando Runner'}', '${pedido.ubicacion_entrega}')" class="text-emerald-700 hover:text-emerald-900 text-xs font-semibold flex items-center gap-1">
-                    Ver detalles <i data-lucide="chevron-right" class="w-3 h-3"></i>
-                </button>
-                ${botonCancelar}
-            </div>
-        </div>
+<div class="rounded-2xl border ${esEnCamino ? 'border-emerald-200 bg-emerald-50/50' : 'border-blue-100 bg-blue-50/50'} p-4 mb-3">
+    <div class="flex items-center justify-between mb-2">
+        <span class="text-[11px] font-semibold ${colorBadge} px-2 py-0.5 rounded-full flex items-center gap-1.5">
+            <i data-lucide="${iconoBadge}" class="w-3 h-3"></i> ${pedido.estado}
+        </span>
+        <span class="text-[11px] font-mono-stat text-slate-400">#${pedido.id_pedido}</span>
+    </div>
+    <p class="text-[14px] font-semibold text-slate-900 mt-2">Entregar en: ${pedido.ubicacion_entrega}</p>
+    <p class="text-[12px] text-slate-600 mt-1">Runner: <strong>${nombreRunner}</strong></p>
+
+    <!-- Contenedor inferior de botones con línea separadora -->
+    <div class="flex items-center justify-between mt-3 pt-3 border-t ${esEnCamino ? 'border-emerald-100' : 'border-blue-200/50'}">
+        <button onclick="openChatModal({ student: '${nombreRunner}', foto: '${pedido.runner_foto || ''}', route: '${pedido.ubicacion_entrega || ''}', item: 'Pedido #${pedido.id_pedido}' })" class="text-emerald-700 hover:text-emerald-900 text-xs font-semibold flex items-center gap-1">
+            Ver detalles <i data-lucide="chevron-right" class="w-3 h-3"></i>
+        </button>
+        ${botonCancelar}
+    </div>
+</div>
+`;
         `;
             contenedorActivos.innerHTML += tarjeta;
         });
