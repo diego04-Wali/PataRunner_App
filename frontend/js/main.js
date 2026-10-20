@@ -1034,22 +1034,17 @@ async function sendChatMessage() {
     const chatInput = document.getElementById("chat-input");
     const text = chatInput ? chatInput.value.trim() : "";
     
-    const chatModal = document.getElementById("chat-modal");
-    const orderSummaryText = document.getElementById("chat-order-summary")?.textContent || "";
+    // Leer el texto del encabezado que dice "Pedido #117 · Torre b, piso 4"
+    const orderSummary = document.getElementById("chat-order-summary");
+    const headerText = orderSummary ? orderSummary.textContent : "";
     
-    // Extrae el número del pedido (#117) directamente del texto de la cabecera visible
-    const idFromHeader = orderSummaryText.match(/#(\d+)/)?.[1] || orderSummaryText.match(/\d+/)?.[0];
-
-    // Obtener id_pedido probando todas las fuentes posibles
-    const idPedido = window.idPedidoActual 
-        || chatModal?.dataset?.idPedido 
-        || chatModal?.dataset?.id_pedido 
-        || chatModal?.getAttribute("data-id-pedido")
-        || idFromHeader;
+    // Extraer el número que está justo después del '#' (ej. #117 -> 117)
+    const match = headerText.match(/#(\d+)/);
+    const idPedido = match ? match[1] : (window.idPedidoActual || null);
 
     console.log("1. Botón de enviar presionado");
     console.log("2. Texto a enviar:", text);
-    console.log("3. ID del pedido vinculado al chat:", idPedido);
+    console.log("3. ID del pedido extraído de la pantalla:", idPedido);
 
     if (!text || !idPedido) {
         console.warn("ENVÍO CANCELADO: Falta escribir texto o no se sabe el ID del pedido.");
