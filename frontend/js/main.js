@@ -1644,45 +1644,41 @@ async function cargarMensajes(id_pedido) {
         if (!respuesta.ok) return;
 
         const mensajes = await respuesta.json();
-
-        // === EVITAR PARPADEO: Solo dibujamos la pantalla si alguien mandó un mensaje nuevo ===
-        if (mensajes.length === cantidadMensajesAnterior) return;
-        cantidadMensajesAnterior = mensajes.length;
-
         contenedor.innerHTML = ''; 
 
-        if (mensajes.length === 0) {
+        if (!Array.isArray(mensajes) || mensajes.length === 0) {
             contenedor.innerHTML = '<p class="text-center text-slate-400 text-[12px] py-4">No hay mensajes aún. ¡Escribe para coordinar!</p>';
             return;
         }
 
         mensajes.forEach(msg => {
             const soyYo = msg.id_remitente === miIdUsuarioReal;
-            const alineacion = soyYo ? 'justify-end' : 'justify-start';
-            const colorFondo = soyYo ? 'bg-blue-600 text-white rounded-br-none' : 'bg-slate-100 text-slate-700 rounded-bl-none';
+            const alineacion = soyYo ? 'flex justify-end' : 'flex justify-start';
+            const estiloBurbuja = soyYo 
+                ? 'max-w-[75%] bg-blue-600 text-white text-[12.5px] leading-snug px-3.5 py-2 rounded-2xl rounded-br-sm' 
+                : 'max-w-[75%] bg-white border border-slate-100 text-slate-700 text-[12.5px] leading-snug px-3.5 py-2 rounded-2xl rounded-bl-sm';
 
-           // Detectar si el mensaje es una imagen (empieza con [IMG])
-            let contenidoMensaje = msg.mensaje;
+            let contenidoMensaje = msg.mensaje || "";
             if (contenidoMensaje.startsWith('[IMG]')) {
                 const base64Data = contenidoMensaje.replace('[IMG]', '');
-                // Renderizamos la imagen en lugar del texto
                 contenidoMensaje = `<img src="${base64Data}" class="rounded-xl max-w-full" alt="Evidencia">`;
             }
 
-            contenedor.innerHTML += `
-                <div class="flex ${alineacion} mb-3">
-                    <div class="max-w-[75%] rounded-2xl px-3 py-2 text-[13px] ${colorFondo}">
+            const burbujaHTML = `
+                <div class="${alineacion} mb-2.5">
+                    <div class="${estiloBurbuja}">
                         ${contenidoMensaje}
                     </div>
                 </div>
             `;
+            contenedor.innerHTML += burbujaHTML;
         });
 
         // Bajar el scroll automáticamente al final
         contenedor.scrollTop = contenedor.scrollHeight;
 
     } catch (error) {
-        console.error("Error crítico al cargar:", error);
+        console.error("Error crítico al cargar mensajes:", error);
     }
 }
 
