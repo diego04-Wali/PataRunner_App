@@ -965,9 +965,15 @@ function openChatModal(data) {
     const key = data.student;
     const nombreUsuario = data.student || "Usuario";
   document.getElementById("chat-student-name").textContent = nombreUsuario;
-  // Agrega esta línea alrededor de la línea 980 en openChatModal:
-chatModal.dataset.idPedido = data.id_pedido || data.id || '';
-window.idPedidoActual = data.id_pedido || data.id || null;
+  // Extraer el ID del pedido con seguridad (de id_pedido, id, o del texto "Pedido #117")
+let idExtraido = data.id_pedido || data.id;
+if (!idExtraido && data.item) {
+    const coincidencia = data.item.match(/\d+/);
+    if (coincidencia) idExtraido = coincidencia[0];
+}
+
+chatModal.dataset.idPedido = idExtraido || '';
+window.idPedidoActual = idExtraido || null;
 
   // Actualizar avatar con foto o iniciales dinámicas
   const avatarContainer = document.getElementById("chat-student-avatar");
