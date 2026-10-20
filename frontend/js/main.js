@@ -938,80 +938,54 @@ if (btnPostularVerde) {
  let intervaloChatActual = null;
 
 function openChatModal(data) {
-    pedidoChatActual = data.id_pedido || data.id || (data.item ? data.item.match(/\d+/)?.[0] : null);
     console.log("DATOS RECIBIDOS EN EL CHAT:", data);
 
-    // GUARDAR ID DE INMEDIATO EN LA VARIABLE GLOBAL
+    // 1. Extraer el ID del pedido con seguridad
     const idCalculado = data.id_pedido || data.id || (data.item ? data.item.match(/\d+/)?.[0] : null);
     window.idPedidoActual = idCalculado ? parseInt(idCalculado) : null;
+    pedidoChatActual = window.idPedidoActual;
 
     const chatModal = document.getElementById("chat-modal");
     if (chatModal && window.idPedidoActual) {
         chatModal.setAttribute("data-id-pedido", window.idPedidoActual);
     }
 
-    if (intervaloChatActual) clearInterval(intervaloChatActual);
+    // Limpiar intervalos anteriores
+    if (intervaloChatReal) clearInterval(intervaloChatReal);
+    if (typeof intervaloChatActual !== 'undefined' && intervaloChatActual) clearInterval(intervaloChatActual);
 
-    const isRunner = sessionStorage.getItem('isRunnerStatus') === 'true';
-    const miRol = isRunner ? "runner" : "alumno";
+    // 2. Configurar cabecera (Nombre y Avatar)
+    const nombreUsuario = data.student || data.nombre_cliente || "Usuario";
+    const nameEl = document.getElementById("chat-student-name");
+    if (nameEl) nameEl.textContent = nombreUsuario;
 
-    intervaloChatActual = setInterval(() => {
-        try {
-            // CAMBIADO A v4
-            let chatData = JSON.parse(localStorage.getItem("chat_final_v4"));
-            if (chatData && chatData.messages) {
-                chatMessages.innerHTML = ""; 
-                chatData.messages.forEach(m => {
-                    const alignment = (m.sender === miRol) ? "me" : "other";
-                    renderBubble(m.text, alignment);
-                });
-                
-                const currentKey = chatModal.dataset.activeStudent;
-                if (currentKey && chatStore[currentKey]) {
-                }
-            }
-        } catch (e) { console.log("Error sincronizando:", e); }
-    }, 1000);
-
-    const key = data.student;
-    const nombreUsuario = data.student || "Usuario";
-  document.getElementById("chat-student-name").textContent = nombreUsuario;
-  // Extraer el ID del pedido con seguridad (de id_pedido, id, o del texto "Pedido #117")
-let idExtraido = data.id_pedido || data.id;
-if (!idExtraido && data.item) {
-    const coincidencia = data.item.match(/\d+/);
-    if (coincidencia) idExtraido = coincidencia[0];
-}
-
-chatModal.dataset.idPedido = idExtraido || '';
-window.idPedidoActual = idExtraido || null;
-
-  // Actualizar avatar con foto o iniciales dinámicas
-  const avatarContainer = document.getElementById("chat-student-avatar");
-  if (data.foto && data.foto.trim() !== '') {
-      avatarContainer.innerHTML = `<img src="${data.foto}" alt="${nombreUsuario}" class="w-full h-full object-cover">`;
-  } else {
-      const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(nombreUsuario)}&background=2563eb&color=fff`;
-      avatarContainer.innerHTML = `<img src="${avatarUrl}" alt="${nombreUsuario}" class="w-full h-full object-cover">`;
-  }
-    document.getElementById("chat-order-summary").textContent = `${data.item} · ${data.route}`;
-
-    chatModal.dataset.activeStudent = key;
-    
-    // CAMBIADO A v4
-    let chatData = JSON.parse(localStorage.getItem("chat_final_v4"));
-    if (!chatData) {
-        localStorage.setItem("chat_final_v4", JSON.stringify({ messages: [] }));
+    const avatarContainer = document.getElementById("chat-student-avatar");
+    if (avatarContainer) {
+        if (data.foto && data.foto.trim() !== '') {
+            avatarContainer.innerHTML = `<img src="${data.foto}" alt="${nombreUsuario}" class="w-full h-full object-cover">`;
+        } else {
+            const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(nombreUsuario)}&background=2563eb&color=fff`;
+            avatarContainer.innerHTML = `<img src="${avatarUrl}" alt="${nombreUsuario}" class="w-full h-full object-cover">`;
+        }
     }
 
-    if (!chatStore[key]) {
-        chatStore[key] = { messages: [], price: data.price, paid: false, context: data.context || "runner" };
+    const summaryEl = document.getElementById("chat-order-summary");
+    if (summaryEl) {
+        summaryEl.textContent = `${data.item || ''} · ${data.route || ''}`;
     }
 
+    // 3. Mostrar el modal
     chatModal.classList.remove("hidden");
     chatModal.classList.add("flex");
     if (window.lucide) lucide.createIcons();
-    setTimeout(() => chatMessages.scrollTop = chatMessages.scrollHeight, 100);
+
+    // 4. Cargar mensajes desde la base de datos de inmediato y en bucle (tiempo real)
+    if (pedidoChatActual) {
+        cargarMensajes(pedidoChatActual);
+        intervaloChatReal = setInterval(() => {
+            cargarMensajes(pedidoChatActual);
+        }, 1500);
+    }
 }
   document.getElementById("chat-close-btn").addEventListener("click", () => {
     chatModal.classList.add("hidden");
