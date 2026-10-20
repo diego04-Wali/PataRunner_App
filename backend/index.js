@@ -301,6 +301,8 @@ app.get('/api/pedidos', async (req, res) => {
         const pedidosPendientes = await pool.query(`
             SELECT 
                 p.*,
+                u.nombre_completo AS alumno_nombre,
+                u.foto_perfil AS alumno_foto,
                 MAX(t.nombre) as tienda, 
                 COALESCE(
                     json_agg(
@@ -314,11 +316,12 @@ app.get('/api/pedidos', async (req, res) => {
                     '[]'
                 ) as productos
             FROM pedidos p
+            LEFT JOIN usuarios u ON p.id_cliente = u.id_usuario
             LEFT JOIN detalle_pedido dp ON p.id_pedido = dp.id_pedido
             LEFT JOIN productos pr ON dp.id_producto = pr.id_producto
             LEFT JOIN tiendas t ON pr.id_tienda = t.id_tienda
             WHERE p.estado = 'Pendiente'
-            GROUP BY p.id_pedido
+            GROUP BY p.id_pedido, u.nombre_completo, u.foto_perfil
             ORDER BY p.id_pedido DESC
         `);
 
@@ -355,9 +358,11 @@ app.get('/api/pedidos/runner/:id_runner', async (req, res) => {
     try {
         const { id_runner } = req.params;
         
-        // Hacemos JOIN con usuarios para saber el nombre del cliente
+        // Hacemos JOIN con usuarios para saber el nombre y foto del cliente
         const entregas = await pool.query(`
-            SELECT p.*, u.nombre_completo AS nombre_cliente
+            SELECT p.*, 
+                   u.nombre_completo AS nombre_cliente,
+                   u.foto_perfil AS alumno_foto
             FROM pedidos p
             JOIN usuarios u ON p.id_cliente = u.id_usuario
             WHERE p.id_runner = $1 AND p.estado = 'En Camino'

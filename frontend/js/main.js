@@ -1262,7 +1262,7 @@ async function cargarPedidosDisponibles() {
         const tarjeta = `
     <div class="runner-order-card rounded-2xl border border-slate-100 p-4 mb-3 shadow-sm"
          data-student="${pedido.alumno_nombre || pedido.nombres || 'Alumno'}"
-         data-foto="${pedido.alumno_foto || pedido.foto_perfil || ''}"
+        data-foto="${pedido.alumno_foto || pedido.foto_perfil || pedido.foto || pedido.avatar || pedido.imagen || ''}"
          data-item="Pedido #${pedido.id_pedido}"
          data-route="${pedido.ubicacion_entrega || ''}"
          data-price="${tarifaFormateada}">
@@ -1906,7 +1906,7 @@ async function cargarPedidosPendientes() {
         const tarjeta = `
 <div class="runner-order-card rounded-2xl border border-slate-100 p-4 mb-3"
      data-student="${pedido.alumno_nombre || pedido.nombres || 'Alumno'}"
-     data-foto="${pedido.alumno_foto || pedido.foto_perfil || ''}"
+     data-foto="${pedido.alumno_foto || pedido.foto_perfil || pedido.foto || pedido.avatar || pedido.imagen || ''}"
      data-item="Pedido #${pedido.id_pedido}"
      data-route="${pedido.ubicacion_entrega || ''}"
      data-price="${parseFloat(pedido.tarifa_entrega).toFixed(2)}">
