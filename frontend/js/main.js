@@ -4360,7 +4360,13 @@ document.addEventListener('submit', async function(e) {
 
         const usuarioStr = sessionStorage.getItem('usuario');
         if (!usuarioStr) {
-            alert('Debes iniciar sesión para enviar un reporte.');
+            Swal.fire({
+                title: 'Sesión requerida',
+                text: 'Debes iniciar sesión para enviar un reporte.',
+                icon: 'warning',
+                confirmButtonColor: '#2563eb',
+                confirmButtonText: 'Aceptar'
+            });
             return;
         }
 
@@ -4368,7 +4374,13 @@ document.addEventListener('submit', async function(e) {
         const motivo = document.getElementById('input-motivo-reporte').value.trim();
 
         if (!motivo) {
-            alert('Por favor, ingresa el detalle del problema.');
+            Swal.fire({
+                title: 'Campo vacío',
+                text: 'Por favor, ingresa el detalle del problema.',
+                icon: 'warning',
+                confirmButtonColor: '#2563eb',
+                confirmButtonText: 'Aceptar'
+            });
             return;
         }
 
@@ -4385,14 +4397,34 @@ document.addEventListener('submit', async function(e) {
             const data = await res.json();
 
             if (res.ok && data.success) {
-                alert('¡Reporte enviado correctamente al equipo de administración!');
-                cerrarModalReporte();
+                Swal.fire({
+                    title: '¡Reporte enviado!',
+                    text: '¡Reporte enviado correctamente al equipo de administración!',
+                    icon: 'success',
+                    confirmButtonColor: '#2563eb',
+                    confirmButtonText: 'Aceptar'
+                });
+                if (typeof cerrarModalReporte === 'function') {
+                    cerrarModalReporte();
+                }
             } else {
-                alert('Error: ' + (data.error || 'No se pudo registrar el reporte.'));
+                Swal.fire({
+                    title: 'Error',
+                    text: data.error || 'No se pudo registrar el reporte.',
+                    icon: 'error',
+                    confirmButtonColor: '#2563eb',
+                    confirmButtonText: 'Aceptar'
+                });
             }
         } catch (err) {
             console.error('Error al enviar el reporte:', err);
-            alert('Error de conexión al intentar enviar el reporte.');
+            Swal.fire({
+                title: 'Error de conexión',
+                text: 'Error de conexión al intentar enviar el reporte.',
+                icon: 'error',
+                confirmButtonColor: '#2563eb',
+                confirmButtonText: 'Aceptar'
+            });
         }
     }
 });
