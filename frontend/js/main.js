@@ -3203,7 +3203,9 @@ if (typeof cargarReportesAdmin === 'function') {
     badgeHtml = '<span class="bg-slate-100 text-slate-600 border border-slate-200 text-[9px] font-bold px-2 py-0.5 rounded-md">ALUMNO</span>';
     botonesHtml += `<button onclick="asignarRunner('${user.codigo}')" class="flex-1 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-100 hover:bg-emerald-100 text-[10.5px] font-semibold rounded-lg border transition-colors">Dar Runner</button>`;
 }
-
+if (user.id_rol !== 3) {
+            botonesHtml += `<button onclick="eliminarUsuarioAdmin('${user.codigo}')" class="flex-1 py-1.5 bg-red-600 text-white text-[10.5px] font-semibold rounded-lg hover:bg-red-700 transition-colors">Eliminar</button>`;
+        }
             contenedor.innerHTML += `
                 <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm mb-3">
                     <div class="flex justify-between items-start">
@@ -3293,6 +3295,33 @@ async function asignarRunner(codigo) {
 window.bloquearUsuario = bloquearUsuario;
 window.quitarRunner = quitarRunner;
 window.asignarRunner = asignarRunner;
+// --- NUEVA FUNCIÓN: ELIMINAR USUARIO ADMIN ---
+async function eliminarUsuarioAdmin(codigo) {
+    if (!confirm(`⚠️ ¿Estás completamente seguro de ELIMINAR la cuenta del usuario ${codigo}? Esta acción borra el registro de la base de datos y no se puede deshacer.`)) {
+        return;
+    }
+
+    try {
+        const res = await fetch(`/api/admin/usuarios/${codigo}`, {
+            method: 'DELETE'
+        });
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+            alert(data.message);
+            if (typeof cargarUsuariosAdmin === 'function') {
+                cargarUsuariosAdmin();
+            }
+        } else {
+            alert('Error: ' + (data.error || 'No se pudo eliminar el usuario'));
+        }
+    } catch (err) {
+        console.error("Error al eliminar usuario:", err);
+        alert('Ocurrió un error de conexión al intentar eliminar la cuenta.');
+    }
+}
+
+window.eliminarUsuarioAdmin = eliminarUsuarioAdmin;
 
 // ==========================================
 // MÓDULO 3 ADMIN: AUDITORÍA Y REPORTES

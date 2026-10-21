@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import pool from './db.js';
 import verificarToken from './auth.js';
+import cron from 'node-cron';
 
 const app = express();
 const port = 3000;
@@ -17,36 +18,108 @@ app.get('/', (req, res) => {
     res.send('Servidor de PataRunner funcionando correctamente 🚀');
 });
 
-// --- NUEVA RUTA: Registrar un Usuario ---
-app.post('/api/usuarios', async (req, res) => {
-    try {
-        // Extraemos los datos que enviará el frontend
-        const { nombre_completo, correo_institucional, telefono } = req.body;
+// ==========================================
+// REGISTRO Y VERIFICACIÓN EN DOS PASOS (CON TABLA TEMPORAL)
+// ==========================================
 
-        // 1. Validar que sea correo UTP
-        if (!correo_institucional.endsWith('@utp.edu.pe')) {
+// 1. Registro Previo (Guarda en la tabla 'registros_pendientes' por 24 horas)
+app.post('/api/usuarios/registro-previo', async (req, res) => {
+    try {
+        const { codigo_alumno, correo_institucional, nombre_completo, password, carrera } = req.body;
+
+        // Validar correo UTP
+        if (!correo_institucional || !correo_institucional.toLowerCase().endsWith('@utp.edu.pe')) {
             return res.status(400).json({ error: 'Por seguridad, solo se permiten correos institucionales de la UTP.' });
         }
 
-        // 2. Guardar en la base de datos (Por defecto le asignamos el id_rol = 1 que es "Cliente")
-        const nuevoUsuario = await pool.query(
-            'INSERT INTO usuarios (id_rol, nombre_completo, correo_institucional, telefono) VALUES ($1, $2, $3, $4) RETURNING *',
-            [1, nombre_completo, correo_institucional, telefono]
+        const correoMinuscula = correo_institucional.toLowerCase();
+
+        // Verificar si ya existe en usuarios activos definitivos
+        const existeDefinitivo = await pool.query(
+            'SELECT * FROM usuarios WHERE codigo_alumno = $1 OR correo_institucional = $2',
+            [codigo_alumno, correoMinuscula]
+        );
+        if (existeDefinitivo.rows.length > 0) {
+            return res.status(400).json({ error: 'Este código de alumno o correo ya tiene una cuenta activa en PataRunner.' });
+        }
+
+        // Limpiar intentos previos en la tabla temporal con este mismo correo/código
+        await pool.query(
+            'DELETE FROM registros_pendientes WHERE correo_institucional = $1 OR codigo_alumno = $2',
+            [correoMinuscula, codigo_alumno]
         );
 
-        // 3. Responder con éxito
-        res.status(201).json({
-            mensaje: 'Usuario registrado exitosamente',
-            usuario: nuevoUsuario.rows[0]
+        // Crear token de verificación único
+        const token = Math.random().toString(36).substring(2) + Date.now().toString(36);
+
+        // Insertar en la tabla temporal
+        await pool.query(
+            `INSERT INTO registros_pendientes (codigo_alumno, correo_institucional, nombre_completo, password_hash, carrera, token_verificacion)
+             VALUES ($1, $2, $3, $4, $5, $6)`,
+            [codigo_alumno, correoMinuscula, nombre_completo, password || 'firebase_auth', carrera, token]
+        );
+
+        res.status(200).json({ 
+            success: true, 
+            mensaje: 'Enlace de verificación enviado a tu correo. Tienes 24 horas para confirmarlo.' 
         });
 
     } catch (error) {
-        console.error(error.message);
-        // Error 23505 es el código interno de PostgreSQL cuando un dato UNIQUE (el correo) se repite
-        if (error.code === '23505') {
-            return res.status(400).json({ error: 'Este correo institucional ya está registrado en PataRunner.' });
+        console.error("Error en registro previo:", error);
+        res.status(500).json({ error: 'Error interno del servidor en el registro.' });
+    }
+});
+
+// 2. Confirmación de cuenta desde el enlace del correo
+app.get('/api/usuarios/confirmar-cuenta/:token', async (req, res) => {
+    try {
+        const { token } = req.params;
+
+        // Buscar el token en la tabla temporal
+        const pendiente = await pool.query(
+            'SELECT * FROM registros_pendientes WHERE token_verificacion = $1',
+            [token]
+        );
+
+        if (pendiente.rows.length === 0) {
+            return res.status(400).send("El enlace de verificación es inválido o ya expiró (pasaron más de 24 horas). Por favor intenta registrarte de nuevo.");
         }
-        res.status(500).json({ error: 'Error interno del servidor.' });
+
+        const user = pendiente.rows[0];
+
+        // Insertar formalmente en la tabla real de usuarios
+        await pool.query(
+            `INSERT INTO usuarios (id_rol, nombre_completo, correo_institucional, codigo_alumno, carrera)
+             VALUES (1, $1, $2, $3, $4)`,
+            [user.nombre_completo, user.correo_institucional, user.codigo_alumno, user.carrera]
+        );
+
+        // Eliminar de la tabla temporal de pendientes
+        await pool.query('DELETE FROM registros_pendientes WHERE id_pendiente = $1', [user.id_pendiente]);
+
+        res.send("<h1>¡Cuenta verificada con éxito! 🎉</h1><p>Ya puedes volver a la aplicación de PataRunner e iniciar sesión.</p>");
+
+    } catch (error) {
+        console.error("Error al confirmar cuenta:", error);
+        res.status(500).send("Error interno al activar la cuenta.");
+    }
+});
+
+// 3. Eliminar Usuario desde el Panel de Administrador
+app.delete('/api/admin/usuarios/:codigo', async (req, res) => {
+    try {
+        const { codigo } = req.params;
+
+        const resultado = await pool.query('DELETE FROM usuarios WHERE codigo_alumno = $1', [codigo]);
+
+        if (resultado.rowCount > 0) {
+            res.json({ success: true, message: `El usuario ${codigo} ha sido eliminado correctamente.` });
+        } else {
+            res.status(404).json({ error: 'Usuario no encontrado.' });
+        }
+    } catch (error) {
+        console.error("Error al eliminar usuario:", error);
+        res.status(500).json({ error: 'No se puede eliminar el usuario porque tiene pedidos o historial asociado.' });
     }
 });
 // --- RUTA: Registrar una Tienda ---
@@ -1174,6 +1247,49 @@ app.delete('/api/usuarios/fotos/:id_foto', async (req, res) => {
     } catch (error) {
         console.error('Error al eliminar foto:', error.message);
         res.status(500).json({ error: 'Error al eliminar la foto.' });
+    }
+});
+
+// ==========================================
+// TAREA PROGRAMADA: LIMPIEZA AUTOMÁTICA DE REGISTROS EXPIRADOS (24h)
+// ==========================================
+cron.schedule('0 * * * *', async () => {
+    try {
+        const resultado = await pool.query(
+            `DELETE FROM registros_pendientes 
+             WHERE fecha_creacion < NOW() - INTERVAL '24 hours'`
+        );
+        if (resultado.rowCount > 0) {
+            console.log(`🧹 Limpieza automática: Se eliminaron ${resultado.rowCount} registros no verificados expirados.`);
+        }
+    } catch (error) {
+        console.error("Error en la tarea de limpieza automática:", error);
+    }
+});
+
+// --- RUTA ADMIN: ELIMINAR USUARIO DEFINITIVAMENTE ---
+app.delete('/api/admin/usuarios/:codigo', async (req, res) => {
+    const { codigo } = req.params;
+    try {
+        const result = await pool.query('DELETE FROM usuarios WHERE codigo_alumno = $1', [codigo]);
+        
+        if (result.rowCount === 0) {
+            return res.status(404).json({ success: false, error: 'Usuario no encontrado' });
+        }
+        
+        res.json({ success: true, message: `Usuario ${codigo} eliminado con éxito.` });
+    } catch (error) {
+        console.error('Error al eliminar usuario:', error);
+        
+        // Si hay una restricción de clave foránea en la base de datos (por ejemplo, pedidos asignados), captura el error
+        if (error.code === '23503') {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'No se puede eliminar el usuario porque tiene registros o pedidos asociados en la base de datos.' 
+            });
+        }
+        
+        res.status(500).json({ success: false, error: 'Error al eliminar usuario en la base de datos' });
     }
 });
 
