@@ -21,22 +21,45 @@ window.fetch = function(url, config) {
   let activeOrder = null;
  let isRunner = (sessionStorage.getItem('isRunnerStatus') === 'true');
   let cart = []; // { id, category, name, price, qty }
-// Destrabar visualmente el botón si ya es Runner al cargar la página
+// Destrabar visualmente el botón e iniciar sesión si existe en localStorage
 window.addEventListener('DOMContentLoaded', () => {
-  cargarDatosPerfil();
-    if (isRunner) {
+    // 1. Restauración automática de sesión desde localStorage al recargar (F5)
+    const usuarioGuardado = localStorage.getItem('usuario');
+    if (usuarioGuardado) {
+        try {
+            const userData = JSON.parse(usuarioGuardado);
+            // Sincronizar sessionStorage con localStorage por compatibilidad
+            sessionStorage.setItem('usuario', usuarioGuardado);
+            if (localStorage.getItem('token')) {
+                sessionStorage.setItem('token', localStorage.getItem('token'));
+            }
+            if (localStorage.getItem('userId')) {
+                sessionStorage.setItem('userId', localStorage.getItem('userId'));
+            }
+
+            // Ocultar la pantalla de inicio de sesión
+            const screenLogin = document.getElementById('screen-login');
+            if (screenLogin) {
+                screenLogin.classList.add('hidden');
+            }
+
+            console.log("Sesión restaurada correctamente para:", userData.nombre_completo || userData.codigo);
+        } catch (e) {
+            console.error("Error al parsear el usuario guardado:", e);
+        }
+    }
+
+    // 2. Lógica inicial de perfil y estado Runner
+    cargarDatosPerfil();
+    if (isRunner || localStorage.getItem('isRunnerStatus') === 'true') {
         const btnRunner = document.getElementById("role-btn-runner");
         if (btnRunner) {
-            // 1. Quitamos el bloqueo
             btnRunner.disabled = false;
             btnRunner.classList.remove("opacity-50", "cursor-not-allowed");
-            
-            // 2. Le quitamos el candadito
             btnRunner.innerHTML = "⚡ Runner";
         }
         
-        // 3. NUEVO: Pintamos TODOS los botones de verde inmediatamente al abrir la web
-document.querySelectorAll("#btn-postular-runner").forEach(applyBtn => {
+        document.querySelectorAll("#btn-postular-runner").forEach(applyBtn => {
             applyBtn.disabled = true;
             applyBtn.classList.remove("bg-blue-600");
             applyBtn.classList.add("bg-emerald-600");
