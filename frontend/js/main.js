@@ -4573,21 +4573,39 @@ window.guardarPerfilUsuario = async function(e) {
 
         const data = await res.json();
         if (data.success) {
-            alert('¡Perfil actualizado con éxito!');
+            Swal.fire({
+                title: '¡Perfil actualizado!',
+                text: '¡Perfil actualizado con éxito!',
+                icon: 'success',
+                confirmButtonColor: '#2563eb',
+                confirmButtonText: 'Aceptar'
+            });
             
             // Actualizar datos locales y vista
             usuario.nombre_completo = nombre;
             usuario.carrera = carrera;
             sessionStorage.setItem('usuario', JSON.stringify(usuario));
 
-            cerrarModalEditarPerfil();
-            cargarDatosPerfil();
+            if (typeof cerrarModalEditarPerfil === 'function') cerrarModalEditarPerfil();
+            if (typeof cargarDatosPerfil === 'function') cargarDatosPerfil();
         } else {
-            alert('Error al actualizar datos: ' + (data.error || ''));
+            Swal.fire({
+                title: 'Error',
+                text: 'Error al actualizar datos: ' + (data.error || ''),
+                icon: 'error',
+                confirmButtonColor: '#2563eb',
+                confirmButtonText: 'Aceptar'
+            });
         }
     } catch (err) {
         console.error('Error al actualizar perfil:', err);
-        alert('Error de conexión al actualizar el perfil.');
+        Swal.fire({
+            title: 'Error de conexión',
+            text: 'Error de conexión al actualizar el perfil.',
+            icon: 'error',
+            confirmButtonColor: '#2563eb',
+            confirmButtonText: 'Aceptar'
+        });
     }
 };
 // Abrir y cerrar modal de editar perfil
@@ -4639,28 +4657,41 @@ window.subirFotoGaleria = function(event) {
     const reader = new FileReader();
 
     reader.onload = async function(e) {
-        const base64Foto = e.target.result;
+    const base64Foto = e.target.result;
 
-        try {
-            const res = await fetch('/api/usuarios/fotos', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    id_usuario: usuario.id_usuario,
-                    url_foto: base64Foto
-                })
+    try {
+        const res = await fetch('/api/usuarios/fotos', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                id_usuario: usuario.id_usuario,
+                url_foto: base64Foto
+            })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+            cargarGaleriaFotos(usuario.id_usuario);
+        } else {
+            Swal.fire({
+                title: 'Error',
+                text: 'Error al subir la foto.',
+                icon: 'error',
+                confirmButtonColor: '#2563eb',
+                confirmButtonText: 'Aceptar'
             });
-
-            const data = await res.json();
-            if (data.success) {
-                cargarGaleriaFotos(usuario.id_usuario);
-            } else {
-                alert('Error al subir la foto.');
-            }
-        } catch (err) {
-            console.error('Error al subir foto:', err);
         }
-    };
+    } catch (err) {
+        console.error('Error al subir foto:', err);
+        Swal.fire({
+            title: 'Error de conexión',
+            text: 'Ocurrió un problema de conexión al intentar subir la foto.',
+            icon: 'error',
+            confirmButtonColor: '#2563eb',
+            confirmButtonText: 'Aceptar'
+        });
+    }
+};
     reader.readAsDataURL(file);
 };
 
@@ -4767,14 +4798,35 @@ window.guardarFotoPerfilConfirmada = async function() {
             usuario.foto_perfil = tempFotoPerfilBase64;
             sessionStorage.setItem('usuario', JSON.stringify(usuario));
 
-            alert('¡Foto de perfil guardada con éxito!');
-            cancelarFotoPerfil();
+            Swal.fire({
+                title: '¡Foto guardada!',
+                text: '¡Foto de perfil guardada con éxito!',
+                icon: 'success',
+                confirmButtonColor: '#2563eb',
+                confirmButtonText: 'Aceptar'
+            });
+
+            if (typeof cancelarFotoPerfil === 'function') {
+                cancelarFotoPerfil();
+            }
         } else {
-            alert('Error: ' + (data.error || 'No se pudo guardar la foto'));
+            Swal.fire({
+                title: 'Error',
+                text: data.error || 'No se pudo guardar la foto',
+                icon: 'error',
+                confirmButtonColor: '#2563eb',
+                confirmButtonText: 'Aceptar'
+            });
         }
     } catch (err) {
         console.error('Error al guardar foto de perfil:', err);
-        alert('Error de conexión al guardar la foto.');
+        Swal.fire({
+            title: 'Error de conexión',
+            text: 'Error de conexión al guardar la foto.',
+            icon: 'error',
+            confirmButtonColor: '#2563eb',
+            confirmButtonText: 'Aceptar'
+        });
     }
 };
 // Mostrar / ocultar contraseña en el formulario de registro
@@ -4820,7 +4872,16 @@ async function sendChatMessage() {
 
     try {
         const userStr = sessionStorage.getItem('usuario');
-        if (!userStr) return alert("Sesión no válida");
+        if (!userStr) {
+            Swal.fire({
+                title: 'Sesión no válida',
+                text: 'Debes iniciar sesión para enviar mensajes en el chat.',
+                icon: 'warning',
+                confirmButtonColor: '#2563eb',
+                confirmButtonText: 'Aceptar'
+            });
+            return;
+        }
         const userData = JSON.parse(userStr);
 
         const res = await fetch('/api/chat', {
