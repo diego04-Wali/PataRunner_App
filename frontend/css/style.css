@@ -26,3 +26,34 @@
 .cursor-grabbing { 
     cursor: grabbing !important; 
 }
+
+/* ===== AJUSTE DE SWEETALERT2 PARA MOCKUP MÓVIL ===== */
+.swal2-popup {
+  max-width: 310px !important; /* Limita el ancho para que quepa en el celular */
+  padding: 1.25rem 1rem !important;
+  border-radius: 1.5rem !important; /* Bordes redondeados estilo app moderna */
+}
+
+.swal2-title {
+  font-size: 1.1rem !important;
+  font-weight: 700 !important;
+  color: #0f172a !important; /* Slate 900 */
+}
+
+.swal2-html-container {
+  font-size: 0.8rem !important;
+  color: #64748b !important; /* Slate 500 */
+  margin: 0.5rem 0 1rem 0 !important;
+}
+
+.swal2-icon {
+  transform: scale(0.75); /* Reduce ligeramente el tamaño del icono del check/error */
+  margin: 0.25rem auto !important;
+}
+
+.swal2-styled.swal2-confirm {
+  font-size: 0.8rem !important;
+  padding: 0.6rem 1.5rem !important;
+  border-radius: 0.75rem !important;
+  font-weight: 600 !important;
+}
