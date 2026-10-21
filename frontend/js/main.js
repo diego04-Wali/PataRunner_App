@@ -23,35 +23,33 @@ window.fetch = function(url, config) {
   let cart = []; // { id, category, name, price, qty }
 // Destrabar visualmente el botón e iniciar sesión si existe en localStorage
 window.addEventListener('DOMContentLoaded', () => {
-    // 1. Restauración automática de sesión desde localStorage al recargar (F5)
-    const usuarioGuardado = localStorage.getItem('usuario');
+    // Restaurar sesión desde localStorage a sessionStorage si existe
+    const usuarioGuardado = localStorage.getItem('usuario') || sessionStorage.getItem('usuario');
+    const tokenGuardado = localStorage.getItem('token') || sessionStorage.getItem('token');
+
     if (usuarioGuardado) {
+        sessionStorage.setItem('usuario', usuarioGuardado);
+        if (tokenGuardado) sessionStorage.setItem('token', tokenGuardado);
+        
+        // Ocultar pantalla de inicio de sesión
+        const screenLogin = document.getElementById('screen-login');
+        if (screenLogin) {
+            screenLogin.classList.add('hidden');
+        }
+
         try {
             const userData = JSON.parse(usuarioGuardado);
-            // Sincronizar sessionStorage con localStorage por compatibilidad
-            sessionStorage.setItem('usuario', usuarioGuardado);
-            if (localStorage.getItem('token')) {
-                sessionStorage.setItem('token', localStorage.getItem('token'));
-            }
-            if (localStorage.getItem('userId')) {
-                sessionStorage.setItem('userId', localStorage.getItem('userId'));
-            }
-
-            // Ocultar la pantalla de inicio de sesión
-            const screenLogin = document.getElementById('screen-login');
-            if (screenLogin) {
-                screenLogin.classList.add('hidden');
-            }
-
             console.log("Sesión restaurada correctamente para:", userData.nombre_completo || userData.codigo);
         } catch (e) {
-            console.error("Error al parsear el usuario guardado:", e);
+            console.error("Error al parsear usuario:", e);
         }
     }
 
-    // 2. Lógica inicial de perfil y estado Runner
+    // Cargar perfil y estado de Runner
     cargarDatosPerfil();
-    if (isRunner || localStorage.getItem('isRunnerStatus') === 'true') {
+
+    const isRunnerStatus = localStorage.getItem('isRunnerStatus') === 'true' || sessionStorage.getItem('isRunnerStatus') === 'true';
+    if (isRunnerStatus) {
         const btnRunner = document.getElementById("role-btn-runner");
         if (btnRunner) {
             btnRunner.disabled = false;
@@ -2339,33 +2337,25 @@ if (inputRegistroCodigo) {
     });
 }
 function cargarDatosPerfil() {
-    // 1. Extraemos el objeto del usuario priorizando localStorage
-    const userStr = localStorage.getItem('usuario') || sessionStorage.getItem('usuario');
+    // Extraemos el objeto del usuario priorizando localStorage o sessionStorage
+    const userStr = localStorage.getItem('usuario') || sessionStorage.getItem('usuario'); 
     
     if (userStr) {
         const userData = JSON.parse(userStr);
-        const nombreCompleto = userData.nombre_completo; // Tomará "Juan Diego Terrones Toccas"
+        const nombreCompleto = userData.nombre_completo || userData.nombres || 'Usuario';
         
-        // 2. Generamos las iniciales automáticas (Ej: Juan Diego -> JD)
-        const partes = nombreCompleto.split(' ');
-        let iniciales = partes[0][0]; 
-        if (partes.length > 1) {
-            iniciales += partes[1][0]; 
-        }
-        
-        // 3. Inyectamos los datos en tu HTML
-        const profileInitials = document.getElementById('profile-initials');
-        const profileName = document.getElementById('profile-name');
-        const profileCareer = document.getElementById('profile-career');
-        const profileEmail = document.getElementById('profile-email');
-        
-        if (profileInitials) profileInitials.textContent = iniciales.toUpperCase();
-        if (profileName) profileName.textContent = nombreCompleto;
-        
-        // Podemos dejar tu carrera fija por ahora si no viene en el login
-if (profileCareer) profileCareer.textContent = userData.carrera;
-        // Usamos el correo si viene en la base de datos, o uno simulado
-      if (profileEmail) profileEmail.textContent = userData.correo_institucional;
+        // Inyectamos los datos en la pantalla
+        const editNombre = document.getElementById('edit-nombre');
+        const editCarrera = document.getElementById('edit-carrera');
+        const displayName = document.getElementById('profile-display-name');
+        const displayCarrera = document.getElementById('profile-display-carrera');
+        const imgPreview = document.getElementById('profile-img-preview');
+
+        if (editNombre) editNombre.value = nombreCompleto;
+        if (editCarrera) editCarrera.value = userData.carrera || '';
+        if (displayName) displayName.textContent = nombreCompleto;
+        if (displayCarrera) displayCarrera.textContent = userData.carrera || 'Estudiante UTP';
+        if (imgPreview && userData.foto_perfil) imgPreview.src = userData.foto_perfil;
     }
 }
 // =================================================================
