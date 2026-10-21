@@ -4326,3 +4326,4 @@ async function sendChatMessage() {
     } catch (err) {
         console.error("Error en petición de chat:", err);
     }
+}
