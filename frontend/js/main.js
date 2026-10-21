@@ -19,7 +19,7 @@ window.fetch = function(url, config) {
   // ===================== ESTADO GENERAL =====================
   let orderState = "idle"; // idle | searching | assigned
   let activeOrder = null;
- let isRunner = (sessionStorage.getItem('isRunnerStatus') === 'true');
+ let isRunner = (localStorage.getItem('isRunnerStatus') === 'true' || sessionStorage.getItem('isRunnerStatus') === 'true');
   let cart = []; // { id, category, name, price, qty }
 // Destrabar visualmente el botón e iniciar sesión si existe en localStorage
 window.addEventListener('DOMContentLoaded', () => {
@@ -2339,8 +2339,8 @@ if (inputRegistroCodigo) {
     });
 }
 function cargarDatosPerfil() {
-    // 1. Extraemos el objeto del usuario de la memoria
-    const userStr = sessionStorage.getItem('usuario'); 
+    // 1. Extraemos el objeto del usuario priorizando localStorage
+    const userStr = localStorage.getItem('usuario') || sessionStorage.getItem('usuario');
     
     if (userStr) {
         const userData = JSON.parse(userStr);
@@ -2850,14 +2850,16 @@ if (btnRunnerTop) {
 }
 
                 alert("¡Felicidades! Ya eres Runner.");
+                
                 // 1. Actualizamos la memoria del navegador al instante sin recargar
-        isRunner = true;
-        sessionStorage.setItem('isRunnerStatus', 'true');
+                isRunner = true;
+                localStorage.setItem('isRunnerStatus', 'true');
+                sessionStorage.setItem('isRunnerStatus', 'true');
         
-        // 2. Llevamos al usuario de regreso a la pantalla principal (Inicio)
-        if (typeof setActiveRole === 'function') {
-            setActiveRole('alumno'); 
-        }
+                // 2. Llevamos al usuario de regreso a la pantalla principal (Inicio)
+                if (typeof setActiveRole === 'function') {
+                    setActiveRole('alumno'); 
+                }
             } else {
                 alert("Error al actualizar tu perfil en el servidor.");
                 activateRunnerBtn.disabled = false;
@@ -4210,9 +4212,9 @@ window.cancelarFotoPerfil = function() {
     if (modal) modal.classList.add('hidden');
 };
 
-// 3. Confirmar y guardar foto en la Base de Datos
+// 3. Confirmar y guardar foto en la Base de Datos y localStorage
 window.guardarFotoPerfilConfirmada = async function() {
-    const usuarioStr = sessionStorage.getItem('usuario');
+    const usuarioStr = localStorage.getItem('usuario') || sessionStorage.getItem('usuario');
     if (!usuarioStr || !tempFotoPerfilBase64) return;
 
     const usuario = JSON.parse(usuarioStr);
@@ -4231,11 +4233,15 @@ window.guardarFotoPerfilConfirmada = async function() {
 
         const data = await res.json();
         if (data.success) {
-            // Actualizar vista de perfil e información local
+            // Actualizar la imagen en la interfaz visual
             const imgPreview = document.getElementById('profile-img-preview');
             if (imgPreview) imgPreview.src = tempFotoPerfilBase64;
 
+            // Actualizar el objeto del usuario en la memoria
             usuario.foto_perfil = tempFotoPerfilBase64;
+
+            // Guardar de forma permanente en localStorage y sessionStorage
+            localStorage.setItem('usuario', JSON.stringify(usuario));
             sessionStorage.setItem('usuario', JSON.stringify(usuario));
 
             alert('¡Foto de perfil guardada con éxito!');
