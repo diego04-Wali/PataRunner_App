@@ -1488,10 +1488,21 @@ async function cargarMisPedidos() {
             const colorBadge = esEnCamino ? 'text-emerald-700 bg-emerald-100' : 'text-blue-700 bg-blue-100';
             const iconoBadge = esEnCamino ? 'bike' : 'loader';
 
+
+            window.mostrarAvisoNoSePuedeCancelar = function() {
+    Swal.fire({
+        title: 'Pedido en camino',
+        text: 'Tu pedido ya fue aceptado por un Runner. No puedes cancelarlo de forma automática.\n\nPor favor, entra a "Ver detalles" y coordina directamente con tu Runner a través del chat.',
+        icon: 'warning',
+        confirmButtonColor: '#2563eb',
+        confirmButtonText: 'Entendido'
+    });
+    };
+
           // --- NUEVO: Mostrar botón siempre, pero con diferente comportamiento según el estado ---
         const botonCancelar = pedido.estado === 'Pendiente' 
-            ? `<button onclick="cancelarPedidoAlumno(${pedido.id_pedido})" class="text-red-500 hover:text-red-700 text-xs font-semibold px-3 py-1.5 rounded-lg border border-red-200 hover:bg-red-50 transition-colors">Cancelar pedido</button>` 
-            : `<button onclick="alert('Tu pedido ya fue aceptado por un Runner. No puedes cancelarlo de forma automática.\\n\\nPor favor, entra a \\'Ver detalles\\' y coordina directamente con tu Runner a través del chat.')" class="text-red-400 hover:text-red-500 text-xs font-semibold px-3 py-1.5 rounded-lg border border-red-100 hover:bg-red-50 transition-colors opacity-90">Cancelar pedido</button>`;
+    ? `<button onclick="cancelarPedidoAlumno(${pedido.id_pedido})" class="text-red-500 hover:text-red-700 text-xs font-semibold px-3 py-1.5 rounded-lg border border-red-200 hover:bg-red-50 transition-colors">Cancelar pedido</button>` 
+    : `<button onclick="mostrarAvisoNoSePuedeCancelar()" class="text-red-400 hover:text-red-500 text-xs font-semibold px-3 py-1.5 rounded-lg border border-red-100 hover:bg-red-50 transition-colors opacity-90">Cancelar pedido</button>`;
 
         const tarjeta = `
 <div class="rounded-2xl border ${esEnCamino ? 'border-emerald-200 bg-emerald-50/50' : 'border-blue-100 bg-blue-50/50'} p-4 mb-3">
@@ -1594,39 +1605,73 @@ async function cargarEntregasActivas() {
 
 // --- MARCAR UN PEDIDO COMO ENTREGADO ---
 async function marcarEntregado(id_pedido) {
-    if (!confirm(`¿Confirmas que ya entregaste el pedido #${id_pedido} al cliente?`)) return;
+    // 1. Confirmación interactiva con SweetAlert2
+    const confirmacion = await Swal.fire({
+        title: '¿Confirmar entrega?',
+        text: `¿Confirmas que ya entregaste el pedido #${id_pedido} al cliente?`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#2563eb',
+        cancelButtonColor: '#64748b',
+        confirmButtonText: 'Sí, entregado',
+        cancelButtonText: 'Cancelar'
+    });
 
-   try {
-        // 1. Extraemos tu información real de la memoria
+    if (!confirmacion.isConfirmed) return;
+
+    try {
+        // 2. Extraemos la información real de la memoria
         const userStr = sessionStorage.getItem('usuario');
         if (!userStr) {
-            alert("Error: No se encontró la sesión del usuario.");
+            Swal.fire({
+                title: 'Sesión expirada',
+                text: 'No se encontró la sesión del usuario.',
+                icon: 'warning',
+                confirmButtonColor: '#2563eb'
+            });
             return;
         }
         const userData = JSON.parse(userStr);
 
-        // 2. Reutilizamos tu ruta PUT para actualizar el estado
+        // 3. Petición PUT para actualizar el estado
         const respuesta = await fetch(`/api/pedidos/${id_pedido}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                id_runner: userData.id_usuario, // <-- Tu ID real dinámico
+                id_runner: userData.id_usuario, // Tu ID real dinámico
                 estado: 'Entregado'
             })
         });
 
         if (respuesta.ok) {
-            alert("¡Excelente trabajo! Entrega finalizada.");
+            Swal.fire({
+                title: '¡Excelente trabajo!',
+                text: 'Entrega finalizada con éxito.',
+                icon: 'success',
+                confirmButtonColor: '#2563eb',
+                confirmButtonText: 'Aceptar'
+            });
             
             // Recargamos las vistas para que desaparezca de "En curso"
-            cargarEntregasActivas(); 
+            if (typeof cargarEntregasActivas === 'function') cargarEntregasActivas(); 
             if (typeof cargarMisPedidos === 'function') cargarMisPedidos(); // Actualiza la vista del alumno si está abierta
             
         } else {
-            alert("Error al actualizar el pedido.");
+            Swal.fire({
+                title: 'Error',
+                text: 'No se pudo actualizar el estado del pedido.',
+                icon: 'error',
+                confirmButtonColor: '#2563eb'
+            });
         }
     } catch (error) {
         console.error("Error:", error);
+        Swal.fire({
+            title: 'Error de conexión',
+            text: 'Ocurrió un problema al intentar conectar con el servidor.',
+            icon: 'error',
+            confirmButtonColor: '#2563eb'
+        });
     }
 }
 
@@ -1817,9 +1862,15 @@ async function enviarImagenChat(event) {
     if (!file) return;
 
     if (file.size > 10 * 1024 * 1024) {
-    alert("La imagen es muy pesada. El tamaño máximo es 10MB.");
-    return;
-}
+        Swal.fire({
+            title: 'Imagen muy pesada',
+            text: 'El tamaño máximo permitido es de 10MB.',
+            icon: 'warning',
+            confirmButtonColor: '#2563eb',
+            confirmButtonText: 'Entendido'
+        });
+        return;
+    }
 
     if (!pedidoChatActual) {
         console.warn("No hay pedido vinculado al chat.");
@@ -2294,9 +2345,20 @@ window.agregarAlCarrito = function(id_producto, nombre, precio) {
 
 // ================= ANULAR PEDIDO Y MOSTRAR MODAL =================
 window.anularPedido = async function(id_pedido) {
-    // 1. Confirmación exclusiva para el Runner
-    if (!confirm('¿Estás seguro de que deseas abandonar esta entrega? Esto podría afectar tu calificación como Runner.')) {
-        return; // Si el usuario hace clic en "Cancelar" (No), detenemos todo y el pedido sigue activo
+    // 1. Confirmación interactiva con SweetAlert2 para el Runner
+    const confirmacion = await Swal.fire({
+        title: '¿Abandonar entrega?',
+        text: '¿Estás seguro de que deseas abandonar esta entrega? Esto podría afectar tu calificación como Runner.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444', // Rojo de advertencia
+        cancelButtonColor: '#64748b',
+        confirmButtonText: 'Sí, abandonar',
+        cancelButtonText: 'Cancelar'
+    });
+
+    if (!confirmacion.isConfirmed) {
+        return; // Si hace clic en "Cancelar", detenemos todo
     }
 
     try {
@@ -2307,8 +2369,14 @@ window.anularPedido = async function(id_pedido) {
         const resultado = await respuesta.json();
 
         if (resultado.success) {
-            // 3. Mostramos un mensaje simple y recargamos las entregas (sin abrir el modal del alumno)
-            alert('Has abandonado el pedido.');
+            // 3. Mensaje de éxito con SweetAlert2
+            Swal.fire({
+                title: 'Entrega abandonada',
+                text: 'Has abandonado el pedido correctamente.',
+                icon: 'info',
+                confirmButtonColor: '#2563eb',
+                confirmButtonText: 'Aceptar'
+            });
             
             // Desaparecemos el pedido de la vista actual del Runner
             if (typeof cargarEntregasActivas === 'function') {
@@ -2318,10 +2386,22 @@ window.anularPedido = async function(id_pedido) {
             if (typeof cargarPedidosPendientes === 'function') {
                 cargarPedidosPendientes(); 
             }
+        } else {
+            Swal.fire({
+                title: 'No se pudo anular',
+                text: resultado.error || 'Ocurrió un error al intentar anular el pedido.',
+                icon: 'error',
+                confirmButtonColor: '#2563eb'
+            });
         }
     } catch (error) {
         console.error("Error al anular:", error);
-        alert("Ocurrió un problema de conexión al intentar cancelar.");
+        Swal.fire({
+            title: 'Error de conexión',
+            text: 'Ocurrió un problema de conexión al intentar cancelar.',
+            icon: 'error',
+            confirmButtonColor: '#2563eb'
+        });
     }
 };
 
@@ -2355,15 +2435,36 @@ window.republicarPedido = async function() {
         const resultado = await respuesta.json();
 
         if (resultado.success) {
-            alert("¡Pedido republicado con éxito! Buscando un nuevo Runner...");
-            cerrarModalCancelacion();
+            Swal.fire({
+                title: '¡Pedido republicado!',
+                text: 'Buscando un nuevo Runner cercano...',
+                icon: 'success',
+                confirmButtonColor: '#2563eb',
+                confirmButtonText: 'Aceptar'
+            });
+
+            if (typeof cerrarModalCancelacion === 'function') {
+                cerrarModalCancelacion();
+            }
             
             // Refresca la vista si tienes esta función
             if (typeof cargarMisPedidos === 'function') cargarMisPedidos();
+        } else {
+            Swal.fire({
+                title: 'No se pudo republicar',
+                text: resultado.error || 'Ocurrió un error al intentar republicar el pedido.',
+                icon: 'error',
+                confirmButtonColor: '#2563eb'
+            });
         }
     } catch (error) {
         console.error("Error al republicar:", error);
-        alert("Hubo un error de conexión al intentar republicar.");
+        Swal.fire({
+            title: 'Error de conexión',
+            text: 'Hubo un error de conexión al intentar republicar.',
+            icon: 'error',
+            confirmButtonColor: '#2563eb'
+        });
     }
 };
 // ==========================================
@@ -2455,17 +2556,31 @@ setInterval(async () => {
             
             // 1. Si la cuenta fue bloqueada por completo
             if (dataEstado.blocked) {
-                alert("Tu cuenta ha sido suspendida por un administrador.");
-                sessionStorage.clear();
-                window.location.reload();
+                Swal.fire({
+                    title: 'Cuenta suspendida',
+                    text: 'Tu cuenta ha sido suspendida por un administrador.',
+                    icon: 'error',
+                    confirmButtonColor: '#2563eb',
+                    confirmButtonText: 'Aceptar'
+                }).then(() => {
+                    sessionStorage.clear();
+                    window.location.reload();
+                });
                 return;
             }
 
             // 2. Si se le revocó el rol de Runner estando activo
             if (userData.id_rol === 2 && dataEstado.id_rol === 1) {
-                alert("Un administrador ha revocado tus permisos de Runner. Tu sesión se cerrará.");
-                sessionStorage.clear();
-                window.location.reload();
+                Swal.fire({
+                    title: 'Permisos revocados',
+                    text: 'Un administrador ha revocado tus permisos de Runner. Tu sesión se cerrará.',
+                    icon: 'warning',
+                    confirmButtonColor: '#2563eb',
+                    confirmButtonText: 'Aceptar'
+                }).then(() => {
+                    sessionStorage.clear();
+                    window.location.reload();
+                });
                 return;
             }
 
@@ -2750,8 +2865,19 @@ async function cargarDirectorioTiendas() {
 
 // --- NUEVA FUNCIÓN: Cancelar pedido desde la vista del Alumno ---
 async function cancelarPedidoAlumno(idPedido) {
-    // Pequeña alerta de confirmación para evitar toques accidentales
-    if (!confirm("¿Estás seguro de que deseas cancelar este pedido?")) {
+    // 1. Confirmación interactiva con SweetAlert2 para evitar toques accidentales
+    const confirmacion = await Swal.fire({
+        title: '¿Cancelar pedido?',
+        text: '¿Estás seguro de que deseas cancelar este pedido?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444', // Rojo de advertencia
+        cancelButtonColor: '#64748b',
+        confirmButtonText: 'Sí, cancelar',
+        cancelButtonText: 'No'
+    });
+
+    if (!confirmacion.isConfirmed) {
         return; 
     }
 
@@ -2763,18 +2889,37 @@ async function cancelarPedidoAlumno(idPedido) {
         const data = await respuesta.json();
 
         if (respuesta.ok) {
-            alert("Tu pedido ha sido cancelado.");
+            Swal.fire({
+                title: 'Pedido cancelado',
+                text: 'Tu pedido ha sido cancelado con éxito.',
+                icon: 'success',
+                confirmButtonColor: '#2563eb',
+                confirmButtonText: 'Aceptar'
+            });
+
             // Recargamos la lista de pedidos del alumno para que desaparezca
             if (typeof cargarMisPedidos === 'function') {
                 cargarMisPedidos(); 
             }
         } else {
             // Si el backend responde con error (ej. ya fue aceptado)
-            alert(data.error || "No se pudo cancelar el pedido.");
+            Swal.fire({
+                title: 'No se pudo cancelar',
+                text: data.error || 'El pedido no se puede cancelar en su estado actual.',
+                icon: 'error',
+                confirmButtonColor: '#2563eb',
+                confirmButtonText: 'Entendido'
+            });
         }
     } catch (error) {
         console.error("Error al cancelar:", error);
-        alert("Ocurrió un error al intentar conectarse con el servidor.");
+        Swal.fire({
+            title: 'Error de conexión',
+            text: 'Ocurrió un error al intentar conectarse con el servidor.',
+            icon: 'error',
+            confirmButtonColor: '#2563eb',
+            confirmButtonText: 'Aceptar'
+        });
     }
 }
 
@@ -2855,8 +3000,14 @@ if (runnerCheckbox && activateRunnerBtn) {
         const token = sessionStorage.getItem('token');
 
         if (!userStr || !token) {
-            alert("Error de sesión. Vuelve a iniciar sesión.");
-            return;
+        Swal.fire({
+        title: 'Error de sesión',
+        text: 'Vuelve a iniciar sesión.',
+        icon: 'warning',
+        confirmButtonColor: '#2563eb',
+        confirmButtonText: 'Aceptar'
+        });
+        return;
         }
 
         let userData = JSON.parse(userStr);
@@ -2876,9 +3027,15 @@ if (runnerCheckbox && activateRunnerBtn) {
 
         // 🚨 SI SIGUE RESTRINGIDO EN LA BASE DE DATOS
         if (userData.bloqueado_runner) {
-            alert("Un administrador ha revocado y restringido tu acceso para registrarte como Runner.");
-            return;
-        }
+        Swal.fire({
+        title: 'Acceso restringido',
+        text: 'Un administrador ha revocado y restringido tu acceso para registrarte como Runner.',
+        icon: 'error',
+        confirmButtonColor: '#2563eb',
+        confirmButtonText: 'Aceptar'
+        });
+        return;
+}
 
         activateRunnerBtn.disabled = true;
         activateRunnerBtn.textContent = "Activando...";
@@ -2918,23 +3075,40 @@ if (btnRunnerTop) {
     btnRunnerTop.classList.add('text-slate-700', 'cursor-pointer', 'hover:bg-slate-200');
 }
 
-                alert("¡Felicidades! Ya eres Runner.");
-                // 1. Actualizamos la memoria del navegador al instante sin recargar
-        isRunner = true;
-        sessionStorage.setItem('isRunnerStatus', 'true');
-        
-        // 2. Llevamos al usuario de regreso a la pantalla principal (Inicio)
-        if (typeof setActiveRole === 'function') {
-            setActiveRole('alumno'); 
-        }
+        Swal.fire({
+            title: '¡Felicidades!',
+            text: 'Ya eres Runner.',
+            icon: 'success',
+            confirmButtonColor: '#2563eb',
+            confirmButtonText: 'Aceptar'
+        }).then(() => {
+            // 1. Actualizamos la memoria del navegador al instante sin recargar
+            isRunner = true;
+            sessionStorage.setItem('isRunnerStatus', 'true');
+            
+            // 2. Llevamos al usuario de regreso a la pantalla principal (Inicio)
+            if (typeof setActiveRole === 'function') {
+                setActiveRole('alumno'); 
+            }
+        });
             } else {
-                alert("Error al actualizar tu perfil en el servidor.");
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Error al actualizar tu perfil en el servidor.',
+                    icon: 'error',
+                    confirmButtonColor: '#2563eb'
+                });
                 activateRunnerBtn.disabled = false;
                 activateRunnerBtn.textContent = "Activar modo runner";
             }
         } catch (error) {
             console.error("Error de conexión:", error);
-            alert("Error de conexión con el servidor.");
+            Swal.fire({
+                title: 'Error de conexión',
+                text: 'Error de conexión con el servidor.',
+                icon: 'error',
+                confirmButtonColor: '#2563eb'
+            });
             activateRunnerBtn.disabled = false;
             activateRunnerBtn.textContent = "Activar modo runner";
         }
@@ -3230,7 +3404,20 @@ if (typeof cargarReportesAdmin === 'function') {
 // --- LÓGICA DE ACCIONES ADMIN ---
 async function bloquearUsuario(codigo, estadoActual) {
     const nuevoEstado = !estadoActual;
-    if (!confirm(`¿Deseas ${nuevoEstado ? 'bloquear' : 'desbloquear'} al usuario ${codigo}?`)) return;
+    const accionTexto = nuevoEstado ? 'bloquear' : 'desbloquear';
+    
+    const confirmacion = await Swal.fire({
+        title: `¿${nuevoEstado ? 'Bloquear' : 'Desbloquear'} usuario?`,
+        text: `¿Deseas ${accionTexto} al usuario ${codigo}?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: nuevoEstado ? '#ef4444' : '#2563eb', // Rojo para bloquear, azul para desbloquear
+        cancelButtonColor: '#64748b',
+        confirmButtonText: nuevoEstado ? 'Sí, bloquear' : 'Sí, desbloquear',
+        cancelButtonText: 'Cancelar'
+    });
+
+    if (!confirmacion.isConfirmed) return;
 
     try {
         const res = await fetch(`/api/admin/usuarios/${codigo}/bloquear`, {
@@ -3239,19 +3426,53 @@ async function bloquearUsuario(codigo, estadoActual) {
             body: JSON.stringify({ blocked: nuevoEstado })
         });
         const data = await res.json();
+        
         if (data.success) {
-            alert(data.message);
-            cargarUsuariosAdmin();
+            Swal.fire({
+                title: '¡Actualizado!',
+                text: data.message || `El usuario ha sido ${accionTexto}do con éxito.`,
+                icon: 'success',
+                confirmButtonColor: '#2563eb',
+                confirmButtonText: 'Aceptar'
+            });
+            
+            if (typeof cargarUsuariosAdmin === 'function') {
+                cargarUsuariosAdmin();
+            }
         } else {
-            alert('Error: ' + data.error);
+            Swal.fire({
+                title: 'Error',
+                text: data.error || 'No se pudo actualizar el estado del usuario.',
+                icon: 'error',
+                confirmButtonColor: '#2563eb',
+                confirmButtonText: 'Aceptar'
+            });
         }
     } catch (err) {
-        alert('Ocurrió un error al intentar actualizar el usuario.');
+        console.error("Error:", err);
+        Swal.fire({
+            title: 'Error de conexión',
+            text: 'Ocurrió un error al intentar actualizar el usuario.',
+            icon: 'error',
+            confirmButtonColor: '#2563eb',
+            confirmButtonText: 'Aceptar'
+        });
     }
 }
 
 async function quitarRunner(codigo) {
-    if (!confirm(`¿Deseas quitar el rol de Runner al usuario ${codigo}?`)) return;
+    const confirmacion = await Swal.fire({
+        title: '¿Quitar rol de Runner?',
+        text: `¿Deseas quitar el rol de Runner al usuario ${codigo}?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#f59e0b', // Ámbar/Naranja de advertencia
+        cancelButtonColor: '#64748b',
+        confirmButtonText: 'Sí, quitar rol',
+        cancelButtonText: 'Cancelar'
+    });
+
+    if (!confirmacion.isConfirmed) return;
 
     try {
         const res = await fetch(`/api/admin/usuarios/${codigo}/runner`, {
@@ -3260,18 +3481,53 @@ async function quitarRunner(codigo) {
             body: JSON.stringify({ isRunner: false })
         });
         const data = await res.json();
+        
         if (data.success) {
-            alert(data.message);
-            cargarUsuariosAdmin();
+            Swal.fire({
+                title: '¡Rol actualizado!',
+                text: data.message || 'Se ha quitado el rol de Runner correctamente.',
+                icon: 'success',
+                confirmButtonColor: '#2563eb',
+                confirmButtonText: 'Aceptar'
+            });
+            
+            if (typeof cargarUsuariosAdmin === 'function') {
+                cargarUsuariosAdmin();
+            }
         } else {
-            alert('Error: ' + data.error);
+            Swal.fire({
+                title: 'Error',
+                text: data.error || 'No se pudo quitar el rol.',
+                icon: 'error',
+                confirmButtonColor: '#2563eb',
+                confirmButtonText: 'Aceptar'
+            });
         }
     } catch (err) {
-        alert('Ocurrió un error al intentar quitar el rol.');
+        console.error("Error:", err);
+        Swal.fire({
+            title: 'Error de conexión',
+            text: 'Ocurrió un error al intentar quitar el rol.',
+            icon: 'error',
+            confirmButtonColor: '#2563eb',
+            confirmButtonText: 'Aceptar'
+        });
     }
 }
+
 async function asignarRunner(codigo) {
-    if (!confirm(`¿Deseas asignar el rol de Runner al usuario ${codigo}?`)) return;
+    const confirmacion = await Swal.fire({
+        title: '¿Asignar rol de Runner?',
+        text: `¿Deseas asignar el rol de Runner al usuario ${codigo}?`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#2563eb', // Azul principal
+        cancelButtonColor: '#64748b',
+        confirmButtonText: 'Sí, asignar',
+        cancelButtonText: 'Cancelar'
+    });
+
+    if (!confirmacion.isConfirmed) return;
 
     try {
         const res = await fetch(`/api/admin/usuarios/${codigo}/runner`, {
@@ -3280,16 +3536,40 @@ async function asignarRunner(codigo) {
             body: JSON.stringify({ isRunner: true })
         });
         const data = await res.json();
+        
         if (data.success) {
-            alert(data.message);
-            cargarUsuariosAdmin();
+            Swal.fire({
+                title: '¡Rol asignado!',
+                text: data.message || 'Se ha asignado el rol de Runner correctamente.',
+                icon: 'success',
+                confirmButtonColor: '#2563eb',
+                confirmButtonText: 'Aceptar'
+            });
+            
+            if (typeof cargarUsuariosAdmin === 'function') {
+                cargarUsuariosAdmin();
+            }
         } else {
-            alert('Error: ' + data.error);
+            Swal.fire({
+                title: 'Error',
+                text: data.error || 'No se pudo asignar el rol.',
+                icon: 'error',
+                confirmButtonColor: '#2563eb',
+                confirmButtonText: 'Aceptar'
+            });
         }
     } catch (err) {
-        alert('Ocurrió un error al intentar actualizar el usuario.');
+        console.error("Error:", err);
+        Swal.fire({
+            title: 'Error de conexión',
+            text: 'Ocurrió un error al intentar actualizar el usuario.',
+            icon: 'error',
+            confirmButtonColor: '#2563eb',
+            confirmButtonText: 'Aceptar'
+        });
     }
 }
+
 window.bloquearUsuario = bloquearUsuario;
 window.quitarRunner = quitarRunner;
 window.asignarRunner = asignarRunner;
@@ -3378,7 +3658,18 @@ async function cargarReportesAdmin(silencioso = false) {
 }
 
 async function responderReporte(idReporte, nuevoEstado) {
-    if (!confirm(`¿Confirmas marcar el reporte #${idReporte} como ${nuevoEstado}?`)) return;
+    const confirmacion = await Swal.fire({
+        title: '¿Actualizar reporte?',
+        text: `¿Confirmas marcar el reporte #${idReporte} como ${nuevoEstado}?`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#2563eb',
+        cancelButtonColor: '#64748b',
+        confirmButtonText: 'Sí, confirmar',
+        cancelButtonText: 'Cancelar'
+    });
+
+    if (!confirmacion.isConfirmed) return;
 
     try {
         const res = await fetch(`/api/admin/reportes/${idReporte}/estado`, {
@@ -3387,14 +3678,37 @@ async function responderReporte(idReporte, nuevoEstado) {
             body: JSON.stringify({ estado: nuevoEstado })
         });
         const data = await res.json();
+        
         if (data.success) {
-            alert(data.message);
-            cargarReportesAdmin();
+            Swal.fire({
+                title: '¡Reporte actualizado!',
+                text: data.message || `El reporte #${idReporte} ha sido actualizado con éxito.`,
+                icon: 'success',
+                confirmButtonColor: '#2563eb',
+                confirmButtonText: 'Aceptar'
+            });
+            
+            if (typeof cargarReportesAdmin === 'function') {
+                cargarReportesAdmin();
+            }
         } else {
-            alert('Error: ' + data.error);
+            Swal.fire({
+                title: 'Error',
+                text: data.error || 'No se pudo actualizar el reporte.',
+                icon: 'error',
+                confirmButtonColor: '#2563eb',
+                confirmButtonText: 'Aceptar'
+            });
         }
     } catch (err) {
-        alert('Ocurrió un error al actualizar el reporte.');
+        console.error("Error:", err);
+        Swal.fire({
+            title: 'Error de conexión',
+            text: 'Ocurrió un error al actualizar el reporte.',
+            icon: 'error',
+            confirmButtonColor: '#2563eb',
+            confirmButtonText: 'Aceptar'
+        });
     }
 }
 
@@ -3843,63 +4157,104 @@ window.cerrarModalNuevoProducto = function() {
 // Evento submit para nueva tienda
 document.addEventListener('submit', async (e) => {
     if (e.target.id === 'form-nueva-tienda') {
-        e.preventDefault();
-        const nombre = document.getElementById('input-nombre-tienda').value.trim();
-        const ubicacion = document.getElementById('input-ubicacion-tienda').value.trim();
+    e.preventDefault();
+    const nombre = document.getElementById('input-nombre-tienda').value.trim();
+    const ubicacion = document.getElementById('input-ubicacion-tienda').value.trim();
 
-        try {
-            const res = await fetch('/api/admin/tiendas', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ nombre, ubicacion })
+    try {
+        const res = await fetch('/api/admin/tiendas', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nombre, ubicacion })
+        });
+        const data = await res.json();
+        if (data.success) {
+            Swal.fire({
+                title: '¡Tienda agregada!',
+                text: 'La tienda ha sido agregada con éxito.',
+                icon: 'success',
+                confirmButtonColor: '#2563eb',
+                confirmButtonText: 'Aceptar'
             });
-            const data = await res.json();
-            if (data.success) {
-                alert('¡Tienda agregada con éxito!');
-                document.getElementById('form-nueva-tienda').reset();
+            document.getElementById('form-nueva-tienda').reset();
+            if (typeof cerrarModalNuevaTienda === 'function') {
                 cerrarModalNuevaTienda();
-                cargarTiendasAdmin(true);
-            } else {
-                alert('Error: ' + data.error);
             }
-        } catch (err) {
-            alert('Error de conexión al guardar la tienda.');
+            if (typeof cargarTiendasAdmin === 'function') {
+                cargarTiendasAdmin(true);
+            }
+        } else {
+            Swal.fire({
+                title: 'Error',
+                text: data.error || 'No se pudo agregar la tienda.',
+                icon: 'error',
+                confirmButtonColor: '#2563eb',
+                confirmButtonText: 'Aceptar'
+            });
         }
+    } catch (err) {
+        console.error("Error:", err);
+        Swal.fire({
+            title: 'Error de conexión',
+            text: 'Error de conexión al guardar la tienda.',
+            icon: 'error',
+            confirmButtonColor: '#2563eb',
+            confirmButtonText: 'Aceptar'
+        });
     }
+}
 
     if (e.target.id === 'form-nuevo-producto') {
-        e.preventDefault();
-        const id_tienda = document.getElementById('select-tienda-producto').value;
-        const nombre = document.getElementById('input-nombre-producto').value.trim();
-        const precio = parseFloat(document.getElementById('input-precio-producto').value);
-        const categoria = document.getElementById('select-categoria-producto').value;
-        const subcategoria = document.getElementById('input-subcategoria-producto') ? document.getElementById('input-subcategoria-producto').value.trim() : '';
-        const descripcion = document.getElementById('input-desc-producto').value.trim();
-        const imagen = document.getElementById('input-imagen-producto').value.trim();
-        const stock = parseInt(document.getElementById('input-stock-producto').value) || 0;
+    e.preventDefault();
+    const id_tienda = document.getElementById('select-tienda-producto').value;
+    const nombre = document.getElementById('input-nombre-producto').value.trim();
+    const precio = parseFloat(document.getElementById('input-precio-producto').value);
+    const categoria = document.getElementById('select-categoria-producto').value;
+    const subcategoria = document.getElementById('input-subcategoria-producto') ? document.getElementById('input-subcategoria-producto').value.trim() : '';
+    const descripcion = document.getElementById('input-desc-producto').value.trim();
+    const imagen = document.getElementById('input-imagen-producto').value.trim();
+    const stock = parseInt(document.getElementById('input-stock-producto').value) || 0;
 
-        try {
-            const res = await fetch('/api/admin/productos', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id_tienda, nombre, precio, categoria, subcategoria, descripcion, imagen, stock })
+    try {
+        const res = await fetch('/api/admin/productos', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id_tienda, nombre, precio, categoria, subcategoria, descripcion, imagen, stock })
+        });
+        const data = await res.json();
+        if (data.success) {
+            Swal.fire({
+                title: '¡Producto agregado!',
+                text: '¡Producto agregado al catálogo correctamente!',
+                icon: 'success',
+                confirmButtonColor: '#2563eb',
+                confirmButtonText: 'Aceptar'
             });
-            const data = await res.json();
-            if (data.success) {
-                alert('¡Producto agregado al catálogo correctamente!');
-                document.getElementById('form-nuevo-producto').reset();
-                cerrarModalNuevoProducto();
-                cargarTiendasAdmin(true);
-                if (typeof cargarCatalogo === 'function') cargarCatalogo();
-            } else {
-                alert('Error: ' + data.error);
-            }
-        } catch (err) {
-            alert('Error de conexión al guardar el producto.');
+            document.getElementById('form-nuevo-producto').reset();
+            if (typeof cerrarModalNuevoProducto === 'function') cerrarModalNuevoProducto();
+            if (typeof cargarTiendasAdmin === 'function') cargarTiendasAdmin(true);
+            if (typeof cargarCatalogo === 'function') cargarCatalogo();
+        } else {
+            Swal.fire({
+                title: 'Error',
+                text: data.error || 'No se pudo agregar el producto.',
+                icon: 'error',
+                confirmButtonColor: '#2563eb',
+                confirmButtonText: 'Aceptar'
+            });
         }
+    } catch (err) {
+        console.error("Error:", err);
+        Swal.fire({
+            title: 'Error de conexión',
+            text: 'Error de conexión al guardar el producto.',
+            icon: 'error',
+            confirmButtonColor: '#2563eb',
+            confirmButtonText: 'Aceptar'
+        });
     }
-    }
-);
+}
+    });
 
 // Listener para cargar Tiendas/Catálogo al hacer clic y activar refresco automático silencioso
 let intervaloTiendas = null;
