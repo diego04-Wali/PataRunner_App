@@ -1019,11 +1019,22 @@ function openChatModal(data) {
 const logoutBtn = document.getElementById('logout-btn');
 if (logoutBtn) {
     logoutBtn.addEventListener('click', () => {
-        // 1. Limpiamos SOLO la memoria de esta pestaña (sessionStorage)
-        // No usamos localStorage.clear() para no borrar el chat de la otra pestaña
+        // 1. Limpiamos AMBOS almacenamientos para borrar el token y el usuario
+        localStorage.clear();
         sessionStorage.clear();
         
-        // 2. Recargamos la página para forzar a la app a mostrar la pantalla de Login
+        // 2. Si Firebase Auth está activo, cerramos sesión en Firebase también
+        if (window.firebaseAuth) {
+            window.firebaseAuth.signOut();
+        }
+
+        // 3. Mostramos nuevamente la pantalla de Login y ocultamos la app
+        const screenLogin = document.getElementById('screen-login');
+        if (screenLogin) {
+            screenLogin.classList.remove('hidden');
+        }
+
+        // 4. Recargamos la página para limpiar variables en memoria
         window.location.reload();
     });
 }
@@ -3459,17 +3470,13 @@ if (btnModPedidos) {
 
     // Funcionalidad del botón "Salir" del Administrador
     document.addEventListener('click', (e) => {
-        const adminLogoutBtn = e.target.closest('#admin-logout-btn');
-        if (adminLogoutBtn) {
-            const realLogout = document.getElementById('logout-btn');
-            if (realLogout) {
-                realLogout.click();
-            } else {
-                sessionStorage.clear();
-                window.location.reload();
-            }
-        }
-    });
+    const adminLogoutBtn = e.target.closest('#admin-logout-btn');
+    if (adminLogoutBtn) {
+        localStorage.clear();
+        sessionStorage.clear();
+        window.location.reload();
+    }
+});
 
     // ==========================================
 // MÓDULO 4 ADMIN: KPIS Y ESTADÍSTICAS
