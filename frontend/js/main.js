@@ -4282,7 +4282,18 @@ window.toggleProductosTienda = function(idTienda) {
 
 // Eliminar producto desde el panel de admin
 window.eliminarProductoAdmin = async function(idProducto) {
-    if (!confirm(`¿Estás seguro de que deseas eliminar este producto del catálogo?`)) {
+    const confirmacion = await Swal.fire({
+        title: '¿Eliminar producto?',
+        text: '¿Estás seguro de que deseas eliminar este producto del catálogo?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444', // Rojo de advertencia/eliminación
+        cancelButtonColor: '#64748b',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+    });
+
+    if (!confirmacion.isConfirmed) {
         return;
     }
 
@@ -4293,15 +4304,34 @@ window.eliminarProductoAdmin = async function(idProducto) {
 
         const data = await res.json();
         if (res.ok && data.success) {
-            alert('¡Producto eliminado correctamente!');
-            cargarTiendasAdmin(); // Recargar el panel admin
+            Swal.fire({
+                title: '¡Eliminado!',
+                text: 'El producto ha sido eliminado correctamente.',
+                icon: 'success',
+                confirmButtonColor: '#2563eb',
+                confirmButtonText: 'Aceptar'
+            });
+
+            if (typeof cargarTiendasAdmin === 'function') cargarTiendasAdmin(); // Recargar el panel admin
             if (typeof cargarCatalogo === 'function') cargarCatalogo(); // Recargar el catálogo del alumno
         } else {
-            alert('Error al eliminar: ' + (data.error || 'No se pudo eliminar el producto'));
+            Swal.fire({
+                title: 'Error al eliminar',
+                text: data.error || 'No se pudo eliminar el producto.',
+                icon: 'error',
+                confirmButtonColor: '#2563eb',
+                confirmButtonText: 'Aceptar'
+            });
         }
     } catch (err) {
         console.error("Error al eliminar producto:", err);
-        alert('Ocurrió un error de conexión al intentar eliminar el producto.');
+        Swal.fire({
+            title: 'Error de conexión',
+            text: 'Ocurrió un error de conexión al intentar eliminar el producto.',
+            icon: 'error',
+            confirmButtonColor: '#2563eb',
+            confirmButtonText: 'Aceptar'
+        });
     }
 };
 // --- FUNCIONES PARA EL MODAL DE REPORTES ---
