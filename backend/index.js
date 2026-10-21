@@ -87,13 +87,12 @@ app.get('/api/usuarios/confirmar-cuenta/:token', async (req, res) => {
 
         const user = pendiente.rows[0];
 
-        // Insertar formalmente en la tabla real de usuarios
+        // Insertar formalmente en la tabla real de usuarios marcando verificado = true
         await pool.query(
-            `INSERT INTO usuarios (id_rol, nombre_completo, correo_institucional, codigo_alumno, carrera)
-             VALUES (1, $1, $2, $3, $4)`,
+            `INSERT INTO usuarios (id_rol, nombre_completo, correo_institucional, codigo_alumno, carrera, verificado)
+             VALUES (1, $1, $2, $3, $4, true)`,
             [user.nombre_completo, user.correo_institucional, user.codigo_alumno, user.carrera]
         );
-
         // Eliminar de la tabla temporal de pendientes
         await pool.query('DELETE FROM registros_pendientes WHERE id_pendiente = $1', [user.id_pendiente]);
 
@@ -861,8 +860,8 @@ app.get('/api/admin/pedidos', async (req, res) => {
 // ----------------------------------------
 app.get('/api/admin/usuarios', async (req, res) => {
     try {
-        // Garantizar que la columna is_blocked exista en la tabla usuarios
         await pool.query('ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS is_blocked BOOLEAN DEFAULT false;');
+        await pool.query('ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS verificado BOOLEAN DEFAULT false;');
 
         const query = `
             SELECT 
@@ -871,7 +870,8 @@ app.get('/api/admin/usuarios', async (req, res) => {
                 nombre_completo, 
                 carrera, 
                 id_rol, 
-                COALESCE(is_blocked, false) AS is_blocked
+                COALESCE(is_blocked, false) AS is_blocked,
+                COALESCE(verificado, false) AS verificado
             FROM usuarios
             ORDER BY id_rol DESC, nombre_completo ASC
         `;
