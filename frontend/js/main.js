@@ -2879,6 +2879,7 @@ activateRunnerBtn.addEventListener('click', async () => {
         activateRunnerBtn.disabled = false;
         activateRunnerBtn.textContent = "Activar modo runner";
 }
+});
 
 async function cargarHistorialRunner() {
     const contenedor = document.getElementById('contenedor-historial-runner');
@@ -4325,4 +4326,3 @@ async function sendChatMessage() {
     } catch (err) {
         console.error("Error en petición de chat:", err);
     }
-}
