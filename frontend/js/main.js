@@ -23,33 +23,31 @@ window.fetch = function(url, config) {
   let cart = []; // { id, category, name, price, qty }
 // Destrabar visualmente el botón e iniciar sesión si existe en localStorage
 window.addEventListener('DOMContentLoaded', () => {
-    // Restaurar sesión desde localStorage a sessionStorage si existe
+    // 1. Restaurar sesión completa (Usuario y Token) hacia sessionStorage
     const usuarioGuardado = localStorage.getItem('usuario') || sessionStorage.getItem('usuario');
     const tokenGuardado = localStorage.getItem('token') || sessionStorage.getItem('token');
+    const userIdGuardado = localStorage.getItem('userId') || sessionStorage.getItem('userId');
 
     if (usuarioGuardado) {
+        // Copiamos a sessionStorage para garantizar compatibilidad con todo el backend
         sessionStorage.setItem('usuario', usuarioGuardado);
         if (tokenGuardado) sessionStorage.setItem('token', tokenGuardado);
-        
-        // Ocultar pantalla de inicio de sesión
+        if (userIdGuardado) sessionStorage.setItem('userId', userIdGuardado);
+
+        // Ocultar pantalla de login
         const screenLogin = document.getElementById('screen-login');
         if (screenLogin) {
             screenLogin.classList.add('hidden');
         }
-
-        try {
-            const userData = JSON.parse(usuarioGuardado);
-            console.log("Sesión restaurada correctamente para:", userData.nombre_completo || userData.codigo);
-        } catch (e) {
-            console.error("Error al parsear usuario:", e);
-        }
     }
 
-    // Cargar perfil y estado de Runner
+    // 2. Cargar datos del perfil de usuario
     cargarDatosPerfil();
 
+    // 3. Restaurar estado de Runner
     const isRunnerStatus = localStorage.getItem('isRunnerStatus') === 'true' || sessionStorage.getItem('isRunnerStatus') === 'true';
     if (isRunnerStatus) {
+        sessionStorage.setItem('isRunnerStatus', 'true');
         const btnRunner = document.getElementById("role-btn-runner");
         if (btnRunner) {
             btnRunner.disabled = false;
@@ -61,6 +59,7 @@ window.addEventListener('DOMContentLoaded', () => {
             applyBtn.disabled = true;
             applyBtn.classList.remove("bg-blue-600");
             applyBtn.classList.add("bg-emerald-600");
+            applyBtn.textContent = "✓ Ya eres Runner";
         });
     }
 });
