@@ -1,4 +1,5 @@
 // --- INTERCEPTOR GLOBAL PARA RENDER ---
+
 const API_URL = 'https://patarunner-app.onrender.com';
 const originalFetch = window.fetch.bind(window);
 
@@ -490,18 +491,38 @@ cart.push({ id: "favor_personalizado", category: "otro", name: text, price, qty:
     // --- NUEVAS ALERTAS DE VALIDACIÓN ---
     const feeAlert = parseFloat(cartFeeInput.value);
     const locAlert = cartLocationInput.value.trim();
-    
+
     if (cart.length === 0) {
-        alert("Agrega al menos un producto a tu pedido.");
-        return; 
+    Swal.fire({
+        title: 'Carrito vacío',
+        text: 'Agrega al menos un producto a tu pedido.',
+        icon: 'warning',
+        confirmButtonColor: '#2563eb',
+        confirmButtonText: 'Entendido'
+    });
+    return; 
     }
+
     if (locAlert.length === 0) {
-        alert("Por favor, ingresa la ubicación de entrega (ej: Torre B, Piso 5).");
-        return;
+    Swal.fire({
+        title: 'Ubicación requerida',
+        text: 'Por favor, ingresa la ubicación de entrega (ej: Torre B, Piso 5).',
+        icon: 'warning',
+        confirmButtonColor: '#2563eb',
+        confirmButtonText: 'Entendido'
+    });
+    return;
     }
+
     if (isNaN(feeAlert) || feeAlert <= 0) {
-        alert("Por favor, ingresa una tarifa válida para tu Runner.");
-        return;
+    Swal.fire({
+        title: 'Tarifa inválida',
+        text: 'Por favor, ingresa una tarifa válida para tu Runner.',
+        icon: 'warning',
+        confirmButtonColor: '#2563eb',
+        confirmButtonText: 'Entendido'
+    });
+    return;
     }
     // ------------------------------------
 
@@ -672,7 +693,7 @@ cart.push({ id: "favor_personalizado", category: "otro", name: text, price, qty:
     });
   });
 
-  submitRatingBtn.addEventListener("click", async () => {
+submitRatingBtn.addEventListener("click", async () => {
     if (selectedRating === 0 || !window.pedidoCalificarActual) return;
     
     const textoOriginal = submitRatingBtn.textContent;
@@ -680,34 +701,50 @@ cart.push({ id: "favor_personalizado", category: "otro", name: text, price, qty:
     submitRatingBtn.textContent = "Enviando...";
 
     try {
-        const respuesta = await fetch(`https://patarunner-app.onrender.com/api/pedidos/${window.pedidoCalificarActual.id_pedido}/calificar`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                calificacion: selectedRating,
-                id_runner: window.pedidoCalificarActual.id_runner
-            })
+    const respuesta = await fetch(`https://patarunner-app.onrender.com/api/pedidos/${window.pedidoCalificarActual.id_pedido}/calificar`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            calificacion: selectedRating,
+            id_runner: window.pedidoCalificarActual.id_runner
+        })
+    });
+
+    if (respuesta.ok) {
+        Swal.fire({
+            title: '¡Muchas gracias!',
+            text: 'Tu calificación ha sido registrada con éxito.',
+            icon: 'success',
+            confirmButtonColor: '#2563eb',
+            confirmButtonText: 'Aceptar'
         });
 
-        if (respuesta.ok) {
-            alert("¡Gracias por calificar a tu Runner!");
-            
-            ratingModal.classList.add("hidden");
-            ratingModal.classList.remove("flex");
-            window.pedidoCalificarActual = null;
-            
-            // Refrescamos el historial para que desaparezca el botón y salga "Ya calificado"
-            if (typeof cargarHistorial === 'function') cargarHistorial();
-        } else {
-            alert("Error al enviar la calificación.");
-        }
-    } catch (error) {
-        console.error("Error:", error);
-        alert("Ocurrió un problema de conexión.");
-    } finally {
-        submitRatingBtn.disabled = false;
-        submitRatingBtn.textContent = textoOriginal;
+        ratingModal.classList.add("hidden");
+        ratingModal.classList.remove("flex");
+        window.pedidoCalificarActual = null;
+
+        // Refrescamos el historial para que desaparezca el botón y salga "Ya calificado"
+        if (typeof cargarHistorial === 'function') cargarHistorial();
+    } else {
+        Swal.fire({
+            title: 'Error',
+            text: 'No se pudo enviar la calificación. Inténtalo de nuevo.',
+            icon: 'error',
+            confirmButtonColor: '#2563eb'
+        });
     }
+} catch (error) {
+    console.error("Error:", error);
+    Swal.fire({
+        title: 'Error de conexión',
+        text: 'Ocurrió un problema de conexión al calificar.',
+        icon: 'error',
+        confirmButtonColor: '#2563eb'
+    });
+} finally {
+    submitRatingBtn.disabled = false;
+    submitRatingBtn.textContent = textoOriginal;
+}
 });
 
 // NUEVO: Función global para abrir el modal desde el historial
@@ -1106,72 +1143,106 @@ window.showTab = showTab;
 
 if (btnPublicar) {
     btnPublicar.addEventListener("click", async () => {
-        // Capturar los valores de los inputs que creamos en el HTML
-       // Capturar los valores de los inputs que creamos en el HTML
-const ubicacion = document.getElementById("cart-location-input").value.trim();
-const tarifa = document.getElementById("cart-fee-input").value.trim();
-const metodoPago = document.getElementById("cart-payment-input").value; // <-- NUEVO: Leemos el HTML
+        // Capturar los valores de los inputs del HTML
+        const ubicacion = document.getElementById("cart-location-input").value.trim();
+        const tarifa = document.getElementById("cart-fee-input").value.trim();
+        const metodoPago = document.getElementById("cart-payment-input").value;
 
-if (!ubicacion || !tarifa) {
-    alert("Por favor, ingresa la ubicación de entrega y la tarifa para tu Runner.");
-    return;
-}
-// Cambiar el estado del botón mientras carga
-const textoOriginal = btnPublicar.innerText;
-btnPublicar.innerText = "Publicando...";
-btnPublicar.disabled = true;
+        if (!ubicacion || !tarifa) {
+            Swal.fire({
+                title: 'Campos incompletos',
+                text: 'Por favor, ingresa la ubicación de entrega y la tarifa para tu Runner.',
+                icon: 'warning',
+                confirmButtonColor: '#2563eb',
+                customClass: {
+                    popup: 'rounded-3xl'
+                }
+            });
+            return;
+        }
 
-try {
-        // 1. NUEVO: Buscamos si el alumno agregó un "Otro" en su carrito
-        const favorPersonalizado = cart.find(item => item.id === "favor_personalizado");
-        
-        // Si lo encuentra, guardamos su texto y precio. Si no, mandamos null (vacío)
-        const textoFavor = favorPersonalizado ? favorPersonalizado.name : null;
-        const precioFavor = favorPersonalizado ? favorPersonalizado.price : null;
+        // Cambiar el estado del botón mientras carga
+        const textoOriginal = btnPublicar.innerText;
+        btnPublicar.innerText = "Publicando...";
+        btnPublicar.disabled = true;
 
-        const respuesta = await fetch('/api/pedidos', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                id_cliente: sessionStorage.getItem('userId'),
-                ubicacion_entrega: ubicacion,
-                tarifa_entrega: parseFloat(tarifa),
-                metodo_pago: metodoPago,
-                descripcion_pedido: textoFavor,   // <-- Enviamos el texto a tu PostgreSQL
-                costo_aproximado: precioFavor,    // <-- Enviamos el precio a tu PostgreSQL
-                carrito: cart.map(item => ({
-                    id_producto: item.id,
-                    cantidad: item.qty,
-                    precio_unitario: item.price,
-                    subtotal: item.price * item.qty
-                }))
-            })
-        });
+        try {
+            // Buscamos si el alumno agregó un "Otro" en su carrito
+            const favorPersonalizado = cart.find(item => item.id === "favor_personalizado");
+            
+            const textoFavor = favorPersonalizado ? favorPersonalizado.name : null;
+            const precioFavor = favorPersonalizado ? favorPersonalizado.price : null;
 
-            const datos = await respuesta.json();
+            const respuesta = await fetch('/api/pedidos', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    id_cliente: sessionStorage.getItem('userId'),
+                    ubicacion_entrega: ubicacion,
+                    tarifa_entrega: parseFloat(tarifa),
+                    metodo_pago: metodoPago,
+                    descripcion_pedido: textoFavor,
+                    costo_aproximado: precioFavor,
+                    carrito: cart.map(item => ({
+                        id_producto: item.id,
+                        cantidad: item.qty,
+                        precio_unitario: item.price,
+                        subtotal: item.price * item.qty
+                    }))
+                })
+            });
+
+            const datos = await respuesta.json(); // <-- Variable 'datos'
 
             if (respuesta.ok) {
-    // Éxito: Mostrar alerta y cerrar el carrito
-    alert(datos.mensaje);
-    cargarMisPedidos();
+                // Éxito: Mostrar alerta elegante con SweetAlert2
+                Swal.fire({
+                    title: '¡Pedido publicado!',
+                    text: datos.mensaje || 'Esperando a que un Runner acepte tu entrega...', // <-- Corregido a datos.mensaje
+                    icon: 'success',
+                    confirmButtonColor: '#2563eb',
+                    confirmButtonText: 'Entendido',
+                    customClass: {
+                        popup: 'rounded-3xl'
+                    }
+                });
 
-    // REFRESCAR EL CATÁLOGO Y EL STOCK EN TIEMPO REAL
-    if (typeof cargarCatalogo === 'function') await cargarCatalogo();
-    if (typeof cargarTiendasAdmin === 'function') await cargarTiendasAdmin(true);
+                if (typeof cargarMisPedidos === 'function') cargarMisPedidos();
 
-    document.getElementById('cart-modal').classList.add('hidden');
-                // Limpiar los campos para el próximo pedido
+                // Refrescar el catálogo y el stock en tiempo real
+                if (typeof cargarCatalogo === 'function') await cargarCatalogo();
+                if (typeof cargarTiendasAdmin === 'function') await cargarTiendasAdmin(true);
+
+                document.getElementById('cart-modal').classList.add('hidden');
+                
+                // Limpiar campos
                 document.getElementById("cart-location-input").value = "";
                 document.getElementById("cart-fee-input").value = "";
                 
             } else {
-                alert("Error: " + datos.error);
+                Swal.fire({
+                    title: 'Error al publicar',
+                    text: datos.error || 'No se pudo procesar la solicitud.',
+                    icon: 'error',
+                    confirmButtonColor: '#2563eb',
+                    customClass: {
+                        popup: 'rounded-3xl'
+                    }
+                });
             }
         } catch (error) {
             console.error("Error al conectar con el servidor:", error);
-            alert("Ocurrió un error al intentar publicar el pedido. Verifica que tu backend esté encendido.");
+            Swal.fire({
+                title: 'Error de conexión',
+                text: 'Ocurrió un error al intentar publicar el pedido. Verifica que tu backend esté encendido.',
+                icon: 'error',
+                confirmButtonColor: '#2563eb',
+                customClass: {
+                    popup: 'rounded-3xl'
+                }
+            });
         } finally {
             // Restaurar el botón a la normalidad
             btnPublicar.innerText = textoOriginal;
@@ -1294,21 +1365,37 @@ cargarPedidosDisponibles();
 
 // --- ACEPTAR UN PEDIDO (FUNCIÓN PARA EL RUNNER) ---
 async function aceptarPedido(id_pedido) {
-    // Pedimos confirmación antes de aceptar
-    if (!confirm(`¿Estás seguro de que quieres aceptar el pedido #${id_pedido}?`)) {
+    // 1. Confirmación interactiva con SweetAlert2
+    const confirmacion = await Swal.fire({
+        title: '¿Aceptar pedido?',
+        text: `¿Estás seguro de que quieres aceptar el pedido #${id_pedido}?`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#2563eb',
+        cancelButtonColor: '#64748b',
+        confirmButtonText: 'Sí, aceptar',
+        cancelButtonText: 'Cancelar'
+    });
+
+    if (!confirmacion.isConfirmed) {
         return;
     }
 
     try {
-        // 1. Extraemos tu información real de la memoria del navegador
+        // 2. Extraemos la información real de la memoria del navegador
         const userStr = sessionStorage.getItem('usuario');
         if (!userStr) {
-            alert("Error: No se encontró la sesión del usuario. Vuelve a iniciar sesión.");
+            Swal.fire({
+                title: 'Sesión expirada',
+                text: 'No se encontró la sesión del usuario. Vuelve a iniciar sesión.',
+                icon: 'warning',
+                confirmButtonColor: '#2563eb'
+            });
             return;
         }
         const userData = JSON.parse(userStr);
 
-        // 2. Hacemos el PUT usando tu ID real (userData.id_usuario)
+        // 3. Petición PUT al servidor
         const respuesta = await fetch(`/api/pedidos/${id_pedido}`, {
             method: 'PUT',
             headers: {
@@ -1316,7 +1403,7 @@ async function aceptarPedido(id_pedido) {
                 'ngrok-skip-browser-warning': 'true'
             },
             body: JSON.stringify({
-                id_runner: userData.id_usuario, // Aquí está la magia dinámica
+                id_runner: userData.id_usuario,
                 estado: 'En Camino'
             })
         });
@@ -1324,18 +1411,34 @@ async function aceptarPedido(id_pedido) {
         const datos = await respuesta.json();
 
         if (respuesta.ok) {
-            alert("¡Pedido aceptado con éxito!");
-            
-            // Volvemos a cargar la lista. Como el pedido ya no dice "Pendiente", desaparecerá de esta pantalla.
-            cargarPedidosDisponibles();
-            cargarEntregasActivas();
-            
+            Swal.fire({
+                title: '¡Pedido asignado!',
+                text: 'Has aceptado el pedido con éxito.',
+                icon: 'success',
+                confirmButtonColor: '#2563eb',
+                confirmButtonText: 'Aceptar'
+            });
+
+            // Refrescamos las vistas del Runner
+            if (typeof cargarPedidosDisponibles === 'function') cargarPedidosDisponibles();
+            if (typeof cargarEntregasActivas === 'function') cargarEntregasActivas();
+
         } else {
-            alert("Error al aceptar el pedido: " + datos.error);
+            Swal.fire({
+                title: 'Error al aceptar',
+                text: datos.error || 'No se pudo aceptar el pedido.',
+                icon: 'error',
+                confirmButtonColor: '#2563eb'
+            });
         }
     } catch (error) {
         console.error("Error al conectar con el servidor:", error);
-        alert("Ocurrió un error de conexión.");
+        Swal.fire({
+            title: 'Error de conexión',
+            text: 'Ocurrió un error al intentar conectar con el servidor.',
+            icon: 'error',
+            confirmButtonColor: '#2563eb'
+        });
     }
 }
 
