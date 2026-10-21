@@ -13,7 +13,7 @@ window.fetch = function(...args) {
 };
   // Importamos Firebase desde su CDN oficial
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, sendPasswordResetEmail, createUserWithEmailAndPassword, sendEmailVerification, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword,sendPasswordResetEmail, createUserWithEmailAndPassword, sendEmailVerification } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
   const firebaseConfig = {
     apiKey: "AIzaSyBzWJYQIzZMkE_TzfgUtRRhh9t_ycIorIk",
     authDomain: "patarunner-1b348.firebaseapp.com",
@@ -112,11 +112,10 @@ if (loginBtn) {
             // 7. Procesamos la respuesta de tu base de datos
             if (response.ok) {
                 console.log("Acceso concedido:", data);
-                // Guardamos en localStorage para que la sesión no se pierda al presionar F5
-localStorage.setItem('token', token);
-localStorage.setItem('usuario', JSON.stringify(data.usuario));
-localStorage.setItem('userId', data.usuario.id_usuario);
-localStorage.setItem('isRunnerStatus', 'false');
+                // Si tu variable de respuesta se llama "data":
+sessionStorage.setItem('usuario', JSON.stringify(data.usuario));
+                sessionStorage.setItem('userId', data.usuario.id_usuario);
+                sessionStorage.setItem('isRunnerStatus', 'false');
           if (typeof window.aplicarEstadoRunner === 'function') {
         window.aplicarEstadoRunner();
     }      
@@ -406,24 +405,5 @@ window.recuperarContrasenaModal = async function() {
         } else {
             alert('No se pudo enviar el correo de recuperación: ' + error.message);
         }
-    }// --- RESTAURAR SESIÓN AL RECARGAR (F5) ---
-onAuthStateChanged(auth, async (user) => {
-    if (user) {
-        // Si Firebase detecta que el usuario sigue logueado tras recargar:
-        const usuarioGuardado = localStorage.getItem('usuario');
-        if (usuarioGuardado) {
-            const usuario = JSON.parse(usuarioGuardado);
-            console.log("Sesión restaurada para:", usuario);
-            
-            // Ocultamos la pantalla de login automáticamente
-            if (screenLogin) {
-                screenLogin.classList.add("hidden");
-            }
-            
-            if (typeof cargarMisPedidos === 'function') {
-                cargarMisPedidos();
-            }
-        }
     }
-});
 };

@@ -19,66 +19,27 @@ window.fetch = function(url, config) {
   // ===================== ESTADO GENERAL =====================
   let orderState = "idle"; // idle | searching | assigned
   let activeOrder = null;
- let isRunner = (localStorage.getItem('isRunnerStatus') === 'true' || sessionStorage.getItem('isRunnerStatus') === 'true');
+ let isRunner = (sessionStorage.getItem('isRunnerStatus') === 'true');
   let cart = []; // { id, category, name, price, qty }
-// Destrabar visualmente el botón e iniciar sesión si existe en localStorage
+// Destrabar visualmente el botón si ya es Runner al cargar la página
 window.addEventListener('DOMContentLoaded', () => {
-    // 1. Restaurar sesión completa (Usuario y Token) hacia sessionStorage y localStorage
-    const usuarioGuardado = localStorage.getItem('usuario') || sessionStorage.getItem('usuario');
-    const tokenGuardado = localStorage.getItem('token') || sessionStorage.getItem('token');
-    const userIdGuardado = localStorage.getItem('userId') || sessionStorage.getItem('userId');
-
-    if (usuarioGuardado) {
-        sessionStorage.setItem('usuario', usuarioGuardado);
-        if (tokenGuardado) sessionStorage.setItem('token', tokenGuardado);
-        if (userIdGuardado) sessionStorage.setItem('userId', userIdGuardado);
-
-        const screenLogin = document.getElementById('screen-login');
-        if (screenLogin) {
-            screenLogin.classList.add('hidden');
-        }
-    }
-
-    // 2. Cargar datos del perfil en pantalla
-    cargarDatosPerfil();
-
-    // 3. Verificar si el usuario ya es Runner (por base de datos o por memoria)
-    let userObj = null;
-    try {
-        if (usuarioGuardado) userObj = JSON.parse(usuarioGuardado);
-    } catch (e) {}
-
-    const esRunner = (userObj && (userObj.id_rol === 2 || userObj.es_runner)) ||
-                     localStorage.getItem('isRunnerStatus') === 'true' ||
-                     sessionStorage.getItem('isRunnerStatus') === 'true';
-
-    if (esRunner) {
-        // Marcar estado runner en ambos almacenamientos
-        localStorage.setItem('isRunnerStatus', 'true');
-        sessionStorage.setItem('isRunnerStatus', 'true');
-
-        // Habilitar botón Runner de la barra superior
+  cargarDatosPerfil();
+    if (isRunner) {
         const btnRunner = document.getElementById("role-btn-runner");
         if (btnRunner) {
+            // 1. Quitamos el bloqueo
             btnRunner.disabled = false;
-            btnRunner.classList.remove("opacity-50", "cursor-not-allowed", "text-slate-400");
-            btnRunner.classList.add("text-slate-700", "cursor-pointer", "hover:bg-slate-200");
+            btnRunner.classList.remove("opacity-50", "cursor-not-allowed");
+            
+            // 2. Le quitamos el candadito
+            btnRunner.innerHTML = "⚡ Runner";
         }
-
-        // OCULTAR la tarjeta "Gana dinero extra siendo Runner" en Inicio
-        document.querySelectorAll('button, div').forEach(el => {
-            if (el.textContent && el.textContent.includes('Gana dinero extra siendo Runner')) {
-                const parentCard = el.closest('div.border') || el.closest('button') || el;
-                if (parentCard) parentCard.style.display = 'none';
-            }
-        });
-
-        // Deshabilitar/actualizar botones de postulación dentro de modales
-        document.querySelectorAll("#btn-postular-runner").forEach(applyBtn => {
+        
+        // 3. NUEVO: Pintamos TODOS los botones de verde inmediatamente al abrir la web
+document.querySelectorAll("#btn-postular-runner").forEach(applyBtn => {
             applyBtn.disabled = true;
             applyBtn.classList.remove("bg-blue-600");
             applyBtn.classList.add("bg-emerald-600");
-            applyBtn.textContent = "✓ Ya eres Runner";
         });
     }
 });
@@ -1035,22 +996,11 @@ function openChatModal(data) {
 const logoutBtn = document.getElementById('logout-btn');
 if (logoutBtn) {
     logoutBtn.addEventListener('click', () => {
-        // 1. Limpiamos AMBOS almacenamientos para borrar el token y el usuario
-        localStorage.clear();
+        // 1. Limpiamos SOLO la memoria de esta pestaña (sessionStorage)
+        // No usamos localStorage.clear() para no borrar el chat de la otra pestaña
         sessionStorage.clear();
         
-        // 2. Si Firebase Auth está activo, cerramos sesión en Firebase también
-        if (window.firebaseAuth) {
-            window.firebaseAuth.signOut();
-        }
-
-        // 3. Mostramos nuevamente la pantalla de Login y ocultamos la app
-        const screenLogin = document.getElementById('screen-login');
-        if (screenLogin) {
-            screenLogin.classList.remove('hidden');
-        }
-
-        // 4. Recargamos la página para limpiar variables en memoria
+        // 2. Recargamos la página para forzar a la app a mostrar la pantalla de Login
         window.location.reload();
     });
 }
@@ -2354,37 +2304,36 @@ if (inputRegistroCodigo) {
         e.target.value = codigo; 
     });
 }
-window.cargarDatosPerfil = async function() {
-    const usuarioStr = localStorage.getItem('usuario') || sessionStorage.getItem('usuario');
-    if (!usuarioStr) return;
-
-    try {
-        const usuario = JSON.parse(usuarioStr);
-        const nombreCompleto = usuario.nombre_completo || usuario.nombres || usuario.nombre || 'Estudiante';
+function cargarDatosPerfil() {
+    // 1. Extraemos el objeto del usuario de la memoria
+    const userStr = sessionStorage.getItem('usuario'); 
+    
+    if (userStr) {
+        const userData = JSON.parse(userStr);
+        const nombreCompleto = userData.nombre_completo; // Tomará "Juan Diego Terrones Toccas"
         
-        const editNombre = document.getElementById('edit-nombre');
-        const editCarrera = document.getElementById('edit-carrera');
-        const displayName = document.getElementById('profile-display-name');
-        const displayCarrera = document.getElementById('profile-display-carrera');
-        const imgPreview = document.getElementById('profile-img-preview');
-
-        if (editNombre) editNombre.value = nombreCompleto;
-        if (editCarrera) editCarrera.value = usuario.carrera || '';
-        if (displayName) displayName.textContent = nombreCompleto;
-        if (displayCarrera) displayCarrera.textContent = usuario.carrera || 'Estudiante UTP';
+        // 2. Generamos las iniciales automáticas (Ej: Juan Diego -> JD)
+        const partes = nombreCompleto.split(' ');
+        let iniciales = partes[0][0]; 
+        if (partes.length > 1) {
+            iniciales += partes[1][0]; 
+        }
         
-        if (imgPreview && usuario.foto_perfil) {
-            imgPreview.src = usuario.foto_perfil;
-        }
-
-        // Cargar fotos de la galería del usuario
-        if (usuario.id_usuario) {
-            cargarGaleriaFotos(usuario.id_usuario);
-        }
-    } catch (e) {
-        console.error("Error al cargar perfil:", e);
+        // 3. Inyectamos los datos en tu HTML
+        const profileInitials = document.getElementById('profile-initials');
+        const profileName = document.getElementById('profile-name');
+        const profileCareer = document.getElementById('profile-career');
+        const profileEmail = document.getElementById('profile-email');
+        
+        if (profileInitials) profileInitials.textContent = iniciales.toUpperCase();
+        if (profileName) profileName.textContent = nombreCompleto;
+        
+        // Podemos dejar tu carrera fija por ahora si no viene en el login
+if (profileCareer) profileCareer.textContent = userData.carrera;
+        // Usamos el correo si viene en la base de datos, o uno simulado
+      if (profileEmail) profileEmail.textContent = userData.correo_institucional;
     }
-};
+}
 // =================================================================
 // VIGILANTE SILENCIOSO: DETECTAR ESTADOS Y CANCELACIONES / ENTREGAS
 // =================================================================
@@ -2797,89 +2746,97 @@ if (runnerCheckbox && activateRunnerBtn) {
         }
     });
 
-  // 3. CONECTANDO A TU BACKEND REAL
-activateRunnerBtn.addEventListener('click', async () => {
-    // Leemos el usuario y el token de forma segura priorizando localStorage o sessionStorage
-    const userStr = localStorage.getItem('usuario') || sessionStorage.getItem('usuario');
-    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+   // 3. CONECTANDO A TU BACKEND REAL
+    activateRunnerBtn.addEventListener('click', async () => {
+        const userStr = sessionStorage.getItem('usuario');
+        const token = sessionStorage.getItem('token');
 
-    if (!userStr) {
-        alert("Error de sesión. Vuelve a iniciar sesión.");
-        return;
-    }
-
-    let userData = JSON.parse(userStr);
-
-    // Consultar el estado más reciente directamente desde la base de datos
-    try {
-        const resEstado = await fetch(`/api/usuarios/estado/${userData.id_usuario}`);
-        if (resEstado.ok) {
-            const dataEstado = await resEstado.json();
-            userData.bloqueado_runner = dataEstado.bloqueado_runner;
-            userData.id_rol = dataEstado.id_rol;
-            
-            // Guardamos la actualización en ambos almacenes
-            localStorage.setItem('usuario', JSON.stringify(userData));
-            sessionStorage.setItem('usuario', JSON.stringify(userData));
-        }
-    } catch (e) {
-        console.error("No se pudo verificar el estado en vivo:", e);
-    }
-
-    // SI SIGUE RESTRINGIDO EN LA BASE DE DATOS
-    if (userData.bloqueado_runner) {
-        alert("Un administrador ha revocado y restringido tu acceso para registrarte como Runner.");
-        return;
-    }
-
-    activateRunnerBtn.disabled = true;
-    activateRunnerBtn.textContent = "Activando...";
-
-    try {
-        const headers = { 'Content-Type': 'application/json' };
-        if (token) {
-            headers['Authorization'] = `Bearer ${token}`;
+        if (!userStr || !token) {
+            alert("Error de sesión. Vuelve a iniciar sesión.");
+            return;
         }
 
-        const respuesta = await fetch('/api/usuarios/activar-runner', {
-            method: 'PUT',
-            headers: headers,
-            body: JSON.stringify({ id_usuario: userData.id_usuario })
-        });
+        let userData = JSON.parse(userStr);
 
-        if (respuesta.ok) {
-            // Actualizamos la sesión con el nuevo rol
-            userData.id_rol = 2;
-            localStorage.setItem('usuario', JSON.stringify(userData));
-            sessionStorage.setItem('usuario', JSON.stringify(userData));
-            localStorage.setItem('isRunnerStatus', 'true');
-            sessionStorage.setItem('isRunnerStatus', 'true');
-
-            // Buscar el botón en la barra superior
-            const btnRunnerTop = document.getElementById('role-btn-runner');
-            if (btnRunnerTop) {
-                btnRunnerTop.disabled = false;
-                btnRunnerTop.classList.remove('text-slate-400', 'opacity-50', 'cursor-not-allowed');
-                btnRunnerTop.classList.add('text-slate-700', 'cursor-pointer', 'hover:bg-slate-200');
+        // 🔄 Consultar el estado más reciente directamente desde la base de datos
+        try {
+            const resEstado = await fetch(`/api/usuarios/estado/${userData.id_usuario}`);
+            if (resEstado.ok) {
+                const dataEstado = await resEstado.json();
+                userData.bloqueado_runner = dataEstado.bloqueado_runner;
+                userData.id_rol = dataEstado.id_rol;
+                sessionStorage.setItem('usuario', JSON.stringify(userData));
             }
+        } catch (e) {
+            console.error("No se pudo verificar el estado en vivo:", e);
+        }
 
-            alert("¡Felicidades! Ya eres Runner.");
+        // 🚨 SI SIGUE RESTRINGIDO EN LA BASE DE DATOS
+        if (userData.bloqueado_runner) {
+            alert("Un administrador ha revocado y restringido tu acceso para registrarte como Runner.");
+            return;
+        }
 
-            if (typeof setActiveRole === 'function') {
-                setActiveRole('alumno');
+        activateRunnerBtn.disabled = true;
+        activateRunnerBtn.textContent = "Activando...";
+
+        try {
+            const respuesta = await fetch(`/api/usuarios/activar-runner`, {
+                method: 'PUT',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (respuesta.ok) {
+                // Actualizamos la sesión local con el nuevo rol
+                userData.id_rol = 2; 
+                sessionStorage.setItem('usuario', JSON.stringify(userData));
+                
+                // Cerramos el modal
+                document.getElementById('postular-runner').classList.add('hidden');
+                document.getElementById('postular-runner').style.display = 'none';
+                
+                // Ejecutamos la función que ahora sí existe
+                aplicarEstadoRunner();
+                
+// Buscar el botón en la barra superior
+const btnRunnerTop = document.getElementById('role-btn-runner');
+
+if (btnRunnerTop) {
+    // 1. Quitarle el bloqueo nativo
+    btnRunnerTop.disabled = false;
+    
+    // 2. Quitar los colores de "bloqueado" (los que tienes en la línea 29)
+    btnRunnerTop.classList.remove('text-slate-400', 'opacity-50', 'cursor-not-allowed');
+    
+    // 3. Ponerle colores de botón normal y que cambie el cursor al pasar el mouse
+    btnRunnerTop.classList.add('text-slate-700', 'cursor-pointer', 'hover:bg-slate-200');
+}
+
+                alert("¡Felicidades! Ya eres Runner.");
+                // 1. Actualizamos la memoria del navegador al instante sin recargar
+        isRunner = true;
+        sessionStorage.setItem('isRunnerStatus', 'true');
+        
+        // 2. Llevamos al usuario de regreso a la pantalla principal (Inicio)
+        if (typeof setActiveRole === 'function') {
+            setActiveRole('alumno'); 
+        }
+            } else {
+                alert("Error al actualizar tu perfil en el servidor.");
+                activateRunnerBtn.disabled = false;
+                activateRunnerBtn.textContent = "Activar modo runner";
             }
-        } else {
-            alert("Error al actualizar tu perfil en el servidor.");
+        } catch (error) {
+            console.error("Error de conexión:", error);
+            alert("Error de conexión con el servidor.");
             activateRunnerBtn.disabled = false;
             activateRunnerBtn.textContent = "Activar modo runner";
         }
-    } catch (error) {
-        console.error("Error de conexión:", error);
-        alert("Error de conexión con el servidor.");
-        activateRunnerBtn.disabled = false;
-        activateRunnerBtn.textContent = "Activar modo runner";
+    });
 }
-});
 
 async function cargarHistorialRunner() {
     const contenedor = document.getElementById('contenedor-historial-runner');
@@ -3479,13 +3436,17 @@ if (btnModPedidos) {
 
     // Funcionalidad del botón "Salir" del Administrador
     document.addEventListener('click', (e) => {
-    const adminLogoutBtn = e.target.closest('#admin-logout-btn');
-    if (adminLogoutBtn) {
-        localStorage.clear();
-        sessionStorage.clear();
-        window.location.reload();
-    }
-});
+        const adminLogoutBtn = e.target.closest('#admin-logout-btn');
+        if (adminLogoutBtn) {
+            const realLogout = document.getElementById('logout-btn');
+            if (realLogout) {
+                realLogout.click();
+            } else {
+                sessionStorage.clear();
+                window.location.reload();
+            }
+        }
+    });
 
     // ==========================================
 // MÓDULO 4 ADMIN: KPIS Y ESTADÍSTICAS
@@ -4219,9 +4180,9 @@ window.cancelarFotoPerfil = function() {
     if (modal) modal.classList.add('hidden');
 };
 
-// 3. Confirmar y guardar foto en la Base de Datos y localStorage
+// 3. Confirmar y guardar foto en la Base de Datos
 window.guardarFotoPerfilConfirmada = async function() {
-    const usuarioStr = localStorage.getItem('usuario') || sessionStorage.getItem('usuario');
+    const usuarioStr = sessionStorage.getItem('usuario');
     if (!usuarioStr || !tempFotoPerfilBase64) return;
 
     const usuario = JSON.parse(usuarioStr);
@@ -4240,15 +4201,11 @@ window.guardarFotoPerfilConfirmada = async function() {
 
         const data = await res.json();
         if (data.success) {
-            // Actualizar la imagen en la interfaz visual
+            // Actualizar vista de perfil e información local
             const imgPreview = document.getElementById('profile-img-preview');
             if (imgPreview) imgPreview.src = tempFotoPerfilBase64;
 
-            // Actualizar el objeto del usuario en la memoria
             usuario.foto_perfil = tempFotoPerfilBase64;
-
-            // Guardar de forma permanente en localStorage y sessionStorage
-            localStorage.setItem('usuario', JSON.stringify(usuario));
             sessionStorage.setItem('usuario', JSON.stringify(usuario));
 
             alert('¡Foto de perfil guardada con éxito!');
