@@ -4431,13 +4431,33 @@ document.addEventListener('submit', async function(e) {
 
 // Editar/Reabastecer stock desde el Panel Admin
 window.editarStockAdmin = async function(idProducto, stockActual) {
-    const nuevoStock = prompt("Ingresa la nueva cantidad de stock para este producto:", stockActual);
-    
-    if (nuevoStock === null || nuevoStock.trim() === "") return;
+    const { value: nuevoStock, isConfirmed } = await Swal.fire({
+        title: 'Actualizar stock',
+        text: 'Ingresa la nueva cantidad de stock para este producto:',
+        input: 'number',
+        inputValue: stockActual,
+        inputAttributes: {
+            min: 0,
+            step: 1
+        },
+        showCancelButton: true,
+        confirmButtonColor: '#2563eb',
+        cancelButtonColor: '#64748b',
+        confirmButtonText: 'Actualizar',
+        cancelButtonText: 'Cancelar'
+    });
+
+    if (!isConfirmed || nuevoStock === undefined || nuevoStock.trim() === "") return;
 
     const cantidad = parseInt(nuevoStock);
     if (isNaN(cantidad) || cantidad < 0) {
-        alert("Por favor, ingresa un número válido mayor o igual a 0.");
+        Swal.fire({
+            title: 'Valor inválido',
+            text: 'Por favor, ingresa un número válido mayor o igual a 0.',
+            icon: 'warning',
+            confirmButtonColor: '#2563eb',
+            confirmButtonText: 'Aceptar'
+        });
         return;
     }
 
@@ -4450,15 +4470,34 @@ window.editarStockAdmin = async function(idProducto, stockActual) {
 
         const data = await res.json();
         if (res.ok && data.success) {
-            alert('¡Stock actualizado con éxito!');
-            cargarTiendasAdmin(true); // Refresca el panel admin
+            Swal.fire({
+                title: '¡Stock actualizado!',
+                text: '¡Stock actualizado con éxito!',
+                icon: 'success',
+                confirmButtonColor: '#2563eb',
+                confirmButtonText: 'Aceptar'
+            });
+
+            if (typeof cargarTiendasAdmin === 'function') cargarTiendasAdmin(true); // Refresca el panel admin
             if (typeof cargarCatalogo === 'function') cargarCatalogo(); // Refresca el catálogo del alumno
         } else {
-            alert('Error: ' + (data.error || 'No se pudo actualizar el stock.'));
+            Swal.fire({
+                title: 'Error',
+                text: data.error || 'No se pudo actualizar el stock.',
+                icon: 'error',
+                confirmButtonColor: '#2563eb',
+                confirmButtonText: 'Aceptar'
+            });
         }
     } catch (err) {
         console.error("Error al actualizar stock:", err);
-        alert('Ocurrió un error de conexión.');
+        Swal.fire({
+            title: 'Error de conexión',
+            text: 'Ocurrió un error de conexión.',
+            icon: 'error',
+            confirmButtonColor: '#2563eb',
+            confirmButtonText: 'Aceptar'
+        });
     }
 };
 
