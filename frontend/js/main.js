@@ -23,38 +23,57 @@ window.fetch = function(url, config) {
   let cart = []; // { id, category, name, price, qty }
 // Destrabar visualmente el botón e iniciar sesión si existe en localStorage
 window.addEventListener('DOMContentLoaded', () => {
-    // 1. Restaurar sesión completa (Usuario y Token) hacia sessionStorage
+    // 1. Restaurar sesión completa (Usuario y Token) hacia sessionStorage y localStorage
     const usuarioGuardado = localStorage.getItem('usuario') || sessionStorage.getItem('usuario');
     const tokenGuardado = localStorage.getItem('token') || sessionStorage.getItem('token');
     const userIdGuardado = localStorage.getItem('userId') || sessionStorage.getItem('userId');
 
     if (usuarioGuardado) {
-        // Copiamos a sessionStorage para garantizar compatibilidad con todo el backend
         sessionStorage.setItem('usuario', usuarioGuardado);
         if (tokenGuardado) sessionStorage.setItem('token', tokenGuardado);
         if (userIdGuardado) sessionStorage.setItem('userId', userIdGuardado);
 
-        // Ocultar pantalla de login
         const screenLogin = document.getElementById('screen-login');
         if (screenLogin) {
             screenLogin.classList.add('hidden');
         }
     }
 
-    // 2. Cargar datos del perfil de usuario
+    // 2. Cargar datos del perfil en pantalla
     cargarDatosPerfil();
 
-    // 3. Restaurar estado de Runner
-    const isRunnerStatus = localStorage.getItem('isRunnerStatus') === 'true' || sessionStorage.getItem('isRunnerStatus') === 'true';
-    if (isRunnerStatus) {
+    // 3. Verificar si el usuario ya es Runner (por base de datos o por memoria)
+    let userObj = null;
+    try {
+        if (usuarioGuardado) userObj = JSON.parse(usuarioGuardado);
+    } catch (e) {}
+
+    const esRunner = (userObj && (userObj.id_rol === 2 || userObj.es_runner)) ||
+                     localStorage.getItem('isRunnerStatus') === 'true' ||
+                     sessionStorage.getItem('isRunnerStatus') === 'true';
+
+    if (esRunner) {
+        // Marcar estado runner en ambos almacenamientos
+        localStorage.setItem('isRunnerStatus', 'true');
         sessionStorage.setItem('isRunnerStatus', 'true');
+
+        // Habilitar botón Runner de la barra superior
         const btnRunner = document.getElementById("role-btn-runner");
         if (btnRunner) {
             btnRunner.disabled = false;
-            btnRunner.classList.remove("opacity-50", "cursor-not-allowed");
-            btnRunner.innerHTML = "⚡ Runner";
+            btnRunner.classList.remove("opacity-50", "cursor-not-allowed", "text-slate-400");
+            btnRunner.classList.add("text-slate-700", "cursor-pointer", "hover:bg-slate-200");
         }
-        
+
+        // OCULTAR la tarjeta "Gana dinero extra siendo Runner" en Inicio
+        document.querySelectorAll('button, div').forEach(el => {
+            if (el.textContent && el.textContent.includes('Gana dinero extra siendo Runner')) {
+                const parentCard = el.closest('div.border') || el.closest('button') || el;
+                if (parentCard) parentCard.style.display = 'none';
+            }
+        });
+
+        // Deshabilitar/actualizar botones de postulación dentro de modales
         document.querySelectorAll("#btn-postular-runner").forEach(applyBtn => {
             applyBtn.disabled = true;
             applyBtn.classList.remove("bg-blue-600");
@@ -2335,15 +2354,14 @@ if (inputRegistroCodigo) {
         e.target.value = codigo; 
     });
 }
-function cargarDatosPerfil() {
-    // Extraemos el objeto del usuario priorizando localStorage o sessionStorage
-    const userStr = localStorage.getItem('usuario') || sessionStorage.getItem('usuario'); 
-    
-    if (userStr) {
-        const userData = JSON.parse(userStr);
-        const nombreCompleto = userData.nombre_completo || userData.nombres || 'Usuario';
+window.cargarDatosPerfil = async function() {
+    const usuarioStr = localStorage.getItem('usuario') || sessionStorage.getItem('usuario');
+    if (!usuarioStr) return;
+
+    try {
+        const usuario = JSON.parse(usuarioStr);
+        const nombreCompleto = usuario.nombre_completo || usuario.nombres || usuario.nombre || 'Estudiante';
         
-        // Inyectamos los datos en la pantalla
         const editNombre = document.getElementById('edit-nombre');
         const editCarrera = document.getElementById('edit-carrera');
         const displayName = document.getElementById('profile-display-name');
@@ -2351,12 +2369,22 @@ function cargarDatosPerfil() {
         const imgPreview = document.getElementById('profile-img-preview');
 
         if (editNombre) editNombre.value = nombreCompleto;
-        if (editCarrera) editCarrera.value = userData.carrera || '';
+        if (editCarrera) editCarrera.value = usuario.carrera || '';
         if (displayName) displayName.textContent = nombreCompleto;
-        if (displayCarrera) displayCarrera.textContent = userData.carrera || 'Estudiante UTP';
-        if (imgPreview && userData.foto_perfil) imgPreview.src = userData.foto_perfil;
+        if (displayCarrera) displayCarrera.textContent = usuario.carrera || 'Estudiante UTP';
+        
+        if (imgPreview && usuario.foto_perfil) {
+            imgPreview.src = usuario.foto_perfil;
+        }
+
+        // Cargar fotos de la galería del usuario
+        if (usuario.id_usuario) {
+            cargarGaleriaFotos(usuario.id_usuario);
+        }
+    } catch (e) {
+        console.error("Error al cargar perfil:", e);
     }
-}
+};
 // =================================================================
 // VIGILANTE SILENCIOSO: DETECTAR ESTADOS Y CANCELACIONES / ENTREGAS
 // =================================================================
@@ -2769,98 +2797,87 @@ if (runnerCheckbox && activateRunnerBtn) {
         }
     });
 
-   // 3. CONECTANDO A TU BACKEND REAL
-    activateRunnerBtn.addEventListener('click', async () => {
-        const userStr = sessionStorage.getItem('usuario');
-        const token = sessionStorage.getItem('token');
+  // 3. CONECTANDO A TU BACKEND REAL
+activateRunnerBtn.addEventListener('click', async () => {
+    // Leemos el usuario y el token de forma segura priorizando localStorage o sessionStorage
+    const userStr = localStorage.getItem('usuario') || sessionStorage.getItem('usuario');
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
 
-        if (!userStr || !token) {
-            alert("Error de sesión. Vuelve a iniciar sesión.");
-            return;
+    if (!userStr) {
+        alert("Error de sesión. Vuelve a iniciar sesión.");
+        return;
+    }
+
+    let userData = JSON.parse(userStr);
+
+    // Consultar el estado más reciente directamente desde la base de datos
+    try {
+        const resEstado = await fetch(`/api/usuarios/estado/${userData.id_usuario}`);
+        if (resEstado.ok) {
+            const dataEstado = await resEstado.json();
+            userData.bloqueado_runner = dataEstado.bloqueado_runner;
+            userData.id_rol = dataEstado.id_rol;
+            
+            // Guardamos la actualización en ambos almacenes
+            localStorage.setItem('usuario', JSON.stringify(userData));
+            sessionStorage.setItem('usuario', JSON.stringify(userData));
+        }
+    } catch (e) {
+        console.error("No se pudo verificar el estado en vivo:", e);
+    }
+
+    // SI SIGUE RESTRINGIDO EN LA BASE DE DATOS
+    if (userData.bloqueado_runner) {
+        alert("Un administrador ha revocado y restringido tu acceso para registrarte como Runner.");
+        return;
+    }
+
+    activateRunnerBtn.disabled = true;
+    activateRunnerBtn.textContent = "Activando...";
+
+    try {
+        const headers = { 'Content-Type': 'application/json' };
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
         }
 
-        let userData = JSON.parse(userStr);
+        const respuesta = await fetch('/api/usuarios/activar-runner', {
+            method: 'PUT',
+            headers: headers,
+            body: JSON.stringify({ id_usuario: userData.id_usuario })
+        });
 
-        // 🔄 Consultar el estado más reciente directamente desde la base de datos
-        try {
-            const resEstado = await fetch(`/api/usuarios/estado/${userData.id_usuario}`);
-            if (resEstado.ok) {
-                const dataEstado = await resEstado.json();
-                userData.bloqueado_runner = dataEstado.bloqueado_runner;
-                userData.id_rol = dataEstado.id_rol;
-                sessionStorage.setItem('usuario', JSON.stringify(userData));
+        if (respuesta.ok) {
+            // Actualizamos la sesión con el nuevo rol
+            userData.id_rol = 2;
+            localStorage.setItem('usuario', JSON.stringify(userData));
+            sessionStorage.setItem('usuario', JSON.stringify(userData));
+            localStorage.setItem('isRunnerStatus', 'true');
+            sessionStorage.setItem('isRunnerStatus', 'true');
+
+            // Buscar el botón en la barra superior
+            const btnRunnerTop = document.getElementById('role-btn-runner');
+            if (btnRunnerTop) {
+                btnRunnerTop.disabled = false;
+                btnRunnerTop.classList.remove('text-slate-400', 'opacity-50', 'cursor-not-allowed');
+                btnRunnerTop.classList.add('text-slate-700', 'cursor-pointer', 'hover:bg-slate-200');
             }
-        } catch (e) {
-            console.error("No se pudo verificar el estado en vivo:", e);
-        }
 
-        // 🚨 SI SIGUE RESTRINGIDO EN LA BASE DE DATOS
-        if (userData.bloqueado_runner) {
-            alert("Un administrador ha revocado y restringido tu acceso para registrarte como Runner.");
-            return;
-        }
+            alert("¡Felicidades! Ya eres Runner.");
 
-        activateRunnerBtn.disabled = true;
-        activateRunnerBtn.textContent = "Activando...";
-
-        try {
-            const respuesta = await fetch(`/api/usuarios/activar-runner`, {
-                method: 'PUT',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-
-            if (respuesta.ok) {
-                // Actualizamos la sesión local con el nuevo rol
-                userData.id_rol = 2; 
-                sessionStorage.setItem('usuario', JSON.stringify(userData));
-                
-                // Cerramos el modal
-                document.getElementById('postular-runner').classList.add('hidden');
-                document.getElementById('postular-runner').style.display = 'none';
-                
-                // Ejecutamos la función que ahora sí existe
-                aplicarEstadoRunner();
-                
-// Buscar el botón en la barra superior
-const btnRunnerTop = document.getElementById('role-btn-runner');
-
-if (btnRunnerTop) {
-    // 1. Quitarle el bloqueo nativo
-    btnRunnerTop.disabled = false;
-    
-    // 2. Quitar los colores de "bloqueado" (los que tienes en la línea 29)
-    btnRunnerTop.classList.remove('text-slate-400', 'opacity-50', 'cursor-not-allowed');
-    
-    // 3. Ponerle colores de botón normal y que cambie el cursor al pasar el mouse
-    btnRunnerTop.classList.add('text-slate-700', 'cursor-pointer', 'hover:bg-slate-200');
-}
-
-                alert("¡Felicidades! Ya eres Runner.");
-                
-                // 1. Actualizamos la memoria del navegador al instante sin recargar
-                isRunner = true;
-                localStorage.setItem('isRunnerStatus', 'true');
-                sessionStorage.setItem('isRunnerStatus', 'true');
-        
-                // 2. Llevamos al usuario de regreso a la pantalla principal (Inicio)
-                if (typeof setActiveRole === 'function') {
-                    setActiveRole('alumno'); 
-                }
-            } else {
-                alert("Error al actualizar tu perfil en el servidor.");
-                activateRunnerBtn.disabled = false;
-                activateRunnerBtn.textContent = "Activar modo runner";
+            if (typeof setActiveRole === 'function') {
+                setActiveRole('alumno');
             }
-        } catch (error) {
-            console.error("Error de conexión:", error);
-            alert("Error de conexión con el servidor.");
+        } else {
+            alert("Error al actualizar tu perfil en el servidor.");
             activateRunnerBtn.disabled = false;
             activateRunnerBtn.textContent = "Activar modo runner";
         }
-    });
+    } catch (error) {
+        console.error("Error de conexión:", error);
+        alert("Error de conexión con el servidor.");
+        activateRunnerBtn.disabled = false;
+        activateRunnerBtn.textContent = "Activar modo runner";
 }
 
 async function cargarHistorialRunner() {
@@ -4308,4 +4325,3 @@ async function sendChatMessage() {
     } catch (err) {
         console.error("Error en petición de chat:", err);
     }
-}
