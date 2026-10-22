@@ -93,25 +93,30 @@ if (loginBtn) {
 
             // 4. Intentamos iniciar sesión con Firebase Auth
             // 🟢 CÓDIGO CORREGIDO:
-const userCredential = await signInWithEmailAndPassword(auth, emailInput, passwordInput);
+// 1. Iniciar sesión en Firebase
+            const userCredential = await signInWithEmailAndPassword(auth, emailInput, passwordInput);
 
-// 1. Obligamos a Firebase a consultar el estado actualizado en sus servidores
-await userCredential.user.reload();
+            // 2. Forzar la recarga de datos desde los servidores de Firebase
+            await userCredential.user.reload();
 
-// 2. Obtenemos el objeto de usuario fresco en memoria
-const user = auth.currentUser;
+            // 3. Obtener la referencia del usuario activo tras la recarga
+            const user = auth.currentUser;
 
-// 3. Verificamos la propiedad actualizada
-if (!user.emailVerified && codigo !== "ADMIN01") {
-    Swal.fire({
-        title: 'Correo no verificado',
-        text: 'Debes verificar tu correo institucional en tu bandeja de entrada antes de ingresar a PataRunner.',
-        icon: 'warning',
-        confirmButtonColor: '#2563eb'
-    });
-    await auth.signOut();
-    return;
-}
+            // 🔍 IMPRIMIR EN CONSOLA EL ESTADO REAL
+            console.log("ID de usuario:", user.uid);
+            console.log("¿Email verificado en Firebase?:", user.emailVerified);
+
+            // 4. Evaluar la verificación
+            if (!user.emailVerified && codigo !== "ADMIN01") {
+                Swal.fire({
+                    title: 'Correo no verificado',
+                    text: 'Debes verificar tu correo institucional en tu bandeja de entrada antes de ingresar a PataRunner.',
+                    icon: 'warning',
+                    confirmButtonColor: '#2563eb'
+                });
+                await auth.signOut();
+                return;
+            }
 
             // 5. ¡CLAVE!: 'true' fuerza la renovación del token con la verificación de Firebase
             const token = await user.getIdToken(true);
@@ -350,7 +355,12 @@ if (btnRegister) {
             const user = userCredential.user;
 
             // 5. Enviar correo de verificación nativo de Firebase al instante
-            await sendEmailVerification(user);
+            const actionCodeSettings = {
+    url: 'https://patarunnerapp-frontend.vercel.app',
+    handleCodeInApp: false
+};
+
+await sendEmailVerification(user, actionCodeSettings);
 
             // 6. Guardar al usuario en PostgreSQL (Neon) con verificado = false y su firebase_uid
             const respuestaBD = await fetch('/api/usuarios/registro', {
