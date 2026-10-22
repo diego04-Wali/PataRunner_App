@@ -1307,7 +1307,9 @@ app.delete('/api/admin/usuarios/:codigo', async (req, res) => {
 });
 
 // Iniciar servidor
-app.listen(port, () => {
-    console.log(`Servidor ejecutándose en el puerto ${port}`);
+const PORT = process.env.PORT || port || 3000;
+
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Servidor ejecutándose en el puerto ${PORT}`);
 });
 
