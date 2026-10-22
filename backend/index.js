@@ -133,23 +133,6 @@ app.get('/api/usuarios/confirmar-cuenta/:token', async (req, res) => {
     }
 });
 
-// 3. Eliminar Usuario desde el Panel de Administrador
-app.delete('/api/admin/usuarios/:codigo', async (req, res) => {
-    try {
-        const { codigo } = req.params;
-
-        const resultado = await pool.query('DELETE FROM usuarios WHERE codigo_alumno = $1', [codigo]);
-
-        if (resultado.rowCount > 0) {
-            res.json({ success: true, message: `El usuario ${codigo} ha sido eliminado correctamente.` });
-        } else {
-            res.status(404).json({ error: 'Usuario no encontrado.' });
-        }
-    } catch (error) {
-        console.error("Error al eliminar usuario:", error);
-        res.status(500).json({ error: 'No se puede eliminar el usuario porque tiene pedidos o historial asociado.' });
-    }
-});
 // --- RUTA: Registrar una Tienda ---
 app.post('/api/tiendas', async (req, res) => {
     try {
@@ -1298,27 +1281,28 @@ cron.schedule('0 * * * *', async () => {
 
 // --- RUTA ADMIN: ELIMINAR USUARIO DEFINITIVAMENTE ---
 app.delete('/api/admin/usuarios/:codigo', async (req, res) => {
-    const { codigo } = req.params;
     try {
-        const result = await pool.query('DELETE FROM usuarios WHERE codigo_alumno = $1', [codigo]);
-        
-        if (result.rowCount === 0) {
-            return res.status(404).json({ success: false, error: 'Usuario no encontrado' });
+        const { codigo } = req.params;
+
+        // 1. Obtener id_usuario
+        const userRes = await pool.query('SELECT id_usuario FROM usuarios WHERE codigo_alumno = $1', [codigo]);
+        if (userRes.rows.length === 0) {
+            return res.status(404).json({ success: false, error: 'Usuario no encontrado.' });
         }
-        
-        res.json({ success: true, message: `Usuario ${codigo} eliminado con éxito.` });
+        const idUsuario = userRes.rows[0].id_usuario;
+
+        // 2. Limpiar registros en tablas dependientes (Evita error de llave foránea)
+        await pool.query('DELETE FROM chat WHERE id_remitente = $1', [idUsuario]);
+        await pool.query('DELETE FROM pedidos WHERE id_cliente = $1 OR id_runner = $1', [idUsuario]);
+        await pool.query('DELETE FROM fotos_usuario WHERE id_usuario = $1', [idUsuario]);
+
+        // 3. Eliminar usuario de PostgreSQL
+        await pool.query('DELETE FROM usuarios WHERE id_usuario = $1', [idUsuario]);
+
+        res.json({ success: true, message: `El usuario ${codigo} y su historial han sido eliminados correctamente.` });
     } catch (error) {
-        console.error('Error al eliminar usuario:', error);
-        
-        // Si hay una restricción de clave foránea en la base de datos (por ejemplo, pedidos asignados), captura el error
-        if (error.code === '23503') {
-            return res.status(400).json({ 
-                success: false, 
-                error: 'No se puede eliminar el usuario porque tiene registros o pedidos asociados en la base de datos.' 
-            });
-        }
-        
-        res.status(500).json({ success: false, error: 'Error al eliminar usuario en la base de datos' });
+        console.error("Error al eliminar usuario:", error);
+        res.status(500).json({ success: false, error: "Error interno al eliminar el usuario." });
     }
 });
 
