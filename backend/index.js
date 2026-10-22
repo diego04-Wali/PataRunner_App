@@ -3,6 +3,12 @@ import cors from 'cors';
 import pool from './db.js';
 import verificarToken from './auth.js';
 import cron from 'node-cron';
+import admin from 'firebase-admin';
+
+// Inicializar Firebase Admin SDK (utiliza las credenciales por defecto del proyecto)
+if (!admin.apps.length) {
+    admin.initializeApp();
+}
 
 const app = express();
 const port = 3000;
@@ -75,7 +81,7 @@ app.get('/api/usuarios/confirmar-cuenta/:token', async (req, res) => {
     try {
         const { token } = req.params;
 
-        // Buscar el token en la tabla temporal
+        // 1. Buscar el token en la tabla temporal
         const pendiente = await pool.query(
             'SELECT * FROM registros_pendientes WHERE token_verificacion = $1',
             [token]
@@ -87,16 +93,39 @@ app.get('/api/usuarios/confirmar-cuenta/:token', async (req, res) => {
 
         const user = pendiente.rows[0];
 
-        // Insertar formalmente en la tabla real de usuarios marcando verificado = true
+        // 2. Crear la cuenta en Firebase Authentication desde el servidor
+        let firebaseUid;
+        try {
+            const userRecord = await admin.auth().createUser({
+                email: user.correo_institucional,
+                password: user.password_hash !== 'firebase_auth' ? user.password_hash : 'Utp123456*', // Contraseña temporal o asignada
+                displayName: user.nombre_completo,
+                emailVerified: true
+            });
+            firebaseUid = userRecord.uid;
+        } catch (fbError) {
+            // Si el usuario ya existía en Firebase, obtenemos su UID
+            if (fbError.code === 'auth/email-already-exists') {
+                const existingUser = await admin.auth().getUserByEmail(user.correo_institucional);
+                firebaseUid = existingUser.uid;
+            } else {
+                throw fbError;
+            }
+        }
+
+        // 3. Insertar formalmente en la tabla real de usuarios marcando verificado = true
         await pool.query(
-            `INSERT INTO usuarios (id_rol, nombre_completo, correo_institucional, codigo_alumno, carrera, verificado)
-             VALUES (1, $1, $2, $3, $4, true)`,
-            [user.nombre_completo, user.correo_institucional, user.codigo_alumno, user.carrera]
+            `INSERT INTO usuarios (firebase_uid, id_rol, nombre_completo, correo_institucional, codigo_alumno, carrera, verificado)
+             VALUES ($1, 1, $2, $3, $4, $5, true)
+             ON CONFLICT (codigo_alumno) DO UPDATE 
+             SET verificado = true, firebase_uid = EXCLUDED.firebase_uid`,
+            [firebaseUid, user.nombre_completo, user.correo_institucional, user.codigo_alumno, user.carrera]
         );
-        // Eliminar de la tabla temporal de pendientes
+
+        // 4. Eliminar de la tabla temporal de pendientes
         await pool.query('DELETE FROM registros_pendientes WHERE id_pendiente = $1', [user.id_pendiente]);
 
-        res.send("<h1>¡Cuenta verificada con éxito! 🎉</h1><p>Ya puedes volver a la aplicación de PataRunner e iniciar sesión.</p>");
+        res.send("<h1>¡Cuenta verificada con éxito! 🎉</h1><p>Tu usuario ha sido activado en PataRunner. Ya puedes volver a la aplicación e iniciar sesión.</p>");
 
     } catch (error) {
         console.error("Error al confirmar cuenta:", error);
