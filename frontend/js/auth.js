@@ -92,23 +92,26 @@ if (loginBtn) {
             loginBtn.disabled = true;
 
             // 4. Intentamos iniciar sesión con Firebase Auth
-            const userCredential = await signInWithEmailAndPassword(auth, emailInput, passwordInput);
-            const user = userCredential.user;
+            // 🟢 CÓDIGO CORREGIDO:
+const userCredential = await signInWithEmailAndPassword(auth, emailInput, passwordInput);
 
-            // Refrescar el usuario para leer el estado de verificación actualizado
-            await user.reload();
+// 1. Obligamos a Firebase a consultar el estado actualizado en sus servidores
+await userCredential.user.reload();
 
-            // Verificamos si el correo ya fue validado (EXCEPTO PARA EL ADMIN)
-            if (!user.emailVerified && codigo !== "ADMIN01") {
-                Swal.fire({
-                    title: 'Correo no verificado',
-                    text: 'Debes verificar tu correo institucional en tu bandeja de entrada antes de ingresar a PataRunner.',
-                    icon: 'warning',
-                    confirmButtonColor: '#2563eb'
-                });
-                await auth.signOut();
-                return;
-            }
+// 2. Obtenemos el objeto de usuario fresco en memoria
+const user = auth.currentUser;
+
+// 3. Verificamos la propiedad actualizada
+if (!user.emailVerified && codigo !== "ADMIN01") {
+    Swal.fire({
+        title: 'Correo no verificado',
+        text: 'Debes verificar tu correo institucional en tu bandeja de entrada antes de ingresar a PataRunner.',
+        icon: 'warning',
+        confirmButtonColor: '#2563eb'
+    });
+    await auth.signOut();
+    return;
+}
 
             // 5. ¡CLAVE!: 'true' fuerza la renovación del token con la verificación de Firebase
             const token = await user.getIdToken(true);
