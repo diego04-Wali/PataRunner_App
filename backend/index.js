@@ -3,12 +3,13 @@ import cors from 'cors';
 import pool from './db.js';
 import verificarToken from './auth.js';
 import cron from 'node-cron';
-import admin from 'firebase-admin';
+import { initializeApp, cert, getApps } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
 
-// Inicializar Firebase Admin de forma segura
-if (!admin.apps || !admin.apps.length) {
-    admin.initializeApp({
-        credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT))
+// Inicializar Firebase Admin de forma segura en ES Modules
+if (!getApps().length) {
+    initializeApp({
+        credential: cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT))
     });
 }
 const app = express();
