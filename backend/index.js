@@ -254,7 +254,17 @@ app.get('/api/pedidos/historial-runner/:id_usuario', async (req, res) => {
 
 // --- RUTA: Registrar un Pedido completo (Cabecera + Productos) ---
 app.post('/api/pedidos', verificarToken, async (req, res) => {
-  const { direccion_entrega, total, carrito } = req.body;
+  const { 
+    direccion_entrega, 
+    ubicacion_entrega, 
+    tarifa_entrega, 
+    metodo_pago, 
+    descripcion_pedido, 
+    costo_aproximado, 
+    total, 
+    carrito 
+  } = req.body;
+
   const firebase_uid = req.user.uid || req.user.user_id;
   const client = await pool.connect();
 
@@ -274,16 +284,31 @@ app.post('/api/pedidos', verificarToken, async (req, res) => {
 
     const id_cliente = userRes.rows[0].id_usuario;
 
-    // 2. Insertar cabecera con estado 'Pendiente' (formato compatible con tus SELECT)
+    // Asignación flexible de variables según lo enviado por el frontend
+    const ubicacionFinal = ubicacion_entrega || direccion_entrega || 'No especificada';
+    const tarifaFinal = tarifa_entrega || 0;
+    const metodoPagoFinal = metodo_pago || 'Efectivo';
+    const costoAproxFinal = costo_aproximado || total || 0;
+
+    // 2. Insertar cabecera usando ÚNICAMENTE las columnas existentes en tu tabla 'pedidos'
     const resPedido = await client.query(
-      `INSERT INTO pedidos (id_cliente, ubicacion_entrega, total, estado, fecha_pedido) 
-       VALUES ($1, $2, $3, 'Pendiente', NOW()) 
-       RETURNING id_pedido`,
-      [id_cliente, direccion_entrega, total]
+      `INSERT INTO pedidos (
+        id_cliente, 
+        ubicacion_entrega, 
+        tarifa_entrega, 
+        metodo_pago, 
+        descripcion_pedido, 
+        costo_aproximado, 
+        estado, 
+        fecha_pedido
+      ) VALUES ($1, $2, $3, $4, $5, $6, 'Pendiente', NOW()) 
+      RETURNING id_pedido`,
+      [id_cliente, ubicacionFinal, tarifaFinal, metodoPagoFinal, descripcion_pedido || null, costoAproxFinal]
     );
+    
     const idPedido = resPedido.rows[0].id_pedido;
 
-    // 3. Insertar detalle de productos en la tabla en singular 'detalle_pedido'
+    // 3. Insertar detalle de productos en la tabla 'detalle_pedido'
     if (carrito && Array.isArray(carrito)) {
       for (const item of carrito) {
         const precioUnitario = item.precio_unitario || item.precio || 0;
