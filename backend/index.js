@@ -27,21 +27,15 @@ app.get('/', (req, res) => {
 });
 
 // ==========================================
-// REGISTRO Y VERIFICACIÓN EN DOS PASOS (CON TABLA TEMPORAL)
-// ==========================================
-
-// 1. Registro Previo (Guarda en la tabla 'registros_pendientes' por 24 horas)
-// ==========================================
 // RUTA DE REGISTRO DE USUARIO (OPCIÓN A - NATIVA CON FIREBASE)
 // ==========================================
 app.post('/api/usuarios/registro', async (req, res) => {
     try {
         const { firebase_uid, codigo_alumno, correo_institucional, nombre_completo, carrera, verificado } = req.body;
 
-        // Insertar en la tabla usuarios de Neon
         const query = `
-            INSERT INTO usuarios (firebase_uid, codigo_alumno, correo_institucional, nombre_completo, carrera, verificado)
-            VALUES ($1, $2, $3, $4, $5, $6)
+            INSERT INTO usuarios (id_rol, firebase_uid, codigo_alumno, correo_institucional, nombre_completo, carrera, verificado)
+            VALUES (1, $1, $2, $3, $4, $5, $6)
             ON CONFLICT (codigo_alumno) DO UPDATE 
             SET firebase_uid = EXCLUDED.firebase_uid,
                 correo_institucional = EXCLUDED.correo_institucional,
@@ -69,10 +63,10 @@ app.post('/api/usuarios/registro', async (req, res) => {
         });
 
     } catch (error) {
-        console.error("Error al registrar usuario en PostgreSQL:", error);
+        console.error("Error exacto en PostgreSQL:", error.message);
         res.status(500).json({ 
             success: false, 
-            error: "Error interno al guardar los datos del usuario." 
+            error: error.message || "Error interno al guardar los datos del usuario." 
         });
     }
 });
