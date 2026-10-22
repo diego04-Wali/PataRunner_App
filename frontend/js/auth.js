@@ -353,21 +353,14 @@ if (btnRegister) {
             btnRegister.disabled = true;
             btnRegister.classList.add("opacity-70");
 
-            // 4. Crear la cuenta directamente en Firebase Auth
+            // 4. Crear usuario en Firebase Auth cliente
             const userCredential = await createUserWithEmailAndPassword(auth, correoInstitucional, password);
             const user = userCredential.user;
 
-            // 5. Enviar correo de verificación nativo de Firebase al instante
-            const actionCodeSettings = {
-    url: 'https://patarunnerapp-frontend.vercel.app',
-    handleCodeInApp: false
-};
-
-await sendEmailVerification(user, actionCodeSettings);
-// ⚠️ AGREGAR ESTA LÍNEA: Cerramos la sesión temporal para obligar un login limpio tras verificar
+            // 5. Cerrar sesión cliente temporal
             await auth.signOut();
 
-            // 6. Guardar al usuario en PostgreSQL (Neon) con verificado = false y su firebase_uid
+            // 6. Notificar al backend para que genere el link y envíe el correo vía Nodemailer
             const respuestaBD = await fetch('/api/usuarios/registro', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -376,16 +369,13 @@ await sendEmailVerification(user, actionCodeSettings);
                     codigo_alumno: codigo.toUpperCase(),
                     nombre_completo: nombreCompleto,
                     carrera: carrera,
-                    correo_institucional: correoInstitucional,
-                    verificado: false
+                    correo_institucional: correoInstitucional
                 })
             });
-
             const datosRespuesta = await respuestaBD.json();
 
             if (respuestaBD.ok) {
                 alert(`¡Registro exitoso!\n\nHemos enviado un correo de verificación oficial a:\n${correoInstitucional}\n\nPor favor, revisa tu bandeja de entrada o spam antes de iniciar sesión.`);
-
                 // Limpiamos el formulario y volvemos a la pantalla de Login
                 document.getElementById('register-codigo').value = '';
                 document.getElementById('register-nombres').value = '';
