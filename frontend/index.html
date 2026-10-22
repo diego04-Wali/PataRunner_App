@@ -345,10 +345,16 @@
                     </div>
                     <div id="contenedor-tiendas-admin" class="space-y-3"></div>
                 </div>
-                <!-- 🔴 PEGAR AQUÍ: MÓDULO 6 RESEÑAS -->
-                <div id="mod-resenas" class="modulo-admin hidden space-y-3">
-                    <div id="contenedor-resenas-admin"></div>
-                </div>
+              <!-- MÓDULO 6: RESEÑAS DE LA APP -->
+<div id="mod-resenas" class="modulo-admin hidden space-y-3">
+    <div class="flex items-center justify-between mb-2">
+        <p class="text-[12px] font-bold text-slate-800 uppercase">Reseñas de la Aplicación</p>
+        <button onclick="cargarResenasAdmin()" class="text-blue-600 hover:bg-blue-50 p-1 rounded transition-colors">
+            <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+        </button>
+    </div>
+    <div id="contenedor-resenas-admin" class="space-y-3 pb-10"></div>
+</div>
             </div> <!-- Cierre contenedor de pantallas admin -->
         </div> <!-- Cierre tab-admin -->
 <!-- TAB: PERFIL -->

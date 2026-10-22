@@ -3337,6 +3337,11 @@ function mostrarModulo(idModulo) {
         btnActivo.classList.remove('bg-white', 'text-slate-600');
         btnActivo.classList.add('bg-indigo-600', 'text-white');
     }
+
+    // 🟢 AGREGAR ESTAS LÍNEAS AQUÍ:
+    if (idModulo === 'mod-resenas') {
+        cargarResenasAdmin();
+    }
 }
 
 // Configurar el arrastre del menú horizontal (Solo se ejecuta si el panel existe)
@@ -5179,4 +5184,15 @@ async function cargarResenasAdmin() {
         console.error("Error al cargar reseñas admin:", err);
         contenedor.innerHTML = '<p class="text-red-500 text-[11px] text-center py-4">Error al conectar con el servidor.</p>';
     }
+}
+// Exponer función globalmente para que pueda llamarse desde el HTML o SweetAlert
+window.cargarResenasAdmin = cargarResenasAdmin;
+
+// Vincular directamente el botón "6. ⭐ Reseñas"
+const btnModResenas = document.getElementById('btn-mod-resenas');
+if (btnModResenas) {
+    btnModResenas.addEventListener('click', () => {
+        mostrarModulo('mod-resenas');
+        cargarResenasAdmin();
+    });
 }
