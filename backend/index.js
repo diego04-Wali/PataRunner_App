@@ -463,14 +463,31 @@ app.get('/api/chat/:id_pedido', async (req, res) => {
         res.status(500).json({ error: 'Error al obtener el chat.' });
     }
 });
+// Middleware de verificación de token Firebase
+const verificarToken = async (req, res, next) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'Token no proporcionado o formato inválido.' });
+    }
 
-// Ruta de Login para validar credenciales y responder al frontend
+    const token = authHeader.split(' ')[1];
+
+    try {
+        const decodedToken = await getAuth().verifyIdToken(token);
+        req.user = decodedToken;
+        next();
+    } catch (error) {
+        console.error("Error al verificar token de Firebase:", error);
+        return res.status(403).json({ error: 'Token inválido o expirado.' });
+    }
+};
+// Ruta de Login segura
 app.post('/api/login', verificarToken, async (req, res) => {
     try {
         const firebase_uid = req.user.uid;
-        const email = req.user.email;
+        const email = req.user.email ? req.user.email.toLowerCase() : '';
 
-        // Buscar al usuario en la base de datos por firebase_uid o por correo
+        // Buscar al usuario en PostgreSQL
         const result = await pool.query(
             'SELECT * FROM usuarios WHERE firebase_uid = $1 OR correo_institucional = $2',
             [firebase_uid, email]
@@ -482,19 +499,26 @@ app.post('/api/login', verificarToken, async (req, res) => {
 
         const usuario = result.rows[0];
 
-        // Asegurar que quede marcado como verificado en Neon si Firebase ya lo verificó
+        // Sincronizar campo verificado
         if (!usuario.verificado) {
             await pool.query('UPDATE usuarios SET verificado = TRUE WHERE id_usuario = $1', [usuario.id_usuario]);
             usuario.verificado = true;
+        }
+
+        // Si falta vincular el firebase_uid en Neon, se actualiza automáticamente
+        if (!usuario.firebase_uid) {
+            await pool.query('UPDATE usuarios SET firebase_uid = $1 WHERE id_usuario = $2', [firebase_uid, usuario.id_usuario]);
+            usuario.firebase_uid = firebase_uid;
         }
 
         res.json({
             message: 'Acceso concedido',
             usuario: usuario
         });
+
     } catch (error) {
-        console.error("Error en /api/login:", error);
-        res.status(500).json({ error: 'Error interno del servidor en el inicio de sesión.' });
+        console.error("Error en POST /api/login:", error.message);
+        res.status(500).json({ error: error.message || 'Error interno del servidor en el inicio de sesión.' });
     }
 });
 
