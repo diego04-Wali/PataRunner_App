@@ -93,13 +93,19 @@ app.post('/api/usuarios/registro', async (req, res) => {
         const verificationLink = await getAuth().generateEmailVerificationLink(emailLimpio, actionCodeSettings);
 
         // 2. Configurar el transporte SMTP (Usa Gmail con Contraseña de Aplicación o Brevo)
-        const transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-                user: process.env.EMAIL_USER || 'tu_correo@gmail.com',
-                pass: process.env.EMAIL_PASS || 'tu_clave_de_aplicacion'
-            }
-        });
+        // 🟢 CÓDIGO CORREGIDO (SSL directo por puerto 465):
+const transporter = nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+    },
+    tls: {
+        rejectUnauthorized: false
+    }
+});
 
         // 3. Redactar el correo HTML
         const mailOptions = {
