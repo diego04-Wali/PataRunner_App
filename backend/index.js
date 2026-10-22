@@ -21,6 +21,11 @@ let serviceAccount = null;
 try {
     if (process.env.FIREBASE_SERVICE_ACCOUNT) {
         serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+        
+        // Corregir formateo de saltos de línea en la clave privada
+        if (serviceAccount.private_key) {
+            serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+        }
     } else if (fs.existsSync('./firebase-service-account.json')) {
         serviceAccount = JSON.parse(fs.readFileSync('./firebase-service-account.json', 'utf8'));
     }
@@ -159,8 +164,9 @@ app.post('/api/usuarios/registro', async (req, res) => {
             usuario: result.rows[0]
         });
 
-    } catch (error) {
-        console.error("Error en registro:", error.message);
+    }  catch (error) {
+        // Cambiar console.error para ver la traza completa y el código de error
+        console.error("Error detallado en registro:", error);
         res.status(500).json({ 
             success: false, 
             error: error.message || "Error al procesar el registro." 
