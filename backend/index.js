@@ -464,34 +464,37 @@ app.get('/api/chat/:id_pedido', async (req, res) => {
     }
 });
 
-// --- RUTA 1: Iniciar sesión y obtener Rol ---
+// Ruta de Login para validar credenciales y responder al frontend
 app.post('/api/login', verificarToken, async (req, res) => {
-    // Extraemos los datos que Firebase ya validó desde el frontend
-const correo = req.usuarioFirebase.email.toLowerCase();
     try {
-        // 1. Buscamos si el usuario ya existe en tu PostgreSQL
-        let result = await pool.query('SELECT * FROM usuarios WHERE correo_institucional = $1', [correo]);
+        const firebase_uid = req.user.uid;
+        const email = req.user.email;
 
-        // 2. Si no existe en la BD, rechazamos el login para que la ruta /api/registro haga su trabajo
-if (result.rows.length === 0) {
-    return res.status(404).json({ 
-        error: 'Usuario no encontrado en la base de datos. Falta completar el registro.' 
-    });
-}
-       // 3. Devolvemos los datos del usuario (validando si está bloqueado)
-        const usuario = result.rows[0];
+        // Buscar al usuario en la base de datos por firebase_uid o por correo
+        const result = await pool.query(
+            'SELECT * FROM usuarios WHERE firebase_uid = $1 OR correo_institucional = $2',
+            [firebase_uid, email]
+        );
 
-        if (usuario.is_blocked) {
-            return res.status(403).json({ 
-                error: 'Tu cuenta ha sido suspendida. Contacta con soporte.' 
-            });
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Usuario no encontrado en la base de datos. Falta completar el registro.' });
         }
 
-        res.status(200).json({ mensaje: 'Inicio de sesión exitoso', usuario: usuario });
+        const usuario = result.rows[0];
 
+        // Asegurar que quede marcado como verificado en Neon si Firebase ya lo verificó
+        if (!usuario.verificado) {
+            await pool.query('UPDATE usuarios SET verificado = TRUE WHERE id_usuario = $1', [usuario.id_usuario]);
+            usuario.verificado = true;
+        }
+
+        res.json({
+            message: 'Acceso concedido',
+            usuario: usuario
+        });
     } catch (error) {
-        console.error('Error en el backend durante el login:', error);
-        res.status(500).json({ error: 'Error en el servidor al procesar el usuario.' });
+        console.error("Error en /api/login:", error);
+        res.status(500).json({ error: 'Error interno del servidor en el inicio de sesión.' });
     }
 });
 
