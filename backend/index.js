@@ -1291,30 +1291,12 @@ app.delete('/api/admin/usuarios/:codigo', async (req, res) => {
         }
         const idUsuario = userRes.rows[0].id_usuario;
 
-        // 2. Limpiar registros en el orden correcto para evitar fallos de Foreign Key
-        // a. Mensajes en chat_pedido
+        // 2. Limpiar dependencias en el orden correcto
         await pool.query('DELETE FROM chat_pedido WHERE id_remitente = $1', [idUsuario]).catch(() => {});
-
-        // b. Obtener los IDs de pedidos asociados al usuario
-        const pedidosRes = await pool.query(
-            'SELECT id_pedido FROM pedidos WHERE id_cliente = $1 OR id_runner = $1',
-            [idUsuario]
-        );
-        const idsPedidos = pedidosRes.rows.map(p => p.id_pedido);
-
-        // c. Limpiar detalle_pedido y chats de esos pedidos
-        if (idsPedidos.length > 0) {
-            await pool.query('DELETE FROM detalle_pedido WHERE id_pedido = ANY($1)', [idsPedidos]).catch(() => {});
-            await pool.query('DELETE FROM chat_pedido WHERE id_pedido = ANY($1)', [idsPedidos]).catch(() => {});
-        }
-
-        // d. Limpiar pedidos
+        await pool.query('DELETE FROM reportes WHERE id_usuario_reporta = $1', [idUsuario]).catch(() => {});
         await pool.query('DELETE FROM pedidos WHERE id_cliente = $1 OR id_runner = $1', [idUsuario]).catch(() => {});
 
-        // e. Limpiar reportes
-        await pool.query('DELETE FROM reportes WHERE id_reportante = $1 OR id_reportado = $1', [idUsuario]).catch(() => {});
-
-        // 3. Eliminar usuario de PostgreSQL (fotos_usuario se borra solo por el ON DELETE CASCADE)
+        // 3. Eliminar usuario (fotos_usuario, detalle_pedido y chats vinculados caen por CASCADE)
         await pool.query('DELETE FROM usuarios WHERE id_usuario = $1', [idUsuario]);
 
         res.json({ success: true, message: `El usuario ${codigo} ha sido eliminado correctamente.` });
