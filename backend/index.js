@@ -16,6 +16,7 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // 1. Carga segura de Firebase Service Account (Tolerante a fallos en Render)
+// 1. Carga segura de Firebase Service Account
 let serviceAccount = null;
 
 try {
@@ -28,7 +29,8 @@ try {
     console.error("❌ Error al cargar credenciales de Firebase:", error.message);
 }
 
-if (serviceAccount && !admin.apps.length) {
+// 2. Inicialización segura de Firebase Admin (usando encadenamiento opcional)
+if (serviceAccount && (!admin.apps || !admin.apps.length)) {
     admin.initializeApp({
         credential: admin.credential.cert(serviceAccount)
     });
