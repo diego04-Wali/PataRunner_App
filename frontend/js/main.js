@@ -1226,11 +1226,11 @@ if (btnPublicar) {
                     }
                 });
 
-                if (typeof cargarMisPedidos === 'function') cargarMisPedidos();
+                // 🟢 CÓDIGO CORREGIDO:
+if (typeof cargarMisPedidos === 'function') cargarMisPedidos();
 
-                // Refrescar el catálogo y el stock en tiempo real
-                if (typeof cargarCatalogo === 'function') await cargarCatalogo();
-                if (typeof cargarTiendasAdmin === 'function') await cargarTiendasAdmin(true);
+// Refrescar el catálogo y el stock en tiempo real
+if (typeof cargarCatalogo === 'function') await cargarCatalogo();
 
                 document.getElementById('cart-modal').classList.add('hidden');
                 
@@ -4122,11 +4122,15 @@ let listaTiendasGlobal = [];
 async function cargarTiendasAdmin(silencioso = false) {
     const contenedor = document.getElementById('contenedor-tiendas-admin');
     if (!contenedor) return;
+// 🟢 GUARDIÁN DE SEGURIDAD: Solo los administradores (id_rol = 3) pueden consultar esta API
+    const userStr = sessionStorage.getItem('usuario');
+    const userData = userStr ? JSON.parse(userStr) : null;
+    if (!userData || userData.id_rol !== 3) return;
 
-   if (!silencioso) {
-    contenedor.innerHTML = '<div class="flex justify-center py-8"><i data-lucide="loader-2" class="w-6 h-6 text-indigo-600 animate-spin"></i></div>';
-    if (window.lucide) lucide.createIcons();
-}
+    if (!silencioso) {
+        contenedor.innerHTML = '<div class="flex justify-center py-8"><i data-lucide="loader-2" class="w-6 h-6 text-indigo-600 animate-spin"></i></div>';
+        if (window.lucide) lucide.createIcons();
+    }
 
     try {
         const [resTiendas, resProductos] = await Promise.all([
