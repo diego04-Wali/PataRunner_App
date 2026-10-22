@@ -49,7 +49,7 @@ if (btnTogglePassword) {
 }
 // -----------------------------------------------------------
 
- const loginBtn = document.getElementById("login-btn");
+const loginBtn = document.getElementById("login-btn");
 const screenLogin = document.getElementById("screen-login");
 
 if (loginBtn) {
@@ -60,23 +60,30 @@ if (loginBtn) {
 
         // 2. Validaciones estrictas
         if (!codigo || !passwordInput) {
-            alert("Por favor, ingresa tu código y contraseña.");
+            Swal.fire({
+                title: 'Campos incompletos',
+                text: 'Por favor, ingresa tu código y contraseña.',
+                icon: 'warning',
+                confirmButtonColor: '#2563eb'
+            });
             return;
         }
 
-       // 3. EXCEPCIÓN VIP PARA EL ADMIN Y GENERACIÓN DE CORREO
+        // 3. Generación de correo
         let emailInput = "";
 
         if (codigo === "ADMIN01") {
-            // Si eres tú, saltamos las reglas y usamos tu correo de admin
             emailInput = "terronesdiego04@gmail.com";
         } else {
-            // Si es un alumno normal, aplicamos las validaciones estrictas
             if (!codigo.startsWith('U') || codigo.length !== 9) {
-                alert("El código de alumno debe empezar con 'U' y tener 8 números.");
+                Swal.fire({
+                    title: 'Código inválido',
+                    text: 'El código de alumno debe empezar con "U" y tener 8 números.',
+                    icon: 'warning',
+                    confirmButtonColor: '#2563eb'
+                });
                 return;
             }
-            // Generamos el correo institucional en secreto para Firebase
             emailInput = `${codigo}@utp.edu.pe`;
         }
 
@@ -84,77 +91,80 @@ if (loginBtn) {
             loginBtn.textContent = "Iniciando...";
             loginBtn.disabled = true;
 
-            // 4. Intentamos iniciar sesión con Firebase
+            // 4. Intentamos iniciar sesión con Firebase Auth
             const userCredential = await signInWithEmailAndPassword(auth, emailInput, passwordInput);
             const user = userCredential.user;
 
-            // Verificamos si el correo ya fue validado en su bandeja (EXCEPTO PARA EL ADMIN)
+            // Refrescar el usuario para leer el estado de verificación actualizado
+            await user.reload();
+
+            // Verificamos si el correo ya fue validado (EXCEPTO PARA EL ADMIN)
             if (!user.emailVerified && codigo !== "ADMIN01") {
-                alert("Debes verificar tu correo institucional antes de ingresar a PataRunner. Revisa tu bandeja de entrada.");
-                await auth.signOut(); // Lo bloqueamos por seguridad
-                return; // Detenemos todo aquí
+                Swal.fire({
+                    title: 'Correo no verificado',
+                    text: 'Debes verificar tu correo institucional en tu bandeja de entrada antes de ingresar a PataRunner.',
+                    icon: 'warning',
+                    confirmButtonColor: '#2563eb'
+                });
+                await auth.signOut();
+                return;
             }
 
-            // 5. Extraemos el token criptográfico
-            const token = await user.getIdToken();
+            // 5. ¡CLAVE!: 'true' fuerza la renovación del token con la verificación de Firebase
+            const token = await user.getIdToken(true);
             sessionStorage.setItem('token', token);
 
-            // 6. Tocamos la puerta de tu servidor local (Tu backend)
+            // 6. Enviamos el token al backend en Render
             const response = await fetch('/api/login', {
                 method: 'POST',
                 headers: {
+                    'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 }
             });
 
             const data = await response.json();
 
-            // 7. Procesamos la respuesta de tu base de datos
+            // 7. Procesamos la respuesta de la base de datos (Neon)
             if (response.ok) {
                 console.log("Acceso concedido:", data);
-                // Si tu variable de respuesta se llama "data":
-sessionStorage.setItem('usuario', JSON.stringify(data.usuario));
+                sessionStorage.setItem('usuario', JSON.stringify(data.usuario));
                 sessionStorage.setItem('userId', data.usuario.id_usuario);
-                sessionStorage.setItem('isRunnerStatus', 'false');
-          if (typeof window.aplicarEstadoRunner === 'function') {
-        window.aplicarEstadoRunner();
-    }      
+                sessionStorage.setItem('isRunnerStatus', data.usuario.id_rol === 2 ? 'true' : 'false');
+
+                if (typeof window.aplicarEstadoRunner === 'function') {
+                    window.aplicarEstadoRunner();
+                }      
                 if (typeof cargarMisPedidos === 'function') {
                     cargarMisPedidos();
                 }
 
-                // Ocultamos la pantalla de login
+                // Ocultamos el login
                 if (screenLogin) {
                     screenLogin.classList.add("hidden");
                 }
 
-                // --- NUEVA LÓGICA DE ROLES (INCLUYE REDIRECCIÓN DEL ADMIN) ---
+                // Redirección por roles (ADMIN, RUNNER, ALUMNO)
                 if (data.usuario && data.usuario.id_rol === 3) {
-                    // 1. Ocultamos las barras de navegación
                     const bottomNav = document.getElementById('bottom-nav-bar');
                     if (bottomNav) bottomNav.classList.add('hidden');
                     
-                    const topBar = document.getElementById('role-switcher-bar'); // Usamos tu ID exacto
+                    const topBar = document.getElementById('role-switcher-bar');
                     if (topBar) topBar.classList.add('hidden');
 
-                    // 2. Ocultamos todos los tabs normales
                     document.querySelectorAll('div[id^="tab-"]').forEach(tab => tab.classList.add('hidden'));
 
-                    // 3. Mostramos SOLO el panel de admin a pantalla completa
                     const tabAdmin = document.getElementById('tab-admin');
                     if (tabAdmin) {
-                        tabAdmin.classList.remove('hidden');
-                        tabAdmin.classList.remove('pb-24');
+                        tabAdmin.classList.remove('hidden', 'pb-24');
                         tabAdmin.classList.add('pb-6');
                     }
                     
-                    // 4. Cargamos la base de datos automáticamente
                     if (typeof cargarUsuariosAdmin === 'function') {
                         cargarUsuariosAdmin();
                     }
                 } else if (data.usuario && data.usuario.id_rol === 2) {
                     sessionStorage.setItem('isRunnerStatus', 'true');
-                    // Usamos window.isRunner si la variable está global en otro lado, sino omitimos. 
                     if (typeof isRunner !== 'undefined') { isRunner = true; } 
                     
                     if (typeof window.setActiveRole === 'function') {
@@ -177,24 +187,37 @@ sessionStorage.setItem('usuario', JSON.stringify(data.usuario));
                         btnRunner.classList.add("opacity-50", "cursor-not-allowed");
                         btnRunner.innerHTML = '<i data-lucide="lock" class="w-3 h-3"></i> Runner';
                     }
-                    // Renderizamos el icono del candado
                     if (window.lucide) {
                         lucide.createIcons();
                     }
                 }
             } else {
-                alert("Acceso denegado por el servidor: " + data.error);
+                Swal.fire({
+                    title: 'Acceso denegado',
+                    text: data.error || 'Ocurrió un error al ingresar.',
+                    icon: 'error',
+                    confirmButtonColor: '#2563eb'
+                });
             }
 
         } catch (error) {
             console.error("Error en Firebase:", error.code, error.message);
             if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found') {
-                alert("Código de alumno o contraseña incorrectos.");
+                Swal.fire({
+                    title: 'Credenciales incorrectas',
+                    text: 'Código de alumno o contraseña incorrectos.',
+                    icon: 'error',
+                    confirmButtonColor: '#2563eb'
+                });
             } else {
-                alert("Hubo un error al intentar ingresar. Revisa tus datos.");
+                Swal.fire({
+                    title: 'Error de autenticación',
+                    text: 'Hubo un error al intentar ingresar. Revisa tus datos.',
+                    icon: 'error',
+                    confirmButtonColor: '#2563eb'
+                });
             }
         } finally {
-            // Restauramos el botón visualmente
             loginBtn.textContent = "Iniciar sesión";
             loginBtn.disabled = false;
         }

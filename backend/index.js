@@ -37,13 +37,12 @@ const verificarToken = async (req, res, next) => {
 
     try {
         const decodedToken = await getAuth().verifyIdToken(token);
-        // Guardamos en ambos por compatibilidad con tus otras rutas
         req.user = decodedToken;
         req.usuarioFirebase = decodedToken;
         next();
     } catch (error) {
-        console.error("Error al verificar token de Firebase:", error);
-        return res.status(403).json({ error: 'Token inválido o expirado.' });
+        console.error("Error al verificar token de Firebase:", error.message);
+        return res.status(403).json({ error: `Token inválido o expirado: ${error.message}` });
     }
 };
 // Middlewares
