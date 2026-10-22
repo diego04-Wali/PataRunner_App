@@ -5,7 +5,6 @@ import cron from 'node-cron';
 import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 
-import express from 'express';
 import { Resend } from 'resend';
 import admin from 'firebase-admin';
 import fs from 'fs';
