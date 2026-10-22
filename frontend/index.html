@@ -11,6 +11,15 @@
 <link rel="manifest" href="manifest.json" />
 <link rel="icon" type="image/png" sizes="512x512" href="logo.png">
 <link rel="apple-touch-icon" href="logo.png">
+<script>
+  // Oculta el login de forma inmediata si existe un token guardado
+  if (localStorage.getItem('token') && localStorage.getItem('usuario')) {
+    const style = document.createElement('style');
+    style.id = 'fast-hide-login';
+    style.innerHTML = '#screen-login { display: none !important; }';
+    document.head.appendChild(style);
+  }
+</script>
 </head>
 <body class="min-h-screen w-full bg-white sm:bg-gradient-to-br sm:from-slate-950 sm:via-slate-900 sm:to-black flex items-center justify-center sm:py-12 sm:px-4">
 
