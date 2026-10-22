@@ -1291,18 +1291,22 @@ app.delete('/api/admin/usuarios/:codigo', async (req, res) => {
         }
         const idUsuario = userRes.rows[0].id_usuario;
 
-        // 2. Limpiar registros en tablas dependientes (Evita error de llave foránea)
+        // 2. Limpiar registros en TODAS las tablas dependientes
         await pool.query('DELETE FROM chat WHERE id_remitente = $1', [idUsuario]);
         await pool.query('DELETE FROM pedidos WHERE id_cliente = $1 OR id_runner = $1', [idUsuario]);
         await pool.query('DELETE FROM fotos_usuario WHERE id_usuario = $1', [idUsuario]);
+        
+        // Limpiar valoraciones y reportes si existen las tablas
+        await pool.query('DELETE FROM valoraciones WHERE id_evaluador = $1 OR id_evaluado = $1', [idUsuario]).catch(() => {});
+        await pool.query('DELETE FROM reportes WHERE id_reportante = $1 OR id_reportado = $1', [idUsuario]).catch(() => {});
 
         // 3. Eliminar usuario de PostgreSQL
         await pool.query('DELETE FROM usuarios WHERE id_usuario = $1', [idUsuario]);
 
         res.json({ success: true, message: `El usuario ${codigo} y su historial han sido eliminados correctamente.` });
     } catch (error) {
-        console.error("Error al eliminar usuario:", error);
-        res.status(500).json({ success: false, error: "Error interno al eliminar el usuario." });
+        console.error("Error crítico al eliminar usuario:", error);
+        res.status(500).json({ success: false, error: "No se pudo eliminar el usuario debido a registros asociados en la base de datos." });
     }
 });
 
