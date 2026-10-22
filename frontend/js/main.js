@@ -1,18 +1,32 @@
-// --- INTERCEPTOR GLOBAL PARA RENDER ---
+// --- INTERCEPTOR GLOBAL PARA RENDER Y AUTENTICACIÓN ---
 
 const API_URL = 'https://patarunner-app.onrender.com';
 const originalFetch = window.fetch.bind(window);
 
-window.fetch = function(url, config) {
-    // Si la ruta empieza con "/", le anteponemos obligatoriamente el servidor de Render
+window.fetch = function(url, config = {}) {
+    // 1. Normalizar URL a Render
     if (url && typeof url === 'string' && url.startsWith('/')) {
         url = API_URL + url;
-    }
-    // Si por alguna razón la URL trae localhost o un enlace viejo, lo redirigimos a Render
-    else if (url && typeof url === 'string' && (url.includes('localhost') || url.includes('ngrok'))) {
+    } else if (url && typeof url === 'string' && (url.includes('localhost') || url.includes('ngrok'))) {
         const path = url.replace(/https?:\/\/[^\/]+/, '');
         url = API_URL + path;
     }
+
+    // 2. Adjuntar Token de Autorización automáticamente si existe
+    const token = sessionStorage.getItem('token') || localStorage.getItem('token');
+    if (token) {
+        config.headers = config.headers || {};
+        
+        // Si headers es una instancia de Headers de JS o un objeto literal
+        if (config.headers instanceof Headers) {
+            if (!config.headers.has('Authorization')) {
+                config.headers.append('Authorization', `Bearer ${token}`);
+            }
+        } else if (!config.headers['Authorization']) {
+            config.headers['Authorization'] = `Bearer ${token}`;
+        }
+    }
+
     return originalFetch(url, config);
 };
   lucide.createIcons();
@@ -3377,14 +3391,22 @@ document.addEventListener('DOMContentLoaded', () => {
 // FUNCIONES DEL PANEL DE ADMINISTRACIÓN
 // ==========================================
 async function cargarUsuariosAdmin() {
+    const contenedor = document.getElementById('mod-usuarios');
+    if (!contenedor) return;
+
     try {
-        const respuesta = await fetch('/api/admin/usuarios');
+        const token = sessionStorage.getItem('token') || localStorage.getItem('token');
+
+        const respuesta = await fetch('/api/admin/usuarios', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
         
         if (!respuesta.ok) throw new Error("Error al obtener usuarios");
         const usuarios = await respuesta.json();
-
-        const contenedor = document.getElementById('mod-usuarios');
-        if (!contenedor) return;
 
         // Cargamos los reportes en segundo plano al abrir el panel de admin
         if (typeof cargarReportesAdmin === 'function') {
@@ -3396,7 +3418,6 @@ async function cargarUsuariosAdmin() {
         usuarios.forEach(user => {
             const esAdmin = user.id_rol === 3;
 
-            // 1. Crear el distintivo de verificación solo si NO es Administrador
             let badgeVerificado = '';
             if (!esAdmin) {
                 badgeVerificado = user.verificado 
@@ -3450,7 +3471,7 @@ async function cargarUsuariosAdmin() {
         console.error("Error crítico en cargarUsuariosAdmin:", error);
         const contenedor = document.getElementById('mod-usuarios');
         if (contenedor) {
-            contenedor.innerHTML += '<p class="text-red-500 text-[11px] mt-2 border border-red-200 bg-red-50 p-2 rounded">Error de conexión: No se pudo cargar la base de datos.</p>';
+            contenedor.innerHTML = '<p class="text-red-500 text-[11px] mt-2 border border-red-200 bg-red-50 p-2 rounded">Error de conexión: No se pudo cargar la base de datos.</p>';
         }
     }
 }
