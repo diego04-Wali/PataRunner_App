@@ -31,109 +31,52 @@ app.get('/', (req, res) => {
 // ==========================================
 
 // 1. Registro Previo (Guarda en la tabla 'registros_pendientes' por 24 horas)
-app.post('/api/usuarios/registro-previo', async (req, res) => {
+// ==========================================
+// RUTA DE REGISTRO DE USUARIO (OPCIÓN A - NATIVA CON FIREBASE)
+// ==========================================
+app.post('/api/usuarios/registro', async (req, res) => {
     try {
-        const { codigo_alumno, correo_institucional, nombre_completo, password, carrera } = req.body;
+        const { firebase_uid, codigo_alumno, correo_institucional, nombre_completo, carrera, verificado } = req.body;
 
-        // Validar correo UTP
-        if (!correo_institucional || !correo_institucional.toLowerCase().endsWith('@utp.edu.pe')) {
-            return res.status(400).json({ error: 'Por seguridad, solo se permiten correos institucionales de la UTP.' });
-        }
+        // Insertar en la tabla usuarios de Neon
+        const query = `
+            INSERT INTO usuarios (firebase_uid, codigo_alumno, correo_institucional, nombre_completo, carrera, verificado)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            ON CONFLICT (codigo_alumno) DO UPDATE 
+            SET firebase_uid = EXCLUDED.firebase_uid,
+                correo_institucional = EXCLUDED.correo_institucional,
+                nombre_completo = EXCLUDED.nombre_completo,
+                carrera = EXCLUDED.carrera,
+                verificado = EXCLUDED.verificado
+            RETURNING id_usuario, codigo_alumno, correo_institucional;
+        `;
 
-        const correoMinuscula = correo_institucional.toLowerCase();
+        const values = [
+            firebase_uid, 
+            codigo_alumno, 
+            correo_institucional.toLowerCase(), 
+            nombre_completo, 
+            carrera, 
+            verificado || false
+        ];
 
-        // Verificar si ya existe en usuarios activos definitivos
-        const existeDefinitivo = await pool.query(
-            'SELECT * FROM usuarios WHERE codigo_alumno = $1 OR correo_institucional = $2',
-            [codigo_alumno, correoMinuscula]
-        );
-        if (existeDefinitivo.rows.length > 0) {
-            return res.status(400).json({ error: 'Este código de alumno o correo ya tiene una cuenta activa en PataRunner.' });
-        }
+        const result = await pool.query(query, values);
 
-        // Limpiar intentos previos en la tabla temporal con este mismo correo/código
-        await pool.query(
-            'DELETE FROM registros_pendientes WHERE correo_institucional = $1 OR codigo_alumno = $2',
-            [correoMinuscula, codigo_alumno]
-        );
-
-        // Crear token de verificación único
-        const token = Math.random().toString(36).substring(2) + Date.now().toString(36);
-
-        // Insertar en la tabla temporal
-        await pool.query(
-            `INSERT INTO registros_pendientes (codigo_alumno, correo_institucional, nombre_completo, password_hash, carrera, token_verificacion)
-             VALUES ($1, $2, $3, $4, $5, $6)`,
-            [codigo_alumno, correoMinuscula, nombre_completo, password || 'firebase_auth', carrera, token]
-        );
-
-        res.status(200).json({ 
-            success: true, 
-            mensaje: 'Enlace de verificación enviado a tu correo. Tienes 24 horas para confirmarlo.' 
+        res.status(201).json({
+            success: true,
+            message: 'Usuario registrado correctamente en la base de datos.',
+            usuario: result.rows[0]
         });
 
     } catch (error) {
-        console.error("Error en registro previo:", error);
-        res.status(500).json({ error: 'Error interno del servidor en el registro.' });
+        console.error("Error al registrar usuario en PostgreSQL:", error);
+        res.status(500).json({ 
+            success: false, 
+            error: "Error interno al guardar los datos del usuario." 
+        });
     }
 });
 
-// 2. Confirmación de cuenta desde el enlace del correo
-app.get('/api/usuarios/confirmar-cuenta/:token', async (req, res) => {
-    try {
-        const { token } = req.params;
-
-        // 1. Buscar el token en la tabla temporal
-        const pendiente = await pool.query(
-            'SELECT * FROM registros_pendientes WHERE token_verificacion = $1',
-            [token]
-        );
-
-        if (pendiente.rows.length === 0) {
-            return res.status(400).send("El enlace de verificación es inválido o ya expiró (pasaron más de 24 horas). Por favor intenta registrarte de nuevo.");
-        }
-
-        const user = pendiente.rows[0];
-
-        // 2. Crear la cuenta en Firebase Authentication desde el servidor
-        let firebaseUid;
-        try {
-            const userRecord = await admin.auth().createUser({
-                email: user.correo_institucional,
-                password: user.password_hash !== 'firebase_auth' ? user.password_hash : 'Utp123456*', // Contraseña temporal o asignada
-                displayName: user.nombre_completo,
-                emailVerified: true
-            });
-            firebaseUid = userRecord.uid;
-        } catch (fbError) {
-            // Si el usuario ya existía en Firebase, obtenemos su UID
-            if (fbError.code === 'auth/email-already-exists') {
-                const existingUser = await admin.auth().getUserByEmail(user.correo_institucional);
-                firebaseUid = existingUser.uid;
-            } else {
-                throw fbError;
-            }
-        }
-
-        // 3. Insertar formalmente en la tabla real de usuarios marcando verificado = true
-        await pool.query(
-            `INSERT INTO usuarios (firebase_uid, id_rol, nombre_completo, correo_institucional, codigo_alumno, carrera, verificado)
-             VALUES ($1, 1, $2, $3, $4, $5, true)
-             ON CONFLICT (codigo_alumno) DO UPDATE 
-             SET verificado = true, firebase_uid = EXCLUDED.firebase_uid`,
-            [firebaseUid, user.nombre_completo, user.correo_institucional, user.codigo_alumno, user.carrera]
-        );
-
-        // 4. Eliminar de la tabla temporal de pendientes
-        await pool.query('DELETE FROM registros_pendientes WHERE id_pendiente = $1', [user.id_pendiente]);
-
-        res.send("<h1>¡Cuenta verificada con éxito! 🎉</h1><p>Tu usuario ha sido activado en PataRunner. Ya puedes volver a la aplicación e iniciar sesión.</p>");
-
-    } catch (error) {
-        console.error("Error al confirmar cuenta:", error);
-        res.status(500).send("Error interno al activar la cuenta.");
-    }
-});
 
 // --- RUTA: Registrar una Tienda ---
 app.post('/api/tiendas', async (req, res) => {

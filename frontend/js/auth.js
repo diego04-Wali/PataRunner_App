@@ -13,7 +13,7 @@ window.fetch = function(...args) {
 };
   // Importamos Firebase desde su CDN oficial
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword, sendPasswordResetEmail, createUserWithEmailAndPassword, sendEmailVerification } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
   const firebaseConfig = {
     apiKey: "AIzaSyBzWJYQIzZMkE_TzfgUtRRhh9t_ycIorIk",
     authDomain: "patarunner-1b348.firebaseapp.com",
@@ -270,7 +270,7 @@ if (btnPostularRunner) {
     });
 }
 // ==========================================
-// FASE 2: REGISTRO EN FIREBASE Y VERIFICACIÓN
+// FASE 2: REGISTRO EN FIREBASE Y VERIFICACIÓN (OPCIÓN A)
 // ==========================================
 const btnRegister = document.getElementById('btn-register');
 
@@ -302,55 +302,58 @@ if (btnRegister) {
             return;
         }
 
-        // 3. Generamos el correo institucional en secreto
+        // 3. Generamos el correo institucional y nombre completo
         const correoInstitucional = `${codigo.toUpperCase()}@utp.edu.pe`;
+        const nombreCompleto = `${nombres.trim()} ${apellidos.trim()}`;
 
         try {
-            // Cambiamos el estado del botón para que el usuario sepa que está cargando
             btnRegister.textContent = "Creando cuenta...";
             btnRegister.disabled = true;
             btnRegister.classList.add("opacity-70");
 
-           // 4. Unificamos nombres y enviamos el pre-registro al Backend
-        const nombreCompleto = `${nombres.trim()} ${apellidos.trim()}`;
+            // 4. Crear la cuenta directamente en Firebase Auth
+            const userCredential = await createUserWithEmailAndPassword(auth, correoInstitucional, password);
+            const user = userCredential.user;
 
-        const respuestaBD = await fetch('/api/usuarios/registro-previo', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                codigo_alumno: codigo.toUpperCase(),
-                nombre_completo: nombreCompleto,
-                carrera: carrera,
-                correo_institucional: correoInstitucional,
-                password_hash: password
-            })
-        });
+            // 5. Enviar correo de verificación nativo de Firebase al instante
+            await sendEmailVerification(user);
 
-        const datosRespuesta = await respuestaBD.json();
+            // 6. Guardar al usuario en PostgreSQL (Neon) con verificado = false y su firebase_uid
+            const respuestaBD = await fetch('/api/usuarios/registro', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    firebase_uid: user.uid,
+                    codigo_alumno: codigo.toUpperCase(),
+                    nombre_completo: nombreCompleto,
+                    carrera: carrera,
+                    correo_institucional: correoInstitucional,
+                    verificado: false
+                })
+            });
 
-        if (respuestaBD.ok) {
-            alert(`¡Pre-registro exitoso!\n\nHemos enviado un enlace de verificación a:\n${correoInstitucional}\n\nPor favor, revisa tu bandeja de entrada (o spam) para activar tu cuenta.`);
+            const datosRespuesta = await respuestaBD.json();
 
-            // Limpiamos el formulario y volvemos a la pantalla de Login
-            document.getElementById('register-codigo').value = '';
-            document.getElementById('register-nombres').value = '';
-            document.getElementById('register-apellidos').value = '';
-            document.getElementById('register-carrera').value = '';
-            document.getElementById('register-password').value = '';
-            document.getElementById('register-terms').checked = false;
+            if (respuestaBD.ok) {
+                alert(`¡Registro exitoso!\n\nHemos enviado un correo de verificación oficial a:\n${correoInstitucional}\n\nPor favor, revisa tu bandeja de entrada o spam antes de iniciar sesión.`);
 
-            document.getElementById('register-form').classList.add('hidden');
-            document.getElementById('login-form').classList.remove('hidden');
-        } else {
-            alert(datosRespuesta.error || "Ocurrió un error al procesar tu registro.");
-        }
+                // Limpiamos el formulario y volvemos a la pantalla de Login
+                document.getElementById('register-codigo').value = '';
+                document.getElementById('register-nombres').value = '';
+                document.getElementById('register-apellidos').value = '';
+                document.getElementById('register-carrera').value = '';
+                document.getElementById('register-password').value = '';
+                document.getElementById('register-terms').checked = false;
+
+                document.getElementById('register-form').classList.add('hidden');
+                document.getElementById('login-form').classList.remove('hidden');
+            } else {
+                alert("Error al guardar en base de datos: " + (datosRespuesta.error || "Ocurrió un error."));
+            }
 
         } catch (error) {
             console.error("Error en el registro de Firebase:", error);
             
-            // Manejo de errores comunes de Firebase en español
             if (error.code === 'auth/email-already-in-use') {
                 alert("Ya existe una cuenta asociada a este código de alumno.");
             } else if (error.code === 'auth/weak-password') {
@@ -359,7 +362,6 @@ if (btnRegister) {
                 alert("Ocurrió un error al crear la cuenta: " + error.message);
             }
         } finally {
-            // Restauramos el botón a la normalidad
             btnRegister.textContent = "Registrarme";
             btnRegister.disabled = false;
             btnRegister.classList.remove("opacity-70");
