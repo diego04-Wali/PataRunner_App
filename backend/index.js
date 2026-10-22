@@ -5,6 +5,93 @@ import cron from 'node-cron';
 import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 
+import express from 'express';
+import { Resend } from 'resend';
+import admin from 'firebase-admin';
+import fs from 'fs';
+
+// Cargar credenciales de Firebase Admin
+const serviceAccount = JSON.parse(fs.readFileSync('./firebase-service-account.json', 'utf8'));
+
+if (!admin.apps.length) {
+    admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount)
+    });
+}
+
+// Inicializar Resend leyendo la variable configurada en Render
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+// Endpoint de Registro
+app.post('/api/usuarios/registro', async (req, res) => {
+    try {
+        const { firebase_uid, codigo_alumno, correo_institucional, nombre_completo, carrera } = req.body;
+
+        // 1. Guardar o actualizar en Neon PostgreSQL
+        const query = `
+            INSERT INTO usuarios (id_rol, firebase_uid, codigo_alumno, correo_institucional, nombre_completo, carrera, verificado)
+            VALUES (1, $1, $2, $3, $4, $5, false)
+            ON CONFLICT (codigo_alumno) DO UPDATE 
+            SET firebase_uid = EXCLUDED.firebase_uid,
+                correo_institucional = EXCLUDED.correo_institucional,
+                nombre_completo = EXCLUDED.nombre_completo,
+                carrera = EXCLUDED.carrera
+            RETURNING id_usuario;
+        `;
+
+        await pool.query(query, [
+            firebase_uid, 
+            codigo_alumno, 
+            correo_institucional.toLowerCase(), 
+            nombre_completo, 
+            carrera
+        ]);
+
+        // 2. Generar el enlace nativo de verificación de Firebase
+        const actionCodeSettings = {
+            url: 'https://patarunnerapp-frontend.vercel.app',
+            handleCodeInApp: false
+        };
+
+        const verificationLink = await admin.auth().generateEmailVerificationLink(
+            correo_institucional.toLowerCase(),
+            actionCodeSettings
+        );
+
+        // 3. Despachar el correo por Resend
+        await resend.emails.send({
+            from: 'PataRunner UTP <onboarding@resend.dev>',
+            to: [correo_institucional.toLowerCase()],
+            subject: 'PataRunner - Confirma tu correo institucional',
+            html: `
+                <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
+                    <h2>¡Hola, ${nombre_completo}!</h2>
+                    <p>Bienvenido a <b>PataRunner UTP</b>. Para completar tu registro y acceder a la plataforma, confirma tu correo institucional haciendo clic en el siguiente enlace:</p>
+                    <p style="margin: 25px 0;">
+                        <a href="${verificationLink}" style="background-color: #2563eb; color: white; padding: 12px 20px; text-decoration: none; border-radius: 6px; font-weight: bold;">Verificar mi correo institucional</a>
+                    </p>
+                    <p>Si el botón no abre, copia y pega esta dirección en tu navegador:</p>
+                    <p><a href="${verificationLink}">${verificationLink}</a></p>
+                    <hr style="border: none; border-top: 1px solid #eee; margin-top: 30px;">
+                    <p style="font-size: 12px; color: #777;">Si no solicitaste este registro, puedes ignorar este mensaje.</p>
+                </div>
+            `
+        });
+
+        res.status(201).json({
+            success: true,
+            message: 'Registro completado. Revisa tu correo institucional para verificar tu cuenta.'
+        });
+
+    } catch (error) {
+        console.error("Error en registro:", error);
+        res.status(500).json({ 
+            success: false, 
+            error: error.message || "Error al procesar el registro." 
+        });
+    }
+});
+
 // Inicializar Firebase Admin de forma segura en ES Modules
 if (!getApps().length) {
     try {

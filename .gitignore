@@ -4,3 +4,4 @@ frontend/node_modules/
 .env
 *.log
 backend/firebase-key.json
+firebase-service-account.json
