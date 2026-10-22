@@ -4986,3 +4986,176 @@ async function sendChatMessage() {
         console.error("Error en petición de chat:", err);
     }
 }
+// ==========================================
+// LÓGICA DE RESEÑAS DE LA APLICACIÓN (USUARIO)
+// ==========================================
+let calificacionAppSeleccionada = 0;
+
+window.abrirModalResenaApp = function() {
+    calificacionAppSeleccionada = 0;
+    document.querySelectorAll('.star-app-btn').forEach(btn => {
+        btn.classList.remove('text-amber-400');
+        btn.classList.add('text-slate-300');
+    });
+    document.getElementById('input-comentario-resena').value = '';
+
+    const modal = document.getElementById('modal-resena-app');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+};
+
+window.cerrarModalResenaApp = function() {
+    const modal = document.getElementById('modal-resena-app');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+};
+
+// Selección interactiva de estrellas
+document.addEventListener('click', (e) => {
+    const starBtn = e.target.closest('.star-app-btn');
+    if (starBtn) {
+        calificacionAppSeleccionada = parseInt(starBtn.dataset.value);
+        document.querySelectorAll('.star-app-btn').forEach(btn => {
+            const val = parseInt(btn.dataset.value);
+            if (val <= calificacionAppSeleccionada) {
+                btn.classList.add('text-amber-400');
+                btn.classList.remove('text-slate-300');
+            } else {
+                btn.classList.remove('text-amber-400');
+                btn.classList.add('text-slate-300');
+            }
+        });
+    }
+});
+
+// Enviar reseña desde el modal
+document.addEventListener('submit', async (e) => {
+    if (e.target.id === 'form-resena-app') {
+        e.preventDefault();
+
+        if (calificacionAppSeleccionada === 0) {
+            Swal.fire({
+                title: 'Selecciona una puntuación',
+                text: 'Por favor, selecciona cuántas estrellas le das a la app.',
+                icon: 'warning',
+                confirmButtonColor: '#2563eb'
+            });
+            return;
+        }
+
+        const usuarioStr = localStorage.getItem('usuario') || sessionStorage.getItem('usuario');
+        if (!usuarioStr) return;
+        const usuario = JSON.parse(usuarioStr);
+        const comentario = document.getElementById('input-comentario-resena').value.trim();
+
+        try {
+            const res = await fetch('/api/resenas-app', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id_usuario: usuario.id_usuario,
+                    calificacion: calificacionAppSeleccionada,
+                    comentario: comentario
+                })
+            });
+
+            const data = await res.json();
+            if (res.ok && data.success) {
+                Swal.fire({
+                    title: '¡Gracias por tu opinión!',
+                    text: 'Tu reseña ha sido enviada con éxito.',
+                    icon: 'success',
+                    confirmButtonColor: '#2563eb'
+                });
+                cerrarModalResenaApp();
+            } else {
+                Swal.fire({
+                    title: 'Error',
+                    text: data.error || 'No se pudo guardar tu reseña.',
+                    icon: 'error',
+                    confirmButtonColor: '#2563eb'
+                });
+            }
+        } catch (err) {
+            console.error('Error al enviar reseña:', err);
+            Swal.fire({
+                title: 'Error de conexión',
+                text: 'No se pudo conectar con el servidor.',
+                icon: 'error',
+                confirmButtonColor: '#2563eb'
+            });
+        }
+    }
+});
+
+
+// ==========================================
+// MÓDULO ADMIN: VISUALIZAR RESEÑAS DE LA APP
+// ==========================================
+async function cargarResenasAdmin() {
+    const contenedor = document.getElementById('contenedor-resenas-admin');
+    if (!contenedor) return;
+
+    contenedor.innerHTML = '<div class="flex justify-center py-8"><i data-lucide="loader-2" class="w-6 h-6 text-indigo-600 animate-spin"></i></div>';
+    if (window.lucide) lucide.createIcons();
+
+    try {
+        // Obtener el token guardado en la sesión
+        const token = sessionStorage.getItem('token') || localStorage.getItem('token');
+
+        const res = await fetch('/api/admin/resenas-app', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!res.ok) throw new Error("Error al consultar reseñas");
+        const resenas = await res.json();
+
+        if (resenas.length === 0) {
+            contenedor.innerHTML = `
+                <div class="bg-white border border-slate-200 rounded-xl p-6 text-center shadow-sm">
+                    <p class="text-[13px] font-medium text-slate-500">Aún no hay reseñas registradas sobre la aplicación.</p>
+                </div>`;
+            return;
+        }
+
+        let html = '<p class="text-[12px] font-bold text-slate-800 uppercase mb-3">Opiniones y Calificaciones de Usuarios</p>';
+
+        resenas.forEach(r => {
+            const estrellas = '★'.repeat(r.calificacion) + '☆'.repeat(5 - r.calificacion);
+            const fecha = new Date(r.fecha_creacion).toLocaleDateString('es-PE', {
+                day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+            });
+
+            html += `
+                <div class="bg-white border border-slate-200 rounded-xl p-3.5 mb-3 shadow-sm">
+                    <div class="flex justify-between items-start mb-1.5">
+                        <div>
+                            <p class="text-[13px] font-bold text-slate-900">${r.nombre_completo || 'Usuario'}</p>
+                            <p class="text-[10px] text-slate-400">${r.carrera || 'Estudiante'} • ${r.codigo || ''}</p>
+                        </div>
+                        <span class="text-amber-400 font-bold text-sm tracking-wider">${estrellas}</span>
+                    </div>
+
+                    <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-100 mt-2">
+                        <p class="text-[11.5px] text-slate-700 leading-relaxed font-normal">"${r.comentario || 'Sin comentario escrito.'}"</p>
+                        <p class="text-[9px] text-slate-400 mt-1.5 text-right">${fecha}</p>
+                    </div>
+                </div>
+            `;
+        });
+
+        contenedor.innerHTML = html;
+
+    } catch (err) {
+        console.error("Error al cargar reseñas admin:", err);
+        contenedor.innerHTML = '<p class="text-red-500 text-[11px] text-center py-4">Error al conectar con el servidor.</p>';
+    }
+}

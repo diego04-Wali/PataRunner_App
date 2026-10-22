@@ -45,6 +45,25 @@ const verificarToken = async (req, res, next) => {
         return res.status(403).json({ error: `Token inválido o expirado: ${error.message}` });
     }
 };
+// Middleware para verificar si el usuario tiene rol de Administrador (id_rol === 3)
+const verificarAdmin = async (req, res, next) => {
+    try {
+        const firebase_uid = req.user.uid || req.user.user_id;
+        const result = await pool.query(
+            'SELECT id_rol FROM usuarios WHERE firebase_uid = $1 OR correo_institucional = $2',
+            [firebase_uid, req.user.email ? req.user.email.toLowerCase() : '']
+        );
+
+        if (result.rows.length === 0 || result.rows[0].id_rol !== 3) {
+            return res.status(403).json({ error: 'Acceso denegado: Se requieren privilegios de administrador.' });
+        }
+
+        next();
+    } catch (error) {
+        console.error("Error al verificar rol de administrador:", error);
+        return res.status(500).json({ error: 'Error interno al validar permisos.' });
+    }
+};
 // Middlewares
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
@@ -141,7 +160,7 @@ app.post('/api/productos', async (req, res) => {
     }
 });
 // --- RUTA: Eliminar / Desactivar Producto ---
-app.delete('/api/admin/productos/:id', async (req, res) => {
+app.delete('/api/admin/productos/:id',verificarToken,verificarAdmin, async (req, res) => {
     const { id } = req.params;
     try {
         const resultado = await pool.query(
@@ -234,57 +253,59 @@ app.get('/api/pedidos/historial-runner/:id_usuario', async (req, res) => {
 });
 
 // --- RUTA: Registrar un Pedido completo (Cabecera + Productos) ---
-app.post('/api/pedidos', async (req, res) => {
-    try {
-        // Ahora también esperamos recibir la descripcion y el costo aproximado
-        const { id_cliente, ubicacion_entrega, tarifa_entrega, metodo_pago, descripcion_pedido, costo_aproximado, carrito } = req.body;
+app.post('/api/pedidos', verificarToken, async (req, res) => {
+  const { direccion_entrega, total, carrito } = req.body;
+  const firebase_uid = req.user.uid || req.user.user_id;
+  const client = await pool.connect();
 
-        // 1. Guardamos la cabecera del pedido (AHORA CON LAS NUEVAS COLUMNAS)
-        const nuevoPedido = await pool.query(
-            `INSERT INTO pedidos (id_cliente, ubicacion_entrega, estado, tarifa_entrega, metodo_pago, descripcion_pedido, costo_aproximado)
-             VALUES ($1, $2, 'Pendiente', $3, $4, $5, $6) RETURNING *`,
-            [id_cliente, ubicacion_entrega, tarifa_entrega, metodo_pago, descripcion_pedido, costo_aproximado]
-        );
+  try {
+    await client.query('BEGIN');
 
-        const pedidoInsertado = nuevoPedido.rows[0];
-        const nuevoIdPedido = pedidoInsertado.id_pedido; // Obtenemos el ID creado
+    // 1. Obtener el id_usuario de PostgreSQL usando el UID de Firebase
+    const userRes = await client.query(
+      'SELECT id_usuario FROM usuarios WHERE firebase_uid = $1 OR correo_institucional = $2',
+      [firebase_uid, req.user.email ? req.user.email.toLowerCase() : '']
+    );
 
-        // 2. Si el frontend nos envió productos en el carrito, los guardamos uno por uno
-        if (carrito && carrito.length > 0) {
-    for (let item of carrito) {
-        // Capturar ID independientemente de si el frontend envía 'id' o 'id_producto'
-        let productoIdSeguro = item.id_producto || item.id;
-        let cantidadComprada = parseInt(item.cantidad || item.qty) || 1;
-
-        if (productoIdSeguro === 'favor_personalizado' || (typeof productoIdSeguro === 'string' && productoIdSeguro.startsWith('otro'))) {
-            productoIdSeguro = null;
-        }
-
-        // 1. Guardar detalle del pedido
-        await pool.query(
-            `INSERT INTO detalle_pedido (id_pedido, id_producto, cantidad, precio_unitario, subtotal)
-             VALUES ($1, $2, $3, $4, $5)`,
-            [nuevoIdPedido, productoIdSeguro, cantidadComprada, item.precio_unitario || item.price, item.subtotal || (item.price * cantidadComprada)]
-        );
-
-        // 2. Descontar el stock en la base de datos
-        if (productoIdSeguro) {
-            await pool.query(
-                'UPDATE productos SET stock = GREATEST(0, stock - $1) WHERE id_producto = $2',
-                [cantidadComprada, productoIdSeguro]
-            );
-        }
+    if (userRes.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Usuario no encontrado en la base de datos.' });
     }
-}
-        res.status(201).json({
-            mensaje: '¡Pedido completo creado con éxito! Esperando a un Runner...',
-            pedido: pedidoInsertado
-        });
 
-    } catch (error) {
-        console.error("Error al guardar pedido:", error.message);
-        res.status(500).json({ error: 'Error al registrar el pedido completo.' });
+    const id_cliente = userRes.rows[0].id_usuario;
+
+    // 2. Insertar cabecera con estado 'Pendiente' (formato compatible con tus SELECT)
+    const resPedido = await client.query(
+      `INSERT INTO pedidos (id_cliente, ubicacion_entrega, total, estado, fecha_pedido) 
+       VALUES ($1, $2, $3, 'Pendiente', NOW()) 
+       RETURNING id_pedido`,
+      [id_cliente, direccion_entrega, total]
+    );
+    const idPedido = resPedido.rows[0].id_pedido;
+
+    // 3. Insertar detalle de productos en la tabla en singular 'detalle_pedido'
+    if (carrito && Array.isArray(carrito)) {
+      for (const item of carrito) {
+        const precioUnitario = item.precio_unitario || item.precio || 0;
+        const subtotal = item.subtotal || (precioUnitario * item.cantidad);
+
+        await client.query(
+          `INSERT INTO detalle_pedido (id_pedido, id_producto, cantidad, precio_unitario, subtotal) 
+           VALUES ($1, $2, $3, $4, $5)`,
+          [idPedido, item.id_producto, item.cantidad, precioUnitario, subtotal]
+        );
+      }
     }
+
+    await client.query('COMMIT');
+    res.status(201).json({ ok: true, id_pedido: idPedido, mensaje: 'Pedido registrado exitosamente' });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Error al procesar el pedido:', error.message);
+    res.status(500).json({ error: 'Error al registrar el pedido: ' + error.message });
+  } finally {
+    client.release();
+  }
 });
 
 // --- RUTA: Registrar el Detalle de un Pedido (Los productos de la orden) ---
@@ -307,10 +328,22 @@ app.post('/api/detalle_pedido', async (req, res) => {
     }
 });
 // --- RUTA: Actualizar estado de un Pedido (Ej: Aceptar o Entregar) ---
-app.put('/api/pedidos/:id', async (req, res) => {
+app.put('/api/pedidos/:id', verificarToken, async (req, res) => {
     try {
         const { id } = req.params; 
-        const { id_runner, estado } = req.body; 
+        let { id_runner, estado } = req.body; 
+
+        // Si el frontend no envió id_runner, lo obtenemos con el token de Firebase
+        if (!id_runner) {
+            const firebase_uid = req.user.uid || req.user.user_id;
+            const userRes = await pool.query(
+                'SELECT id_usuario FROM usuarios WHERE firebase_uid = $1 OR correo_institucional = $2',
+                [firebase_uid, req.user.email ? req.user.email.toLowerCase() : '']
+            );
+            if (userRes.rows.length > 0) {
+                id_runner = userRes.rows[0].id_usuario;
+            }
+        }
         
         // 1. Actualizamos el estado y asignamos el ID del runner
         await pool.query(
@@ -318,11 +351,11 @@ app.put('/api/pedidos/:id', async (req, res) => {
             [id_runner, estado, id]
         );
         
-        // 2. Consultamos el pedido uniendo la tabla usuarios para obtener el nombre y teléfono
+        // 2. Consultamos el pedido con LEFT JOIN para evitar fallos si id_runner es nulo
         const pedidoConRunner = await pool.query(`
             SELECT p.*, u.nombre_completo AS nombre_runner, u.telefono AS telefono_runner
             FROM pedidos p
-            JOIN usuarios u ON p.id_runner = u.id_usuario
+            LEFT JOIN usuarios u ON p.id_runner = u.id_usuario
             WHERE p.id_pedido = $1
         `, [id]);
         
@@ -331,7 +364,7 @@ app.put('/api/pedidos/:id', async (req, res) => {
             pedido: pedidoConRunner.rows[0]
         });
     } catch (error) {
-        console.error(error.message);
+        console.error("Error al actualizar pedido:", error.message);
         res.status(500).json({ error: 'Error al actualizar el pedido.' });
     }
 });
@@ -431,27 +464,6 @@ app.get('/api/pedidos/runner/:id_runner', async (req, res) => {
     }
 });
 
-// --- RUTA: Actualizar estado de un Pedido (Ej: Aceptar o Entregar) ---
-app.put('/api/pedidos/:id', async (req, res) => {
-    try {
-        const { id } = req.params; // Capturamos el ID del pedido de la URL
-        const { id_runner, estado } = req.body; // Capturamos los nuevos datos
-        
-        // Actualizamos al nuevo estado y le asignamos el ID del runner
-        const pedidoActualizado = await pool.query(
-            "UPDATE pedidos SET id_runner = $1, estado = $2 WHERE id_pedido = $3 RETURNING *",
-            [id_runner, estado, id]
-        );
-        
-        res.status(200).json({
-            mensaje: '¡Estado del pedido actualizado exitosamente!',
-            pedido: pedidoActualizado.rows[0]
-        });
-    } catch (error) {
-        console.error(error.message);
-        res.status(500).json({ error: 'Error al actualizar el pedido.' });
-    }
-});
 // --- RUTA: Enviar un mensaje al chat del pedido ---
 app.post('/api/chat',verificarToken, async (req, res) => {
     try {
@@ -655,43 +667,6 @@ app.put('/api/usuarios/rol', verificarToken, async (req, res) => {
 
 // ================= RUTAS DEL CHAT (CON RADARES DE DEPURACIÓN) =================
 
-// 1. Obtener los mensajes
-app.get('/api/chat/:id_pedido', async (req, res) => {
-    try {
-        const { id_pedido } = req.params;
-        console.log("---- GET CHAT ----");
-        console.log("Buscando historial para el pedido ID:", id_pedido);
-        
-        const historial = await pool.query(
-            "SELECT * FROM chat_pedido WHERE id_pedido = $1 ORDER BY fecha_envio ASC",
-            [id_pedido]
-        );
-        
-        console.log("Mensajes encontrados en la base de datos:", historial.rows.length);
-        res.status(200).json(historial.rows);
-    } catch (error) {
-        console.error("Error crítico en GET /chat:", error.message);
-        res.status(500).json({ error: 'Error al cargar el chat.' });
-    }
-});
-
-// 2. Guardar un nuevo mensaje
-app.post('/api/chat', async (req, res) => {
-    try {
-        const { id_pedido, id_remitente, id_rol, mensaje } = req.body;
-
-        const nuevoMensaje = await pool.query(`
-            INSERT INTO chat_pedido (id_pedido, id_remitente, id_rol, mensaje)
-            VALUES ($1, $2, $3, $4)
-            RETURNING *
-        `, [id_pedido, id_remitente, id_rol, mensaje]);
-
-        res.status(201).json(nuevoMensaje.rows[0]);
-    } catch (error) {
-        console.error("Error al guardar mensaje:", error.message);
-        res.status(500).json({ error: "Error interno al enviar el mensaje" });
-    }
-});
 
 // Ruta para anular un pedido
 app.put('/api/pedidos/:id/anular', async (req, res) => {
@@ -823,7 +798,7 @@ app.put('/api/pedidos/:id/calificar', async (req, res) => {
 // ==========================================
 // RUTA ADMIN: OBTENER TODOS LOS PEDIDOS (OPERACIONES)
 // ==========================================
-app.get('/api/admin/pedidos', async (req, res) => {
+app.get('/api/admin/pedidos', verificarToken,verificarAdmin, async (req, res) => {
     try {
         const query = `
             SELECT 
@@ -854,7 +829,7 @@ app.get('/api/admin/pedidos', async (req, res) => {
 /// ----------------------------------------
 // RUTA ADMIN: OBTENER TODOS LOS USUARIOS
 // ----------------------------------------
-app.get('/api/admin/usuarios', async (req, res) => {
+app.get('/api/admin/usuarios',verificarToken,verificarAdmin, async (req, res) => {
     try {
         await pool.query('ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS is_blocked BOOLEAN DEFAULT false;');
         await pool.query('ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS verificado BOOLEAN DEFAULT false;');
@@ -880,7 +855,7 @@ app.get('/api/admin/usuarios', async (req, res) => {
 });
 
 // 1. Bloquear o Desbloquear un usuario
-app.patch('/api/admin/usuarios/:codigo/bloquear', async (req, res) => {
+app.patch('/api/admin/usuarios/:codigo/bloquear',verificarToken,verificarAdmin, async (req, res) => {
     const { codigo } = req.params;
     const { blocked } = req.body;
 
@@ -898,7 +873,7 @@ app.patch('/api/admin/usuarios/:codigo/bloquear', async (req, res) => {
 });
 
 // 2. Quitar o Asignar el rol de Runner (Maneja bloqueo de reclasificación)
-app.patch('/api/admin/usuarios/:codigo/runner', async (req, res) => {
+app.patch('/api/admin/usuarios/:codigo/runner',verificarToken,verificarAdmin, async (req, res) => {
     const { codigo } = req.params;
     const { isRunner } = req.body;
 
@@ -968,7 +943,7 @@ app.get('/api/usuarios/estado/:id', async (req, res) => {
 // ==========================================
 
 // 1. Obtener todos los reportes/incidencias
-app.get('/api/admin/reportes', async (req, res) => {
+app.get('/api/admin/reportes',verificarToken,verificarAdmin, async (req, res) => {
     try {
         // Garantizamos que la tabla reportes exista
         await pool.query(`
@@ -1006,7 +981,7 @@ app.get('/api/admin/reportes', async (req, res) => {
 });
 
 // 2. Actualizar estado de un reporte (Resolver o Desestimar)
-app.patch('/api/admin/reportes/:id/estado', async (req, res) => {
+app.patch('/api/admin/reportes/:id/estado',verificarToken,verificarAdmin, async (req, res) => {
     const { id } = req.params;
     const { estado } = req.body; // 'Resuelto' o 'Desestimado'
 
@@ -1021,7 +996,7 @@ app.patch('/api/admin/reportes/:id/estado', async (req, res) => {
 
 // ==========================================
 // MÓDULO 4 ADMIN: KPIS Y ESTADÍSTICAS DEL DÍA
-app.get('/api/admin/kpis', async (req, res) => {
+app.get('/api/admin/kpis',verificarToken,verificarAdmin, async (req, res) => {
     try {
         // 1. Conteo de pedidos por estado ajustado a la hora de Perú (-05:00)
         const resPedidos = await pool.query(`
@@ -1081,7 +1056,7 @@ app.get('/api/admin/kpis', async (req, res) => {
 // ==========================================
 
 // 1. Obtener todas las tiendas
-app.get('/api/admin/tiendas', async (req, res) => {
+app.get('/api/admin/tiendas',verificarToken,verificarAdmin, async (req, res) => {
     try {
         const result = await pool.query('SELECT * FROM tiendas ORDER BY id_tienda ASC');
         res.json(result.rows);
@@ -1092,7 +1067,7 @@ app.get('/api/admin/tiendas', async (req, res) => {
 });
 
 // 2. Crear una nueva tienda
-app.post('/api/admin/tiendas', async (req, res) => {
+app.post('/api/admin/tiendas',verificarToken,verificarAdmin, async (req, res) => {
     const { nombre, ubicacion } = req.body;
 
     if (!nombre || !ubicacion) {
@@ -1111,7 +1086,7 @@ app.post('/api/admin/tiendas', async (req, res) => {
     }
 });
 
-app.post('/api/admin/productos', async (req, res) => {
+app.post('/api/admin/productos',verificarToken,verificarAdmin, async (req, res) => {
     const { id_tienda, nombre, precio, categoria, subcategoria, descripcion, imagen, stock } = req.body;
     try {
         await pool.query(
@@ -1124,7 +1099,7 @@ app.post('/api/admin/productos', async (req, res) => {
     }
 });
 // --- RUTA ADMIN: Actualizar solo el stock de un producto ---
-app.patch('/api/admin/productos/:id/stock', async (req, res) => {
+app.patch('/api/admin/productos/:id/stock',verificarToken,verificarAdmin, async (req, res) => {
     const { id } = req.params;
     const { stock } = req.body;
 
@@ -1152,37 +1127,6 @@ app.post('/api/reportes', async (req, res) => {
     } catch (error) {
         console.error("Error al registrar reporte:", error);
         res.status(500).json({ success: false, error: 'Error al enviar el reporte' });
-    }
-});
-
-// --- RUTA: Obtener todos los Reportes (Admin) ---
-app.get('/api/admin/reportes', async (req, res) => {
-    try {
-        const query = `
-            SELECT r.id_reporte, r.id_pedido, r.motivo, r.estado, r.fecha_creacion,
-                   u.nombre_completo AS reportador, u.codigo_alumno AS codigo_reportador
-            FROM reportes r
-            LEFT JOIN usuarios u ON r.id_usuario_reporta = u.id_usuario
-            ORDER BY r.fecha_creacion DESC
-        `;
-        const resultado = await pool.query(query);
-        res.json(resultado.rows);
-    } catch (error) {
-        console.error("Error al obtener reportes:", error);
-        res.status(500).json({ error: 'Error al cargar los reportes' });
-    }
-});
-
-// --- RUTA: Actualizar Estado del Reporte (Admin) ---
-app.patch('/api/admin/reportes/:id/estado', async (req, res) => {
-    const { id } = req.params;
-    const { estado } = req.body; // 'Resuelto' o 'Desestimado'
-    try {
-        await pool.query('UPDATE reportes SET estado = $1 WHERE id_reporte = $2', [estado, id]);
-        res.json({ success: true, message: `Reporte marcado como ${estado}` });
-    } catch (error) {
-        console.error("Error al actualizar reporte:", error);
-        res.status(500).json({ success: false, error: 'Error al actualizar el estado' });
     }
 });
 
@@ -1245,7 +1189,54 @@ app.delete('/api/usuarios/fotos/:id_foto', async (req, res) => {
         res.status(500).json({ error: 'Error al eliminar la foto.' });
     }
 });
+// ==========================================
+// RUTAS DE RESEÑAS DE LA APLICACIÓN
+// ==========================================
 
+// 1. Guardar nueva reseña enviada por el usuario
+app.post('/api/resenas-app', async (req, res) => {
+    try {
+        const { id_usuario, calificacion, comentario } = req.body;
+
+        if (!id_usuario || !calificacion) {
+            return res.status(400).json({ error: 'Faltan datos obligatorios.' });
+        }
+
+        await pool.query(
+            'INSERT INTO resenas_app (id_usuario, calificacion, comentario) VALUES ($1, $2, $3)',
+            [id_usuario, calificacion, comentario]
+        );
+
+        res.json({ success: true, message: 'Reseña guardada correctamente.' });
+    } catch (err) {
+        console.error('Error al guardar reseña:', err);
+        res.status(500).json({ error: 'Error al registrar la reseña.' });
+    }
+});
+
+// 2. Obtener todas las reseñas para la vista del Administrador
+app.get('/api/admin/resenas-app',verificarToken,verificarAdmin, async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT 
+                r.id_resena, 
+                r.calificacion, 
+                r.comentario, 
+                r.fecha_creacion,
+                u.nombre_completo, 
+                u.carrera, 
+                u.codigo_alumno AS codigo
+            FROM resenas_app r
+            JOIN usuarios u ON r.id_usuario = u.id_usuario
+            ORDER BY r.fecha_creacion DESC
+        `);
+
+        res.json(result.rows);
+    } catch (err) {
+        console.error('Error al obtener reseñas admin:', err);
+        res.status(500).json({ error: 'Error al consultar las reseñas.' });
+    }
+});
 // ==========================================
 // TAREA PROGRAMADA: LIMPIEZA AUTOMÁTICA DE REGISTROS EXPIRADOS (24h)
 // ==========================================
@@ -1264,7 +1255,7 @@ cron.schedule('0 * * * *', async () => {
 });
 
 // --- RUTA ADMIN: ELIMINAR USUARIO DEFINITIVAMENTE ---
-app.delete('/api/admin/usuarios/:codigo', async (req, res) => {
+app.delete('/api/admin/usuarios/:codigo',verificarToken,verificarAdmin, async (req, res) => {
     try {
         const { codigo } = req.params;
 
