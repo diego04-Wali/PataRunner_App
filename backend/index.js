@@ -7,9 +7,22 @@ import { getAuth } from 'firebase-admin/auth';
 
 // Inicializar Firebase Admin de forma segura en ES Modules
 if (!getApps().length) {
-    initializeApp({
-        credential: cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT))
-    });
+    try {
+        const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT 
+            ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
+            : null;
+
+        if (serviceAccount) {
+            initializeApp({
+                credential: cert(serviceAccount)
+            });
+            console.log("🔥 Firebase Admin inicializado con éxito.");
+        } else {
+            console.warn("⚠️ Advertencia: FIREBASE_SERVICE_ACCOUNT no está definido en las variables de entorno.");
+        }
+    } catch (err) {
+        console.error("❌ Error al parsear FIREBASE_SERVICE_ACCOUNT:", err.message);
+    }
 }
 const app = express();
 const port = 3000;
