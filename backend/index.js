@@ -463,24 +463,7 @@ app.get('/api/chat/:id_pedido', async (req, res) => {
         res.status(500).json({ error: 'Error al obtener el chat.' });
     }
 });
-// Middleware de verificación de token Firebase
-const verificarToken = async (req, res, next) => {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ error: 'Token no proporcionado o formato inválido.' });
-    }
 
-    const token = authHeader.split(' ')[1];
-
-    try {
-        const decodedToken = await getAuth().verifyIdToken(token);
-        req.user = decodedToken;
-        next();
-    } catch (error) {
-        console.error("Error al verificar token de Firebase:", error);
-        return res.status(403).json({ error: 'Token inválido o expirado.' });
-    }
-};
 // Ruta de Login segura
 app.post('/api/login', verificarToken, async (req, res) => {
     try {
