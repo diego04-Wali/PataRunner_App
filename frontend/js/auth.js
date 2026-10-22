@@ -208,6 +208,9 @@ if (response.ok) {
                     }
                 }
             } else {
+                // ⚠️ Limpiar basura en caché si el backend rechaza el acceso
+    localStorage.clear();
+    sessionStorage.clear();
                 Swal.fire({
                     title: 'Acceso denegado',
                     text: data.error || 'Ocurrió un error al ingresar.',
@@ -361,6 +364,8 @@ if (btnRegister) {
 };
 
 await sendEmailVerification(user, actionCodeSettings);
+// ⚠️ AGREGAR ESTA LÍNEA: Cerramos la sesión temporal para obligar un login limpio tras verificar
+            await auth.signOut();
 
             // 6. Guardar al usuario en PostgreSQL (Neon) con verificado = false y su firebase_uid
             const respuestaBD = await fetch('/api/usuarios/registro', {
