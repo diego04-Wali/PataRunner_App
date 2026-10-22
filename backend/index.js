@@ -1,7 +1,6 @@
 import express from 'express';
 import cors from 'cors';
 import pool from './db.js';
-import verificarToken from './auth.js';
 import cron from 'node-cron';
 import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
@@ -14,7 +13,26 @@ if (!getApps().length) {
 }
 const app = express();
 const port = 3000;
+// Middleware de verificación de token Firebase
+const verificarToken = async (req, res, next) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'Token no proporcionado o formato inválido.' });
+    }
 
+    const token = authHeader.split(' ')[1];
+
+    try {
+        const decodedToken = await getAuth().verifyIdToken(token);
+        // Guardamos en ambos por compatibilidad con tus otras rutas
+        req.user = decodedToken;
+        req.usuarioFirebase = decodedToken;
+        next();
+    } catch (error) {
+        console.error("Error al verificar token de Firebase:", error);
+        return res.status(403).json({ error: 'Token inválido o expirado.' });
+    }
+};
 // Middlewares
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
@@ -467,10 +485,15 @@ app.get('/api/chat/:id_pedido', async (req, res) => {
 // Ruta de Login segura
 app.post('/api/login', verificarToken, async (req, res) => {
     try {
-        const firebase_uid = req.user.uid;
+        // Validación de seguridad para req.user
+        if (!req.user) {
+            return res.status(401).json({ error: 'No se pudo autenticar el token de usuario.' });
+        }
+
+        const firebase_uid = req.user.uid || req.user.user_id;
         const email = req.user.email ? req.user.email.toLowerCase() : '';
 
-        // Buscar al usuario en PostgreSQL
+        // Buscar al usuario en PostgreSQL (Neon)
         const result = await pool.query(
             'SELECT * FROM usuarios WHERE firebase_uid = $1 OR correo_institucional = $2',
             [firebase_uid, email]
@@ -482,13 +505,13 @@ app.post('/api/login', verificarToken, async (req, res) => {
 
         const usuario = result.rows[0];
 
-        // Sincronizar campo verificado
+        // Sincronizar estado verificado
         if (!usuario.verificado) {
             await pool.query('UPDATE usuarios SET verificado = TRUE WHERE id_usuario = $1', [usuario.id_usuario]);
             usuario.verificado = true;
         }
 
-        // Si falta vincular el firebase_uid en Neon, se actualiza automáticamente
+        // Vincular firebase_uid en Neon si estaba nulo
         if (!usuario.firebase_uid) {
             await pool.query('UPDATE usuarios SET firebase_uid = $1 WHERE id_usuario = $2', [firebase_uid, usuario.id_usuario]);
             usuario.firebase_uid = firebase_uid;
