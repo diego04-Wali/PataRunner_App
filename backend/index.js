@@ -5,11 +5,12 @@ import verificarToken from './auth.js';
 import cron from 'node-cron';
 import admin from 'firebase-admin';
 
-// Inicializar Firebase Admin SDK (utiliza las credenciales por defecto del proyecto)
-if (!admin.apps.length) {
-    admin.initializeApp();
+// Inicializar Firebase Admin de forma segura
+if (!admin.apps || !admin.apps.length) {
+    admin.initializeApp({
+        credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT))
+    });
 }
-
 const app = express();
 const port = 3000;
 
