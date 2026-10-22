@@ -375,22 +375,23 @@
         </div>
     </div>
 
-    <!-- BOTÓN PARA EDITAR DATOS -->
-    <button onclick="abrirModalEditarPerfil()" class="w-full flex items-center justify-between p-3.5 bg-white border border-slate-200 rounded-xl shadow-sm hover:bg-slate-50 transition-colors">
-        <div class="flex items-center gap-3">
-            <div class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-base shrink-0">
-                ✏️
+    <!-- OPCIONES DEL PERFIL EN ORDEN CORRECTO -->
+    <div class="space-y-3">
+        <!-- 1. EDITAR DATOS -->
+        <button onclick="abrirModalEditarPerfil()" class="w-full flex items-center justify-between p-3.5 bg-white border border-slate-200 rounded-xl shadow-sm hover:bg-slate-50 transition-colors">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-base shrink-0">
+                    ✏️
+                </div>
+                <div class="text-left">
+                    <p class="text-xs font-bold text-slate-800">Editar mis datos</p>
+                    <p class="text-[10px] text-slate-400">Nombre, carrera profesional o contraseña</p>
+                </div>
             </div>
-            <div class="text-left">
-                <p class="text-xs font-bold text-slate-800">Editar mis datos</p>
-                <p class="text-[10px] text-slate-400">Nombre, carrera profesional o contraseña</p>
-            </div>
-        </div>
-        <span class="text-slate-300 font-bold text-xs">❯</span>
-    </button>
+            <span class="text-slate-300 font-bold text-xs">❯</span>
+        </button>
 
-    <!-- REPORTAR PROBLEMA Y CERRAR SESIÓN -->
-    <div class="space-y-3 pt-2">
+        <!-- 2. REPORTAR UN PROBLEMA -->
         <button onclick="abrirModalReporte()" class="w-full flex items-center justify-between p-3.5 bg-white border border-slate-200 rounded-xl shadow-sm hover:bg-slate-50 transition-colors">
             <div class="flex items-center gap-3">
                 <div class="w-9 h-9 rounded-xl bg-red-50 text-red-500 flex items-center justify-center font-bold text-base shrink-0">
@@ -404,23 +405,26 @@
             <span class="text-slate-300 font-bold text-xs">❯</span>
         </button>
 
-        <button id="logout-btn" class="w-full py-3 rounded-xl border border-red-200 text-red-600 font-medium text-[13px] bg-white hover:bg-red-50 transition-colors shadow-sm">
+        <!-- 3. CALIFICAR LA APLICACIÓN -->
+        <div onclick="abrirModalResenaApp()" class="bg-white border border-slate-200 rounded-xl p-3.5 shadow-sm flex items-center justify-between cursor-pointer hover:bg-slate-50 transition-colors">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center font-bold text-base shrink-0">
+                    ⭐
+                </div>
+                <div class="text-left">
+                    <p class="text-xs font-bold text-slate-800">Calificar la aplicación</p>
+                    <p class="text-[10px] text-slate-400">Deja tu opinión sobre PataRunner</p>
+                </div>
+            </div>
+            <span class="text-slate-300 font-bold text-xs">❯</span>
+        </div>
+
+        <!-- 4. CERRAR SESIÓN -->
+        <button id="logout-btn" class="w-full py-3 rounded-xl border border-red-200 text-red-600 font-medium text-[13px] bg-white hover:bg-red-50 transition-colors shadow-sm mt-2">
             Cerrar sesión
         </button>
     </div>
 
-    <!-- Opción para dejar reseña de la app -->
-<div onclick="abrirModalResenaApp()" class="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm flex items-center justify-between cursor-pointer hover:bg-slate-50 transition-colors mb-3">
-    <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-500 shrink-0">
-            <i data-lucide="star" class="w-5 h-5"></i>
-        </div>
-        <div>
-            <p class="text-[13.5px] font-bold text-slate-800 leading-tight">Calificar la aplicación</p>
-            <p class="text-[11px] text-slate-400 mt-0.5">Deja tu opinión sobre PataRunner</p>
-        </div>
-    </div>
-    <i data-lucide="chevron-right" class="w-4 h-4 text-slate-300"></i>
 </div>
 
 </div>
