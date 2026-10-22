@@ -2,21 +2,20 @@ import express from 'express';
 import cors from 'cors';
 import pool from './db.js';
 import cron from 'node-cron';
+import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { Resend } from 'resend';
-import admin from 'firebase-admin';
 import fs from 'fs';
 
 const app = express();
 const port = 3000;
 
-// Middlewares iniciales
+// Middlewares
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// 1. Carga segura de Firebase Service Account (Tolerante a fallos en Render)
-// 1. Carga segura de Firebase Service Account
+// 1. Carga segura de credenciales de Firebase Service Account
 let serviceAccount = null;
 
 try {
@@ -29,17 +28,17 @@ try {
     console.error("❌ Error al cargar credenciales de Firebase:", error.message);
 }
 
-// 2. Inicialización segura de Firebase Admin (usando encadenamiento opcional)
-if (serviceAccount && (!admin.apps || !admin.apps.length)) {
-    admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount)
+// 2. Inicialización limpia de Firebase Admin (ES Modules)
+if (serviceAccount && getApps().length === 0) {
+    initializeApp({
+        credential: cert(serviceAccount)
     });
     console.log("🔥 Firebase Admin inicializado con éxito.");
 } else if (!serviceAccount) {
-    console.warn("⚠️ Advertencia: FIREBASE_SERVICE_ACCOUNT no está definido en las variables de entorno.");
+    console.warn("⚠️ Advertencia: FIREBASE_SERVICE_ACCOUNT no está configurado.");
 }
 
-// 2. Inicializar Resend
+// 3. Inicializar Resend
 const resend = new Resend(process.env.RESEND_API_KEY || '');
 
 // Middleware de verificación de token Firebase
@@ -93,12 +92,13 @@ app.get('/', (req, res) => {
 });
 
 // ==========================================
-// RUTA DE REGISTRO DE USUARIO (NATIVA CON FIREBASE)
+// RUTA DE REGISTRO DE USUARIO (CON RESEND Y FIREBASE)
 // ==========================================
 app.post('/api/usuarios/registro', async (req, res) => {
     try {
         const { firebase_uid, codigo_alumno, correo_institucional, nombre_completo, carrera, verificado } = req.body;
 
+        // 1. Guardar o actualizar en Neon PostgreSQL
         const query = `
             INSERT INTO usuarios (id_rol, firebase_uid, codigo_alumno, correo_institucional, nombre_completo, carrera, verificado)
             VALUES (1, $1, $2, $3, $4, $5, $6)
@@ -122,21 +122,51 @@ app.post('/api/usuarios/registro', async (req, res) => {
 
         const result = await pool.query(query, values);
 
+        // 2. Generar el enlace oficial de verificación con Firebase Admin (ES Modules)
+        const actionCodeSettings = {
+            url: 'https://patarunnerapp-frontend.vercel.app',
+            handleCodeInApp: false
+        };
+
+        const verificationLink = await getAuth().generateEmailVerificationLink(
+            correo_institucional.toLowerCase(),
+            actionCodeSettings
+        );
+
+        // 3. Despachar el correo directamente por Resend
+        await resend.emails.send({
+            from: 'PataRunner UTP <onboarding@resend.dev>',
+            to: [correo_institucional.toLowerCase()],
+            subject: 'PataRunner - Confirma tu correo institucional',
+            html: `
+                <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
+                    <h2>¡Hola, ${nombre_completo}!</h2>
+                    <p>Bienvenido a <b>PataRunner UTP</b>. Para completar tu registro y acceder a la plataforma, confirma tu correo institucional haciendo clic en el siguiente enlace:</p>
+                    <p style="margin: 25px 0;">
+                        <a href="${verificationLink}" style="background-color: #2563eb; color: white; padding: 12px 20px; text-decoration: none; border-radius: 6px; font-weight: bold;">Verificar mi correo institucional</a>
+                    </p>
+                    <p>Si el botón no abre, copia y pega esta dirección en tu navegador:</p>
+                    <p><a href="${verificationLink}">${verificationLink}</a></p>
+                    <hr style="border: none; border-top: 1px solid #eee; margin-top: 30px;">
+                    <p style="font-size: 12px; color: #777;">Si no solicitaste este registro, puedes ignorar este mensaje.</p>
+                </div>
+            `
+        });
+
         res.status(201).json({
             success: true,
-            message: 'Usuario registrado correctamente en la base de datos.',
+            message: 'Registro completado. Revisa tu correo institucional para verificar tu cuenta.',
             usuario: result.rows[0]
         });
 
     } catch (error) {
-        console.error("Error exacto en PostgreSQL:", error.message);
+        console.error("Error en registro:", error.message);
         res.status(500).json({ 
             success: false, 
-            error: error.message || "Error interno al guardar los datos del usuario." 
+            error: error.message || "Error al procesar el registro." 
         });
     }
 });
-
 
 // --- RUTA: Registrar una Tienda ---
 app.post('/api/tiendas', async (req, res) => {
