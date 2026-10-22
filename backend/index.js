@@ -2,6 +2,13 @@ import express from 'express';
 import cors from 'cors';
 import pool from './db.js';
 import verificarToken from './auth.js';
+import cron from 'node-cron';
+import admin from 'firebase-admin';
+
+// Inicializar Firebase Admin SDK (utiliza las credenciales por defecto del proyecto)
+if (!admin.apps.length) {
+    admin.initializeApp();
+}
 
 const app = express();
 const port = 3000;
@@ -17,38 +24,115 @@ app.get('/', (req, res) => {
     res.send('Servidor de PataRunner funcionando correctamente 🚀');
 });
 
-// --- NUEVA RUTA: Registrar un Usuario ---
-app.post('/api/usuarios', async (req, res) => {
-    try {
-        // Extraemos los datos que enviará el frontend
-        const { nombre_completo, correo_institucional, telefono } = req.body;
+// ==========================================
+// REGISTRO Y VERIFICACIÓN EN DOS PASOS (CON TABLA TEMPORAL)
+// ==========================================
 
-        // 1. Validar que sea correo UTP
-        if (!correo_institucional.endsWith('@utp.edu.pe')) {
+// 1. Registro Previo (Guarda en la tabla 'registros_pendientes' por 24 horas)
+app.post('/api/usuarios/registro-previo', async (req, res) => {
+    try {
+        const { codigo_alumno, correo_institucional, nombre_completo, password, carrera } = req.body;
+
+        // Validar correo UTP
+        if (!correo_institucional || !correo_institucional.toLowerCase().endsWith('@utp.edu.pe')) {
             return res.status(400).json({ error: 'Por seguridad, solo se permiten correos institucionales de la UTP.' });
         }
 
-        // 2. Guardar en la base de datos (Por defecto le asignamos el id_rol = 1 que es "Cliente")
-        const nuevoUsuario = await pool.query(
-            'INSERT INTO usuarios (id_rol, nombre_completo, correo_institucional, telefono) VALUES ($1, $2, $3, $4) RETURNING *',
-            [1, nombre_completo, correo_institucional, telefono]
+        const correoMinuscula = correo_institucional.toLowerCase();
+
+        // Verificar si ya existe en usuarios activos definitivos
+        const existeDefinitivo = await pool.query(
+            'SELECT * FROM usuarios WHERE codigo_alumno = $1 OR correo_institucional = $2',
+            [codigo_alumno, correoMinuscula]
+        );
+        if (existeDefinitivo.rows.length > 0) {
+            return res.status(400).json({ error: 'Este código de alumno o correo ya tiene una cuenta activa en PataRunner.' });
+        }
+
+        // Limpiar intentos previos en la tabla temporal con este mismo correo/código
+        await pool.query(
+            'DELETE FROM registros_pendientes WHERE correo_institucional = $1 OR codigo_alumno = $2',
+            [correoMinuscula, codigo_alumno]
         );
 
-        // 3. Responder con éxito
-        res.status(201).json({
-            mensaje: 'Usuario registrado exitosamente',
-            usuario: nuevoUsuario.rows[0]
+        // Crear token de verificación único
+        const token = Math.random().toString(36).substring(2) + Date.now().toString(36);
+
+        // Insertar en la tabla temporal
+        await pool.query(
+            `INSERT INTO registros_pendientes (codigo_alumno, correo_institucional, nombre_completo, password_hash, carrera, token_verificacion)
+             VALUES ($1, $2, $3, $4, $5, $6)`,
+            [codigo_alumno, correoMinuscula, nombre_completo, password || 'firebase_auth', carrera, token]
+        );
+
+        res.status(200).json({ 
+            success: true, 
+            mensaje: 'Enlace de verificación enviado a tu correo. Tienes 24 horas para confirmarlo.' 
         });
 
     } catch (error) {
-        console.error(error.message);
-        // Error 23505 es el código interno de PostgreSQL cuando un dato UNIQUE (el correo) se repite
-        if (error.code === '23505') {
-            return res.status(400).json({ error: 'Este correo institucional ya está registrado en PataRunner.' });
-        }
-        res.status(500).json({ error: 'Error interno del servidor.' });
+        console.error("Error en registro previo:", error);
+        res.status(500).json({ error: 'Error interno del servidor en el registro.' });
     }
 });
+
+// 2. Confirmación de cuenta desde el enlace del correo
+app.get('/api/usuarios/confirmar-cuenta/:token', async (req, res) => {
+    try {
+        const { token } = req.params;
+
+        // 1. Buscar el token en la tabla temporal
+        const pendiente = await pool.query(
+            'SELECT * FROM registros_pendientes WHERE token_verificacion = $1',
+            [token]
+        );
+
+        if (pendiente.rows.length === 0) {
+            return res.status(400).send("El enlace de verificación es inválido o ya expiró (pasaron más de 24 horas). Por favor intenta registrarte de nuevo.");
+        }
+
+        const user = pendiente.rows[0];
+
+        // 2. Crear la cuenta en Firebase Authentication desde el servidor
+        let firebaseUid;
+        try {
+            const userRecord = await admin.auth().createUser({
+                email: user.correo_institucional,
+                password: user.password_hash !== 'firebase_auth' ? user.password_hash : 'Utp123456*', // Contraseña temporal o asignada
+                displayName: user.nombre_completo,
+                emailVerified: true
+            });
+            firebaseUid = userRecord.uid;
+        } catch (fbError) {
+            // Si el usuario ya existía en Firebase, obtenemos su UID
+            if (fbError.code === 'auth/email-already-exists') {
+                const existingUser = await admin.auth().getUserByEmail(user.correo_institucional);
+                firebaseUid = existingUser.uid;
+            } else {
+                throw fbError;
+            }
+        }
+
+        // 3. Insertar formalmente en la tabla real de usuarios marcando verificado = true
+        await pool.query(
+            `INSERT INTO usuarios (firebase_uid, id_rol, nombre_completo, correo_institucional, codigo_alumno, carrera, verificado)
+             VALUES ($1, 1, $2, $3, $4, $5, true)
+             ON CONFLICT (codigo_alumno) DO UPDATE 
+             SET verificado = true, firebase_uid = EXCLUDED.firebase_uid`,
+            [firebaseUid, user.nombre_completo, user.correo_institucional, user.codigo_alumno, user.carrera]
+        );
+
+        // 4. Eliminar de la tabla temporal de pendientes
+        await pool.query('DELETE FROM registros_pendientes WHERE id_pendiente = $1', [user.id_pendiente]);
+
+        res.send("<h1>¡Cuenta verificada con éxito! 🎉</h1><p>Tu usuario ha sido activado en PataRunner. Ya puedes volver a la aplicación e iniciar sesión.</p>");
+
+    } catch (error) {
+        console.error("Error al confirmar cuenta:", error);
+        res.status(500).send("Error interno al activar la cuenta.");
+    }
+});
+
 // --- RUTA: Registrar una Tienda ---
 app.post('/api/tiendas', async (req, res) => {
     try {
@@ -788,8 +872,8 @@ app.get('/api/admin/pedidos', async (req, res) => {
 // ----------------------------------------
 app.get('/api/admin/usuarios', async (req, res) => {
     try {
-        // Garantizar que la columna is_blocked exista en la tabla usuarios
         await pool.query('ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS is_blocked BOOLEAN DEFAULT false;');
+        await pool.query('ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS verificado BOOLEAN DEFAULT false;');
 
         const query = `
             SELECT 
@@ -798,7 +882,8 @@ app.get('/api/admin/usuarios', async (req, res) => {
                 nombre_completo, 
                 carrera, 
                 id_rol, 
-                COALESCE(is_blocked, false) AS is_blocked
+                COALESCE(is_blocked, false) AS is_blocked,
+                COALESCE(verificado, false) AS verificado
             FROM usuarios
             ORDER BY id_rol DESC, nombre_completo ASC
         `;
@@ -1174,6 +1259,68 @@ app.delete('/api/usuarios/fotos/:id_foto', async (req, res) => {
     } catch (error) {
         console.error('Error al eliminar foto:', error.message);
         res.status(500).json({ error: 'Error al eliminar la foto.' });
+    }
+});
+
+// ==========================================
+// TAREA PROGRAMADA: LIMPIEZA AUTOMÁTICA DE REGISTROS EXPIRADOS (24h)
+// ==========================================
+cron.schedule('0 * * * *', async () => {
+    try {
+        const resultado = await pool.query(
+            `DELETE FROM registros_pendientes 
+             WHERE fecha_creacion < NOW() - INTERVAL '24 hours'`
+        );
+        if (resultado.rowCount > 0) {
+            console.log(`🧹 Limpieza automática: Se eliminaron ${resultado.rowCount} registros no verificados expirados.`);
+        }
+    } catch (error) {
+        console.error("Error en la tarea de limpieza automática:", error);
+    }
+});
+
+// --- RUTA ADMIN: ELIMINAR USUARIO DEFINITIVAMENTE ---
+app.delete('/api/admin/usuarios/:codigo', async (req, res) => {
+    try {
+        const { codigo } = req.params;
+
+        // 1. Obtener id_usuario
+        const userRes = await pool.query('SELECT id_usuario FROM usuarios WHERE codigo_alumno = $1', [codigo]);
+        if (userRes.rows.length === 0) {
+            return res.status(404).json({ success: false, error: 'Usuario no encontrado.' });
+        }
+        const idUsuario = userRes.rows[0].id_usuario;
+
+        // 2. Limpiar registros en el orden correcto para evitar fallos de Foreign Key
+        // a. Mensajes en chat_pedido
+        await pool.query('DELETE FROM chat_pedido WHERE id_remitente = $1', [idUsuario]).catch(() => {});
+
+        // b. Obtener los IDs de pedidos asociados al usuario
+        const pedidosRes = await pool.query(
+            'SELECT id_pedido FROM pedidos WHERE id_cliente = $1 OR id_runner = $1',
+            [idUsuario]
+        );
+        const idsPedidos = pedidosRes.rows.map(p => p.id_pedido);
+
+        // c. Limpiar detalle_pedido y chats de esos pedidos
+        if (idsPedidos.length > 0) {
+            await pool.query('DELETE FROM detalle_pedido WHERE id_pedido = ANY($1)', [idsPedidos]).catch(() => {});
+            await pool.query('DELETE FROM chat_pedido WHERE id_pedido = ANY($1)', [idsPedidos]).catch(() => {});
+        }
+
+        // d. Limpiar pedidos
+        await pool.query('DELETE FROM pedidos WHERE id_cliente = $1 OR id_runner = $1', [idUsuario]).catch(() => {});
+
+        // e. Limpiar reportes
+        await pool.query('DELETE FROM reportes WHERE id_reportante = $1 OR id_reportado = $1', [idUsuario]).catch(() => {});
+
+        // 3. Eliminar usuario de PostgreSQL (fotos_usuario se borra solo por el ON DELETE CASCADE)
+        await pool.query('DELETE FROM usuarios WHERE id_usuario = $1', [idUsuario]);
+
+        res.json({ success: true, message: `El usuario ${codigo} ha sido eliminado correctamente.` });
+    } catch (error) {
+        console.error("Error al eliminar usuario:", error);
+        res.status(500).json({ success: false, error: "Error interno al eliminar el usuario." });
     }
 });
 

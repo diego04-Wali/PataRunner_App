@@ -3359,38 +3359,52 @@ if (typeof cargarReportesAdmin === 'function') {
         contenedor.innerHTML = '<p class="text-[12px] font-bold text-slate-800 uppercase mb-2">Gestión de Cuentas</p>';
 
         usuarios.forEach(user => {
-            let badgeHtml = '';
-            let btnBloquearText = user.is_blocked ? 'Desbloquear' : 'Bloquear';
-            let btnBloquearClass = user.is_blocked 
-                ? 'bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-100' 
-                : 'bg-red-50 text-red-600 border-red-100 hover:bg-red-100';
+    // 1. Crear el distintivo de verificación por correo
+    const badgeVerificado = user.verificado 
+        ? `<span class="bg-emerald-100 text-emerald-800 border border-emerald-200 text-[9px] font-bold px-2 py-0.5 rounded-md">✔ Verificado</span>`
+        : `<span class="bg-amber-100 text-amber-800 border border-amber-200 text-[9px] font-bold px-2 py-0.5 rounded-md">⏳ No verificado</span>`;
 
-            let botonesHtml = `<button onclick="bloquearUsuario('${user.codigo}', ${user.is_blocked || false})" class="flex-1 py-1.5 text-[10.5px] font-semibold rounded-lg border transition-colors ${btnBloquearClass}">${btnBloquearText}</button>`;
+    let badgeHtml = '';
+    let btnBloquearText = user.is_blocked ? 'Desbloquear' : 'Bloquear';
+    let btnBloquearClass = user.is_blocked 
+        ? 'bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-100' 
+        : 'bg-red-50 text-red-600 border-red-100 hover:bg-red-100';
 
-            if (user.id_rol === 3) {
-                badgeHtml = '<span class="bg-indigo-50 text-indigo-700 border border-indigo-100 text-[9px] font-bold px-2 py-0.5 rounded-md">ADMIN</span>';
-                botonesHtml = ''; 
-            } else if (user.id_rol === 2) {
-                badgeHtml = '<span class="bg-emerald-50 text-emerald-700 border border-emerald-100 text-[9px] font-bold px-2 py-0.5 rounded-md">RUNNER</span>';
-                botonesHtml += `<button onclick="quitarRunner('${user.codigo}')" class="flex-1 py-1.5 bg-amber-50 text-amber-700 text-[10.5px] font-semibold rounded-lg border border-amber-100 hover:bg-amber-100 transition-colors">Quitar Runner</button>`;
-           } else {
-    badgeHtml = '<span class="bg-slate-100 text-slate-600 border border-slate-200 text-[9px] font-bold px-2 py-0.5 rounded-md">ALUMNO</span>';
-    botonesHtml += `<button onclick="asignarRunner('${user.codigo}')" class="flex-1 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-100 hover:bg-emerald-100 text-[10.5px] font-semibold rounded-lg border transition-colors">Dar Runner</button>`;
-}
+    let botonesHtml = `<button onclick="bloquearUsuario('${user.codigo}', ${user.is_blocked || false})" class="flex-1 py-1.5 text-[10.5px] font-semibold rounded-lg border transition-colors ${btnBloquearClass}">${btnBloquearText}</button>`;
 
-            contenedor.innerHTML += `
-                <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm mb-3">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <p class="text-[13px] font-bold text-slate-900">${user.codigo} - ${user.nombre_completo}</p>
-                            <p class="text-[10px] text-slate-500 mt-0.5">${user.carrera}</p>
-                        </div>
-                        ${badgeHtml}
+    if (user.id_rol === 3) {
+        badgeHtml = '<span class="bg-indigo-50 text-indigo-700 border border-indigo-100 text-[9px] font-bold px-2 py-0.5 rounded-md">ADMIN</span>';
+        botonesHtml = ''; 
+    } else if (user.id_rol === 2) {
+        badgeHtml = '<span class="bg-emerald-50 text-emerald-700 border border-emerald-100 text-[9px] font-bold px-2 py-0.5 rounded-md">RUNNER</span>';
+        botonesHtml += `<button onclick="quitarRunner('${user.codigo}')" class="flex-1 py-1.5 bg-amber-50 text-amber-700 text-[10.5px] font-semibold rounded-lg border border-amber-100 hover:bg-amber-100 transition-colors">Quitar Runner</button>`;
+    } else {
+        badgeHtml = '<span class="bg-slate-100 text-slate-600 border border-slate-200 text-[9px] font-bold px-2 py-0.5 rounded-md">ALUMNO</span>';
+        botonesHtml += `<button onclick="asignarRunner('${user.codigo}')" class="flex-1 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-100 hover:bg-emerald-100 text-[10.5px] font-semibold rounded-lg border transition-colors">Dar Runner</button>`;
+    }
+
+    if (user.id_rol !== 3) {
+        botonesHtml += `<button onclick="eliminarUsuarioAdmin('${user.codigo}')" class="flex-1 py-1.5 bg-red-600 text-white text-[10.5px] font-semibold rounded-lg hover:bg-red-700 transition-colors">Eliminar</button>`;
+    }
+
+    contenedor.innerHTML += `
+        <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm mb-3">
+            <div class="flex justify-between items-start">
+                <div>
+                    <div class="flex items-center gap-1.5 mb-1">
+                        <p class="text-[13px] font-bold text-slate-900">${user.codigo} - ${user.nombre_completo}</p>
+                        ${badgeVerificado}
                     </div>
-                    ${botonesHtml !== '' ? `<div class="flex gap-2 mt-3">${botonesHtml}</div>` : ''}
+                    <p class="text-[10px] text-slate-500 mt-0.5">${user.carrera}</p>
                 </div>
-            `;
-        });
+                ${badgeHtml}
+            </div>
+            ${botonesHtml !== '' ? `<div class="flex gap-2 mt-3">${botonesHtml}</div>` : ''}
+        </div>
+    `;
+});
+
+            
 
     } catch (error) {
         console.error("Error crítico en cargarUsuariosAdmin:", error);
@@ -3573,6 +3587,33 @@ async function asignarRunner(codigo) {
 window.bloquearUsuario = bloquearUsuario;
 window.quitarRunner = quitarRunner;
 window.asignarRunner = asignarRunner;
+// --- NUEVA FUNCIÓN: ELIMINAR USUARIO ADMIN ---
+async function eliminarUsuarioAdmin(codigo) {
+    if (!confirm(`⚠️ ¿Estás completamente seguro de ELIMINAR la cuenta del usuario ${codigo}? Esta acción borra el registro de la base de datos y no se puede deshacer.`)) {
+        return;
+    }
+
+    try {
+        const res = await fetch(`/api/admin/usuarios/${codigo}`, {
+            method: 'DELETE'
+        });
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+            alert(data.message);
+            if (typeof cargarUsuariosAdmin === 'function') {
+                cargarUsuariosAdmin();
+            }
+        } else {
+            alert('Error: ' + (data.error || 'No se pudo eliminar el usuario'));
+        }
+    } catch (err) {
+        console.error("Error al eliminar usuario:", err);
+        alert('Ocurrió un error de conexión al intentar eliminar la cuenta.');
+    }
+}
+
+window.eliminarUsuarioAdmin = eliminarUsuarioAdmin;
 
 // ==========================================
 // MÓDULO 3 ADMIN: AUDITORÍA Y REPORTES

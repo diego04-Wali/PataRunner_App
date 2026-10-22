@@ -13,7 +13,7 @@ window.fetch = function(...args) {
 };
   // Importamos Firebase desde su CDN oficial
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword,sendPasswordResetEmail, createUserWithEmailAndPassword, sendEmailVerification } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
   const firebaseConfig = {
     apiKey: "AIzaSyBzWJYQIzZMkE_TzfgUtRRhh9t_ycIorIk",
     authDomain: "patarunner-1b348.firebaseapp.com",
@@ -311,46 +311,28 @@ if (btnRegister) {
             btnRegister.disabled = true;
             btnRegister.classList.add("opacity-70");
 
-            // 4. Creamos la cuenta en Firebase
-            // IMPORTANTE: Asegúrate de tener importado createUserWithEmailAndPassword y sendEmailVerification al inicio de tu archivo
-            const userCredential = await createUserWithEmailAndPassword(auth, correoInstitucional, password);
-            
-            // 5. Enviamos el correo de verificación inmediatamente
-            await sendEmailVerification(userCredential.user);
+           // 4. Unificamos nombres y enviamos el pre-registro al Backend
+        const nombreCompleto = `${nombres.trim()} ${apellidos.trim()}`;
 
-           // ==========================================
-            // 6. FASE 3: GUARDAR PERFIL EN POSTGRESQL
-            // ==========================================
-            // Obtenemos el ID único (UID) que Firebase le acaba de asignar al alumno
-            const firebaseUid = userCredential.user.uid;
+        const respuestaBD = await fetch('/api/usuarios/registro-previo', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                codigo_alumno: codigo.toUpperCase(),
+                nombre_completo: nombreCompleto,
+                carrera: carrera,
+                correo_institucional: correoInstitucional,
+                password_hash: password
+            })
+        });
 
-            try {
-                // Hacemos la petición a tu servidor Node.js
-                const respuestaBD = await fetch('/api/registro', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        firebase_uid: firebaseUid,
-                        codigo_alumno: codigo,
-                        nombres: nombres,
-                        apellidos: apellidos,
-                        carrera: carrera,
-                        correo: correoInstitucional
-                    })
-                });
+        const datosRespuesta = await respuestaBD.json();
 
-                if (!respuestaBD.ok) {
-                    console.error("Advertencia: La cuenta se creó en Firebase, pero hubo un problema al guardarla en PostgreSQL.");
-                }
-            } catch (dbError) {
-                console.error("No se pudo conectar con el servidor local Node.js. Asegúrate de que esté encendido.", dbError);
-            }
+        if (respuestaBD.ok) {
+            alert(`¡Pre-registro exitoso!\n\nHemos enviado un enlace de verificación a:\n${correoInstitucional}\n\nPor favor, revisa tu bandeja de entrada (o spam) para activar tu cuenta.`);
 
-            // 7. Éxito: Le avisamos al usuario y lo mandamos al login
-            alert(`¡Cuenta creada con éxito!\n\nHemos enviado un enlace de verificación a:\n${correoInstitucional}\n\nPor favor, revisa tu bandeja de entrada (o spam) para activar tu cuenta antes de iniciar sesión.`);
-            
             // Limpiamos el formulario y volvemos a la pantalla de Login
             document.getElementById('register-codigo').value = '';
             document.getElementById('register-nombres').value = '';
@@ -361,6 +343,9 @@ if (btnRegister) {
 
             document.getElementById('register-form').classList.add('hidden');
             document.getElementById('login-form').classList.remove('hidden');
+        } else {
+            alert(datosRespuesta.error || "Ocurrió un error al procesar tu registro.");
+        }
 
         } catch (error) {
             console.error("Error en el registro de Firebase:", error);
