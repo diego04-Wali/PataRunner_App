@@ -1032,16 +1032,18 @@ function openChatModal(data) {
   // ====== CERRAR SESIÓN ======
 const logoutBtn = document.getElementById('logout-btn');
 if (logoutBtn) {
-    logoutBtn.addEventListener('click', () => {
-        // 1. Limpiamos SOLO la memoria de esta pestaña (sessionStorage)
-        // No usamos localStorage.clear() para no borrar el chat de la otra pestaña
+    logoutBtn.addEventListener('click', async () => {
+        // Limpiamos ambos almacenamientos para cerrar sesión por completo
+        localStorage.clear();
         sessionStorage.clear();
         
-        // 2. Recargamos la página para forzar a la app a mostrar la pantalla de Login
+        if (typeof auth !== 'undefined' && auth.signOut) {
+            try { await auth.signOut(); } catch(e) {}
+        }
+
         window.location.reload();
     });
 }
-
 
   function showTab(tab) {
 ["inicio", "pedidos", "runner", "perfil", "historial-runner"].forEach(t => {        document.getElementById("tab-" + t).classList.toggle("hidden", t !== tab);
@@ -3900,6 +3902,7 @@ if (btnModPedidos) {
             if (realLogout) {
                 realLogout.click();
             } else {
+                localStorage.clear();
                 sessionStorage.clear();
                 window.location.reload();
             }

@@ -126,11 +126,19 @@ if (loginBtn) {
             const data = await response.json();
 
             // 7. Procesamos la respuesta de la base de datos (Neon)
-            if (response.ok) {
-                console.log("Acceso concedido:", data);
-                sessionStorage.setItem('usuario', JSON.stringify(data.usuario));
-                sessionStorage.setItem('userId', data.usuario.id_usuario);
-                sessionStorage.setItem('isRunnerStatus', data.usuario.id_rol === 2 ? 'true' : 'false');
+if (response.ok) {
+    console.log("Acceso concedido:", data);
+
+    // Guardado persistente (localStorage) y de pestaña (sessionStorage)
+    localStorage.setItem('token', token);
+    localStorage.setItem('usuario', JSON.stringify(data.usuario));
+    localStorage.setItem('userId', data.usuario.id_usuario);
+    localStorage.setItem('isRunnerStatus', data.usuario.id_rol === 2 ? 'true' : 'false');
+
+    sessionStorage.setItem('token', token);
+    sessionStorage.setItem('usuario', JSON.stringify(data.usuario));
+    sessionStorage.setItem('userId', data.usuario.id_usuario);
+    sessionStorage.setItem('isRunnerStatus', data.usuario.id_rol === 2 ? 'true' : 'false');
 
                 if (typeof window.aplicarEstadoRunner === 'function') {
                     window.aplicarEstadoRunner();
@@ -417,3 +425,74 @@ window.recuperarContrasenaModal = async function() {
         }
     }
 };
+// =================================================================
+// AUTO-LOGIN: RESTAURAR SESIÓN AL REFRESCAR O NAVEGAR
+// =================================================================
+
+// 1. SINCRONIZACIÓN INMEDIATA (Ejecuta al cargar el script)
+// Garantiza que sessionStorage tenga los datos antes de que main.js lea sus variables
+(function sincronizarSesionInmediata() {
+    const tokenPersistente = localStorage.getItem('token');
+    const usuarioPersistente = localStorage.getItem('usuario');
+
+    if (tokenPersistente && usuarioPersistente) {
+        sessionStorage.setItem('token', tokenPersistente);
+        sessionStorage.setItem('usuario', usuarioPersistente);
+        
+        const userId = localStorage.getItem('userId');
+        const isRunnerStatus = localStorage.getItem('isRunnerStatus');
+        if (userId) sessionStorage.setItem('userId', userId);
+        if (isRunnerStatus) sessionStorage.setItem('isRunnerStatus', isRunnerStatus);
+    }
+})();
+
+// 2. RESTAURACIÓN DE INTERFAZ (Se ejecuta cuando el DOM esté listo)
+document.addEventListener("DOMContentLoaded", () => {
+    const usuarioGuardado = sessionStorage.getItem('usuario');
+    const tokenGuardado = sessionStorage.getItem('token');
+
+    if (usuarioGuardado && tokenGuardado) {
+        try {
+            const usuario = JSON.parse(usuarioGuardado);
+            const screenLogin = document.getElementById("screen-login");
+
+            // Ocultar pantalla de login
+            if (screenLogin) {
+                screenLogin.classList.add("hidden");
+            }
+
+            // Si es Administrador
+            if (usuario.id_rol === 3) {
+                const bottomNav = document.getElementById('bottom-nav-bar');
+                if (bottomNav) bottomNav.classList.add('hidden');
+                
+                const topBar = document.getElementById('role-switcher-bar');
+                if (topBar) topBar.classList.add('hidden');
+
+                document.querySelectorAll('div[id^="tab-"]').forEach(tab => tab.classList.add('hidden'));
+
+                const tabAdmin = document.getElementById('tab-admin');
+                if (tabAdmin) {
+                    tabAdmin.classList.remove('hidden', 'pb-24');
+                    tabAdmin.classList.add('pb-6');
+                }
+                if (typeof cargarUsuariosAdmin === 'function') {
+                    cargarUsuariosAdmin();
+                }
+            } else {
+                // Si es Alumno / Runner
+                if (typeof window.aplicarEstadoRunner === 'function') {
+                    window.aplicarEstadoRunner();
+                }
+                if (typeof cargarMisPedidos === 'function') {
+                    cargarMisPedidos();
+                }
+                if (typeof cargarDatosPerfil === 'function') {
+                    cargarDatosPerfil();
+                }
+            }
+        } catch (e) {
+            console.error("Error al restaurar sesión activa:", e);
+        }
+    }
+});
