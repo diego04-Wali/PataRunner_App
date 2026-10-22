@@ -975,6 +975,7 @@ if (btnPostularVerde) {
  let intervaloChatActual = null;
 
 function openChatModal(data) {
+    cacheCantidadMensajes = -1;
     console.log("DATOS RECIBIDOS EN EL CHAT:", data);
 
     // 1. Extraer el ID del pedido con seguridad
@@ -1747,7 +1748,9 @@ function cerrarChat() {
     if (intervaloChatReal) clearInterval(intervaloChatReal);
 }
 
-// 3. Cargar el historial de mensajes de la base de datos
+// 3. Cargar el historial de mensajes de la base de datos (OPTIMIZADO CON CACHÉ DE CANTIDAD Y CARGA ASÍNCRONA)
+let cacheCantidadMensajes = -1;
+
 async function cargarMensajes(id_pedido) {
     const contenedor = document.getElementById('chat-messages');
     if (!contenedor) return;
@@ -1768,6 +1771,13 @@ async function cargarMensajes(id_pedido) {
         if (!respuesta.ok) return;
 
         const mensajes = await respuesta.json();
+
+        // Evitar parpadeos o renderizados pesados si no hay mensajes nuevos
+        if (Array.isArray(mensajes) && mensajes.length === cacheCantidadMensajes) {
+            return;
+        }
+
+        cacheCantidadMensajes = mensajes.length;
         contenedor.innerHTML = ''; 
 
         if (!Array.isArray(mensajes) || mensajes.length === 0) {
@@ -1785,7 +1795,8 @@ async function cargarMensajes(id_pedido) {
             let contenidoMensaje = msg.mensaje || "";
             if (contenidoMensaje.startsWith('[IMG]')) {
                 const base64Data = contenidoMensaje.replace('[IMG]', '');
-                contenidoMensaje = `<img src="${base64Data}" class="rounded-xl max-w-full" alt="Evidencia">`;
+                // Carga diferida y asíncrona para fluidez visual rápida
+                contenidoMensaje = `<img src="${base64Data}" loading="lazy" decoding="async" class="rounded-xl max-w-full max-h-60 object-cover" alt="Evidencia">`;
             }
 
             const burbujaHTML = `
@@ -1858,72 +1869,95 @@ const input = document.getElementById('caja-chat-verdadera');
     }
 }
 
-// 5. Enviar una imagen en el chat
+// 5. Enviar una imagen en el chat (CON COMPRESIÓN ULTRA RÁPIDA VÍA CANVAS)
 async function enviarImagenChat(event) {
     const file = event.target.files[0];
     if (!file) return;
-
-    if (file.size > 10 * 1024 * 1024) {
-        Swal.fire({
-            title: 'Imagen muy pesada',
-            text: 'El tamaño máximo permitido es de 10MB.',
-            icon: 'warning',
-            confirmButtonColor: '#2563eb',
-            confirmButtonText: 'Entendido'
-        });
-        return;
-    }
 
     if (!pedidoChatActual) {
         console.warn("No hay pedido vinculado al chat.");
         return;
     }
 
-    // Convertir la imagen a Base64
+    const input = document.getElementById('caja-chat-verdadera');
+    const placeholderOriginal = input ? input.placeholder : '';
+
+    if (input) {
+        input.placeholder = "Comprimiendo imagen...";
+        input.disabled = true;
+    }
+
+    // Convertir y comprimir la foto usando Canvas HTML5
     const reader = new FileReader();
-    reader.onloadend = async function () {
-        const base64String = reader.result;
-        const mensajeConPrefijo = "[IMG]" + base64String; // Le ponemos la etiqueta para reconocerlo
+    reader.onload = function (e) {
+        const img = new Image();
+        img.onload = async function () {
+            // Dimensiones máximas de 800px para mantener nitidez pero bajo peso
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const maxSize = 800;
 
-        try {
-            const userStr = sessionStorage.getItem('usuario');
-            if (!userStr) return;
-            const userData = JSON.parse(userStr);
-            const token = sessionStorage.getItem('token');
+            let width = img.width;
+            let height = img.height;
 
-            // Cambiar el placeholder temporalmente para dar feedback visual
-            const input = document.getElementById('caja-chat-verdadera');
-            const placeholderOriginal = input.placeholder;
-            input.placeholder = "Enviando imagen...";
-            input.disabled = true;
-
-            const respuesta = await fetch('/api/chat', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    id_pedido: pedidoChatActual,
-                    id_remitente: userData.id_usuario,
-                    id_rol: userData.id_rol,
-                    mensaje: mensajeConPrefijo
-                })
-            });
-
-            if (respuesta.ok) {
-                await cargarMensajes(pedidoChatActual);
+            if (width > height) {
+                if (width > maxSize) {
+                    height *= maxSize / width;
+                    width = maxSize;
+                }
             } else {
-                console.error("Error al enviar imagen al backend");
+                if (height > maxSize) {
+                    width *= maxSize / height;
+                    height = maxSize;
+                }
             }
 
-            // Restaurar la caja de texto
-            input.placeholder = placeholderOriginal;
-            input.disabled = false;
-            event.target.value = ''; // Limpiar el input file para poder subir otra
-        } catch (error) {
-            console.error("Error crítico al enviar imagen:", error);
-        }
+            canvas.width = width;
+            canvas.height = height;
+            ctx.drawImage(img, 0, 0, width, height);
+
+            // Genera un Base64 ultra liviano en JPEG al 65% de calidad
+            const base64Comprimido = canvas.toDataURL('image/jpeg', 0.65);
+            const mensajeConPrefijo = "[IMG]" + base64Comprimido;
+
+            try {
+                const userStr = sessionStorage.getItem('usuario');
+                if (!userStr) return;
+                const userData = JSON.parse(userStr);
+                const token = sessionStorage.getItem('token');
+
+                if (input) input.placeholder = "Enviando imagen...";
+
+                const respuesta = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        id_pedido: pedidoChatActual,
+                        id_remitente: userData.id_usuario,
+                        id_rol: userData.id_rol,
+                        mensaje: mensajeConPrefijo
+                    })
+                });
+
+                if (respuesta.ok) {
+                    await cargarMensajes(pedidoChatActual);
+                } else {
+                    console.error("Error al enviar imagen al backend");
+                }
+            } catch (error) {
+                console.error("Error crítico al enviar imagen:", error);
+            } finally {
+                if (input) {
+                    input.placeholder = placeholderOriginal;
+                    input.disabled = false;
+                }
+                event.target.value = '';
+            }
+        };
+        img.src = e.target.result;
     };
     reader.readAsDataURL(file);
 }
