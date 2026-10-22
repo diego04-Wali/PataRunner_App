@@ -4,7 +4,6 @@ import pool from './db.js';
 import cron from 'node-cron';
 import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
-import nodemailer from 'nodemailer';
 
 // Inicializar Firebase Admin de forma segura en ES Modules
 if (!getApps().length) {
@@ -77,83 +76,46 @@ app.get('/', (req, res) => {
 });
 
 // ==========================================
-// RUTA DE REGISTRO CON ENVÍO DIRECTO DE CORREO (OPCIÓN 2)
+// RUTA DE REGISTRO DE USUARIO (NATIVA CON FIREBASE)
 // ==========================================
 app.post('/api/usuarios/registro', async (req, res) => {
     try {
-        const { firebase_uid, codigo_alumno, correo_institucional, nombre_completo, carrera } = req.body;
-        const emailLimpio = correo_institucional.toLowerCase();
+        const { firebase_uid, codigo_alumno, correo_institucional, nombre_completo, carrera, verificado } = req.body;
 
-        // 1. Generar enlace seguro oficial con Firebase Admin SDK
-        const actionCodeSettings = {
-            url: 'https://patarunnerapp-frontend.vercel.app',
-            handleCodeInApp: false
-        };
-
-        const verificationLink = await getAuth().generateEmailVerificationLink(emailLimpio, actionCodeSettings);
-
-        // 2. Configurar el transporte SMTP (Usa Gmail con Contraseña de Aplicación o Brevo)
-        // 🟢 CÓDIGO CORREGIDO (SSL directo por puerto 465):
-const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true,
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-    },
-    tls: {
-        rejectUnauthorized: false
-    }
-});
-
-        // 3. Redactar el correo HTML
-        const mailOptions = {
-            from: '"PataRunner UTP" <' + (process.env.EMAIL_USER || 'tu_correo@gmail.com') + '>',
-            to: emailLimpio,
-            subject: 'Verifica tu correo institucional - PataRunner',
-            html: `
-                <div style="font-family: Arial, sans-serif; max-width: 500px; margin: auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
-                    <h2 style="color: #2563eb; text-align: center;">¡Hola, ${nombre_completo}! 🏃‍♂️</h2>
-                    <p>Gracias por registrarte en <strong>PataRunner</strong>. Para completar la activación de tu cuenta institucional de la UTP, haz clic en el siguiente botón:</p>
-                    <div style="text-align: center; margin: 30px 0;">
-                        <a href="${verificationLink}" style="background-color: #2563eb; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Verificar mi Correo</a>
-                    </div>
-                    <p style="font-size: 12px; color: #666666; text-align: center;">Si no creaste esta cuenta, puedes ignorar este mensaje.</p>
-                </div>
-            `
-        };
-
-        // 4. Despachar el correo directamente desde el servidor
-        await transporter.sendMail(mailOptions);
-
-        // 5. Guardar/Actualizar usuario en PostgreSQL (Neon)
         const query = `
             INSERT INTO usuarios (id_rol, firebase_uid, codigo_alumno, correo_institucional, nombre_completo, carrera, verificado)
-            VALUES (1, $1, $2, $3, $4, $5, false)
+            VALUES (1, $1, $2, $3, $4, $5, $6)
             ON CONFLICT (codigo_alumno) DO UPDATE 
             SET firebase_uid = EXCLUDED.firebase_uid,
                 correo_institucional = EXCLUDED.correo_institucional,
                 nombre_completo = EXCLUDED.nombre_completo,
                 carrera = EXCLUDED.carrera,
-                verificado = false
+                verificado = EXCLUDED.verificado
             RETURNING id_usuario, codigo_alumno, correo_institucional;
         `;
 
-        const values = [firebase_uid, codigo_alumno, emailLimpio, nombre_completo, carrera];
+        const values = [
+            firebase_uid, 
+            codigo_alumno, 
+            correo_institucional.toLowerCase(), 
+            nombre_completo, 
+            carrera, 
+            verificado || false
+        ];
+
         const result = await pool.query(query, values);
 
         res.status(201).json({
             success: true,
-            message: 'Usuario registrado y correo de verificación enviado.',
+            message: 'Usuario registrado correctamente en la base de datos.',
             usuario: result.rows[0]
         });
 
     } catch (error) {
-        console.error("Error al registrar y enviar correo:", error);
+        console.error("Error exacto en PostgreSQL:", error.message);
         res.status(500).json({ 
             success: false, 
-            error: error.message || "Error interno al procesar el registro." 
+            error: error.message || "Error interno al guardar los datos del usuario." 
         });
     }
 });
