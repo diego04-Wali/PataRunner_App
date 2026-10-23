@@ -7,6 +7,7 @@ import { getAuth } from 'firebase-admin/auth';
 import fs from 'fs';
 import { Resend } from 'resend';
 
+const resend = new Resend('re_VbGquYEz_2hApjUuEgAK2pGVe7YLZUUE6');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -16,16 +17,7 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// Transporter para Gmail por puerto 465 SSL
-const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true,
-    auth: {
-        user: 'terronesdiego04@gmail.com',
-        pass: 'dgdrfzlcfopnbvmx' // Tu contraseña de aplicación de 16 caracteres
-    }
-});
+
 
 // ==========================================
 // CONFIGURACIÓN FIREBASE ADMIN SDK
