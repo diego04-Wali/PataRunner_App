@@ -5,6 +5,7 @@ import cron from 'node-cron';
 import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import fs from 'fs';
+import puppeteer from 'puppeteer';
 
 // --- IMPORTACIONES DE WHATSAPP ---
 import pkg from 'whatsapp-web.js';
@@ -25,7 +26,17 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 const wpClient = new Client({
     authStrategy: new LocalAuth(),
     puppeteer: {
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
+        executablePath: puppeteer.executablePath(),
+        headless: true,
+        args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',
+            '--disable-accelerated-2d-canvas',
+            '--no-first-run',
+            '--no-zygote',
+            '--disable-gpu'
+        ]
     }
 });
 
