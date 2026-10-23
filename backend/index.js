@@ -41,11 +41,40 @@ const wpClient = new Client({
     }
 });
 
-wpClient.on('qr', (qr) => {
-    console.log('\n================ WHATSAPP BOT QR ================');
-    console.log('Escanea este QR con el WhatsApp del bot de PataRunner:');
-    qrcode.generate(qr, { small: true });
-    console.log('=================================================\n');
+// Variable para almacenar la imagen del código QR
+let qrImageBase64 = '';
+
+wpClient.on('qr', async (qr) => {
+    console.log('⚡ Nuevo código QR generado para WhatsApp.');
+    try {
+        // Convierte el código QR a una imagen Base64
+        qrImageBase64 = await QRCode.toDataURL(qr);
+    } catch (err) {
+        console.error('Error al generar imagen QR:', err);
+    }
+});
+
+// Ruta para ver el QR directamente en el navegador
+app.get('/qr', (req, res) => {
+    if (qrImageBase64) {
+        res.send(`
+            <html>
+                <body style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; font-family:sans-serif; background-color:#f4f4f9;">
+                    <h2>Escanea este QR con el WhatsApp de PataRunner</h2>
+                    <img src="${qrImageBase64}" style="width:300px; height:300px; border:10px solid white; border-radius:12px; box-shadow:0 4px 10px rgba(0,0,0,0.1);" />
+                    <p>Refresca la página si el código expira.</p>
+                </body>
+            </html>
+        `);
+    } else {
+        res.send(`
+            <html>
+                <body style="display:flex; align-items:center; justify-content:center; height:100vh; font-family:sans-serif;">
+                    <h3>El bot se está iniciando o ya está conectado. Refresca en unos segundos...</h3>
+                </body>
+            </html>
+        `);
+    }
 });
 
 wpClient.on('ready', () => {
