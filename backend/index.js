@@ -6,6 +6,7 @@ import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import fs from 'fs';
 import puppeteer from 'puppeteer';
+import QRCode from 'qrcode';
 
 // --- IMPORTACIONES DE WHATSAPP ---
 import pkg from 'whatsapp-web.js';
