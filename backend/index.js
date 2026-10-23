@@ -14,7 +14,7 @@ const { Client, LocalAuth } = pkg;
 import qrcode from 'qrcode-terminal';
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
 // Middlewares
 app.use(cors());
@@ -40,7 +40,10 @@ const wpClient = new Client({
             '--disable-accelerated-2d-canvas',
             '--no-first-run',
             '--no-zygote',
-            '--disable-gpu'
+            '--disable-gpu',
+            '--single-process',
+            '--disable-extensions',
+            '--renderer-process-limit=1'
         ]
     }
 });
