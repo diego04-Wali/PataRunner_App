@@ -143,7 +143,7 @@ app.post(['/usuarios/registro', '/api/usuarios/registro'], async (req, res) => {
             method: 'POST',
             headers: {
                 'accept': 'application/json',
-                'api-key': process.env.BREVO_API_KEY || 'xsmtpsib-1acbae53650795a8094fd1b7463c165860f56762c56784ee29801613bf1c31e9-A1V89zWuYkb3V1ww',
+                'api-key': process.env.BREVO_API_KEY || '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',
                 'content-type': 'application/json'
             },
             body: JSON.stringify({
