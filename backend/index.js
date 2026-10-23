@@ -202,43 +202,55 @@ app.post(['/usuarios/registro', '/api/usuarios/registro'], async (req, res) => {
     }
 });
 
-// ==========================================
-// 2. RUTA DE VERIFICACIÓN OTP E INSERCIÓN EN POSTGRESQL
-// ==========================================
 app.post(['/usuarios/registro', '/api/usuarios/registro'], async (req, res) => {
     try {
-        console.log('BODY RECIBIDO:', req.body); // Imprime los datos en la consola de Render para verificar
+        console.log('BODY RECIBIDO:', req.body); // Permite verificar los datos en los logs de Render
 
+        // Desestructurar todas las posibles variantes de nombres que envíe el frontend
         const { 
-            codigoEstudiantil, 
-            codigoAlumno, 
-            nombres, 
-            apellidos, 
+            codigoEstudiantil, codigo_estudiantil, codigoAlumno, codigo_alumno, codigo,
+            nombres, apellidos, nombreCompleto,
             carrera, 
-            email, 
-            correo_personal, 
-            telefono, 
-            password 
+            email, correo, correo_personal, 
+            telefono, celular,
+            password, contrasena
         } = req.body;
-        
-        // Captura el código y el correo sin importar cómo los envíe el frontend
-        const finalCodigo = codigoEstudiantil || codigoAlumno;
-        const finalEmail = email || correo_personal;
 
-        // Generar código OTP de 6 dígitos
+        // Asignar el valor disponible para cada campo obligatorio
+        const finalCodigo = codigoEstudiantil || codigo_estudiantil || codigoAlumno || codigo_alumno || codigo;
+        const finalEmail = email || correo || correo_personal;
+        const finalTelefono = telefono || celular;
+        const finalPassword = password || contrasena;
+        const finalNombre = nombreCompleto || `${nombres || ''} ${apellidos || ''}`.trim();
+
+        // Validar que los datos requeridos no lleguen vacíos
+        if (!finalCodigo || !finalEmail || !finalTelefono || !finalPassword) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Faltan datos obligatorios (código, correo, teléfono o contraseña).' 
+            });
+        }
+
+        // Generar OTP de 6 dígitos
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        const nombreCompleto = `${nombres || ''} ${apellidos || ''}`.trim();
 
-        // Insertar en registros_pendientes asegurando los campos correctos
+        // 1. Guardar el OTP en la tabla codigos_otp
+        await pool.query(
+            `INSERT INTO codigos_otp (telefono, codigo, expira_en) 
+             VALUES ($1, $2, NOW() + INTERVAL '10 minutes')`,
+            [finalTelefono, otp]
+        );
+
+        // 2. Guardar el registro temporal en la tabla registros_pendientes
         await pool.query(
             `INSERT INTO registros_pendientes 
             (codigo_alumno, correo_personal, nombre_completo, password_hash, carrera, token_verificacion, telefono, codigo_otp, expira_en) 
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW() + INTERVAL '10 minutes')`,
-            [finalCodigo, finalEmail, nombreCompleto, password, carrera, otp, telefono, otp]
+            [finalCodigo, finalEmail, finalNombre, finalPassword, carrera || '', otp, finalTelefono, otp]
         );
 
-        // Formatear el número y enviar el código por WhatsApp
-        const cleanPhone = telefono.replace(/\D/g, '');
+        // 3. Enviar el mensaje por WhatsApp mediante Puppeteer
+        const cleanPhone = finalTelefono.replace(/\D/g, '');
         const chatId = `${cleanPhone}@c.us`;
         
         await wpClient.sendMessage(chatId, `Tu código de verificación de PataRunner es: ${otp}`);
