@@ -213,6 +213,12 @@ app.post(['/usuarios/registro', '/api/usuarios/registro'], async (req, res) => {
             [finalCodigo, finalEmail, finalNombre, finalPassword, carrera || '', otp, finalTelefono, otp]
         );
 
+        // 3. Responder de inmediato al Frontend
+        res.status(200).json({ 
+            success: true, 
+            message: 'Registro exitoso y código OTP procesado correctamente.' 
+        });
+
         // 3. ENVIAR EL MENSAJE POR WHATSAPP DE FORMA SEGURA
         let cleanPhone = finalTelefono.replace(/\D/g, '');
         if (!cleanPhone.startsWith('51') && cleanPhone.length === 9) {
