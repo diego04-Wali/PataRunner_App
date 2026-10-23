@@ -170,19 +170,14 @@ app.get('/', (req, res) => {
     res.send('Servidor de PataRunner (WhatsApp OTP Ready) funcionando correctamente 🚀');
 });
 
-// ==========================================
-// 1. RUTA DE REGISTRO CON ENVÍO OTP POR WHATSAPP
-// ==========================================
-
 
 // ==========================================
 // 1. RUTA DE REGISTRO CON ENVÍO OTP POR WHATSAPP
 // ==========================================
 app.post(['/usuarios/registro', '/api/usuarios/registro'], async (req, res) => {
     try {
-        console.log('BODY RECIBIDO:', req.body); // Permite verificar los datos en los logs de Render
+        console.log('BODY RECIBIDO:', req.body);
 
-        // Desestructurar todas las posibles variantes de nombres que envíe el frontend
         const { 
             codigoEstudiantil, codigo_estudiantil, codigoAlumno, codigo_alumno, codigo,
             nombres, apellidos, nombreCompleto, nombre_completo,
@@ -192,14 +187,12 @@ app.post(['/usuarios/registro', '/api/usuarios/registro'], async (req, res) => {
             password, contrasena, password_hash
         } = req.body;
 
-        // Asignar el valor disponible para cada campo obligatorio
         const finalCodigo = codigoEstudiantil || codigo_estudiantil || codigoAlumno || codigo_alumno || codigo;
         const finalEmail = email || correo || correo_personal;
         const finalTelefono = telefono || celular;
         const finalPassword = password || contrasena || password_hash;
         const finalNombre = nombre_completo || nombreCompleto || `${nombres || ''} ${apellidos || ''}`.trim();
 
-        // Validar que los datos requeridos no lleguen vacíos
         if (!finalCodigo || !finalEmail || !finalTelefono || !finalPassword) {
             return res.status(400).json({ 
                 success: false, 
@@ -207,17 +200,16 @@ app.post(['/usuarios/registro', '/api/usuarios/registro'], async (req, res) => {
             });
         }
 
-        // Generar OTP de 6 dígitos
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-        // 1. Guardar el OTP en la tabla codigos_otp
+        // 1. Guardar el OTP en codigos_otp
         await pool.query(
             `INSERT INTO codigos_otp (telefono, codigo, expira_en) 
              VALUES ($1, $2, NOW() + INTERVAL '10 minutes')`,
             [finalTelefono, otp]
         );
 
-        // 2. Guardar el registro temporal en la tabla registros_pendientes
+        // 2. Guardar el registro temporal en registros_pendientes
         await pool.query(
             `INSERT INTO registros_pendientes 
             (codigo_alumno, correo_personal, nombre_completo, password_hash, carrera, token_verificacion, telefono, codigo_otp, expira_en) 
@@ -225,26 +217,30 @@ app.post(['/usuarios/registro', '/api/usuarios/registro'], async (req, res) => {
             [finalCodigo, finalEmail, finalNombre, finalPassword, carrera || '', otp, finalTelefono, otp]
         );
 
-        // 3. Enviar el mensaje por WhatsApp mediante Puppeteer
         // 3. Enviar el mensaje por WhatsApp de forma segura
         const cleanPhone = finalTelefono.replace(/\D/g, '');
         const chatId = `${cleanPhone}@c.us`;
-        
+
         try {
             if (wpClient && wpClient.info) {
                 await wpClient.sendMessage(chatId, `Tu código de verificación de PataRunner es: ${otp}`);
-                console.log(`✅ Mensaje de OTP enviado a ${chatId}`);
+                console.log(`✅ OTP enviado por WhatsApp a ${chatId}`);
             } else {
-                console.warn('⚠️ WhatsApp Web no está listo aún o se está reconectando.');
+                console.warn('⚠️ Cliente de WhatsApp reconectando o no inicializado aún.');
             }
-        } catch (wpError) {
-            console.error('❌ Error al enviar mensaje por WhatsApp:', wpError);
+        } catch (wpErr) {
+            console.error('❌ Error al enviar mensaje con WhatsApp:', wpErr.message);
         }
 
         return res.status(200).json({ 
             success: true, 
-            message: 'Registro completado y código OTP generado.' 
+            message: 'Registro exitoso y código OTP procesado correctamente.' 
         });
+
+    } catch (error) {
+        console.error('❌ Error general en /usuarios/registro:', error);
+        return res.status(500).json({ success: false, error: error.message });
+    }
 });
 
 // ==========================================
