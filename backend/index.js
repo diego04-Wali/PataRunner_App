@@ -5,7 +5,10 @@ import cron from 'node-cron';
 import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import fs from 'fs';
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
+
+// Inicializar Resend con tu API Key válida
+const resend = new Resend('re_VbGquYEz_2hApjUuEgAK2pGVe7YLZUUE6');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -151,10 +154,9 @@ app.post(['/usuarios/registro', '/api/usuarios/registro'], async (req, res) => {
             message: 'Código de verificación enviado a tu correo personal.' 
         });
 
-        // 4. Enviar correo usando Resend (HTTP)
-        // 4. Enviar correo usando Nodemailer por puerto 465 SSL
-        transporter.sendMail({
-            from: '"PataRunner UTP" <terronesdiego04@gmail.com>',
+        // 4. Enviar correo vía API HTTP con Resend (Evita bloqueos de puertos SMTP en Render)
+        resend.emails.send({
+            from: 'PataRunner <onboarding@resend.dev>',
             to: finalEmail,
             subject: 'Tu código de verificación de PataRunner 🏃‍♂️',
             html: `
@@ -168,8 +170,8 @@ app.post(['/usuarios/registro', '/api/usuarios/registro'], async (req, res) => {
                     <p style="color: #666; font-size: 12px; text-align: center;">Este código expira en 10 minutos.</p>
                 </div>
             `
-        }).then(() => console.log(`✅ OTP enviado exitosamente por correo a: ${finalEmail}`))
-          .catch(err => console.error('❌ Error enviando correo por Nodemailer:', err.message));
+        }).then(data => console.log(`✅ OTP enviado exitosamente por Resend a ${finalEmail}:`, data))
+          .catch(err => console.error('❌ Error enviando correo por Resend:', err.message));
 
     } catch (error) {
         console.error('❌ Error general en /usuarios/registro:', error);
