@@ -173,71 +173,35 @@ app.get('/', (req, res) => {
 // ==========================================
 // 1. RUTA DE REGISTRO CON ENVÍO OTP POR WHATSAPP
 // ==========================================
-app.post('/api/usuarios/registro', async (req, res) => {
+app.post('/usuarios/registro', async (req, res) => {
     try {
-        const { codigo_alumno, nombre_completo, carrera, correo_personal, telefono, password } = req.body;
-
-        if (!codigo_alumno || !nombre_completo || !correo_personal || !telefono || !password) {
-            return res.status(400).json({ error: 'Todos los campos son obligatorios.' });
-        }
-        const correoDestino = correo_personal.trim().toLowerCase();
-
-        // Validar celular peruano de 9 dígitos que empiece con 9
-        const regexTelefono = /^9\d{8}$/;
-        if (!regexTelefono.test(telefono)) {
-            return res.status(400).json({ error: 'Ingresa un número de celular peruano válido (9 dígitos).' });
-        }
-
-        // Generar código OTP aleatorio de 6 dígitos
-        const codigoOTP = Math.floor(100000 + Math.random() * 900000).toString();
-        const expiraEn = new Date(Date.now() + 5 * 60 * 1000); // Validez por 5 minutos
-
-        // Guardar o actualizar en la tabla temporizada de registros pendientes
-        const queryPendientes = `
-            INSERT INTO registros_pendientes (codigo_alumno, nombre_completo, carrera, correo_personal, telefono, password_hash, codigo_otp, expira_en)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-            ON CONFLICT (id_pendiente) DO NOTHING;
-        `;
+        const { codigoEstudiantil, nombres, apellidos, carrera, email, telefono, password } = req.body;
         
-        await pool.query(queryPendientes, [
-            codigo_alumno.toUpperCase(),
-            nombre_completo,
-            carrera,
-            correo_personal.toLowerCase(),
-            telefono,
-            password, // Recomendado aplicar bcryptjs
-            codigoOTP,
-            expiraEn
-        ]);
+        // Generar código OTP de 6 dígitos
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-        // Registrar o actualizar también en la tabla auxiliar codigos_otp
         await pool.query(
-            'INSERT INTO codigos_otp (telefono, codigo, expira_en) VALUES ($1, $2, $3)',
-            [telefono, codigoOTP, expiraEn]
-        );
+    `INSERT INTO codigos_otp (telefono, codigo, expira_en) VALUES ($1, $2, NOW() + INTERVAL '10 minutes')`,
+    [telefono, otp]
+);
 
-        // Responder inmediatamente al frontend
-        res.status(200).json({
-            success: true,
-            message: 'Código de verificación generado. Revisa tu WhatsApp.'
-        });
+// (Opcional) Guardar los datos temporales del usuario si usas registros pendientes
+await pool.query(
+    `INSERT INTO registros_pendientes (codigo_estudiantil, nombres, apellidos, carrera, email, telefono, password) 
+     VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+    [codigoEstudiantil, nombres, apellidos, carrera, email, telefono, password]
+);
 
-        // Enviar el código por WhatsApp en segundo plano
-        const numeroFormatted = `51${telefono}@c.us`;
-        const mensajeWhatsApp = `🟢 *PataRunner UTP*\n\nHola ${nombre_completo}, tu código de verificación es:\n\n*${codigoOTP}*\n\nEste código expira en 5 minutos. No lo compartas con nadie.`;
+        // 2. Formatear el número y enviar el código por WhatsApp
+        const cleanPhone = telefono.replace(/\D/g, '');
+        const chatId = `${cleanPhone}@c.us`;
+        
+        await wpClient.sendMessage(chatId, `Tu código de verificación de PataRunner es: ${otp}`);
 
-        wpClient.sendMessage(numeroFormatted, mensajeWhatsApp).then(() => {
-            console.log(`📱 Código OTP [${codigoOTP}] enviado con éxito vía WhatsApp a +51${telefono}`);
-        }).catch(err => {
-            console.error(`❌ Error al enviar mensaje por WhatsApp a +51${telefono}:`, err.message);
-        });
-
+        return res.status(200).json({ success: true, message: 'Código OTP enviado por WhatsApp' });
     } catch (error) {
-        console.error("Error en /api/usuarios/registro:", error);
-        res.status(500).json({ 
-            success: false, 
-            error: "Error interno al procesar el registro." 
-        });
+        console.error('❌ Error en /usuarios/registro:', error);
+        return res.status(500).json({ success: false, error: error.message });
     }
 });
 
