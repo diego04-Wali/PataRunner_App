@@ -311,8 +311,9 @@ if (btnPostularRunner) {
         }
     });
 }
+
 // ==========================================
-// FASE 2: REGISTRO EN FIREBASE Y VERIFICACIÓN (OPCIÓN A)
+// FASE 2: REGISTRO EN FIREBASE Y VERIFICACIÓN (VÍA BACKEND + RESEND)
 // ==========================================
 const btnRegister = document.getElementById('btn-register');
 
@@ -337,14 +338,12 @@ if (btnRegister) {
             return;
         }
 
-        // Expresión regular para validar formato: U + 8 números
         const formatoCodigo = /^U\d{8}$/i;
         if (!formatoCodigo.test(codigo)) {
             alert("El código de alumno debe comenzar con la letra 'U' y contener exactamente ocho dígitos.");
             return;
         }
 
-        // 3. Generamos el correo institucional y nombre completo
         const correoInstitucional = `${codigo.toUpperCase()}@utp.edu.pe`;
         const nombreCompleto = `${nombres.trim()} ${apellidos.trim()}`;
 
@@ -353,19 +352,11 @@ if (btnRegister) {
             btnRegister.disabled = true;
             btnRegister.classList.add("opacity-70");
 
-            // 1. Crear la cuenta directamente en Firebase Auth
+            // 1. Crear la cuenta en Firebase Auth Client
             const userCredential = await createUserWithEmailAndPassword(auth, correoInstitucional, password);
             const user = userCredential.user;
 
-            // 2. Enviar correo de verificación nativo de Firebase al instante
-            const actionCodeSettings = {
-                url: 'https://patarunnerapp-frontend.vercel.app',
-                handleCodeInApp: false
-            };
-
-            await sendEmailVerification(user, actionCodeSettings);
-
-            // 3. Guardar al usuario en PostgreSQL (Neon)
+            // 2. Registrar en PostgreSQL y despachar el correo con Resend a través de nuestro Backend
             const respuestaBD = await fetch('/api/usuarios/registro', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -394,7 +385,7 @@ if (btnRegister) {
                 document.getElementById('register-form').classList.add('hidden');
                 document.getElementById('login-form').classList.remove('hidden');
             } else {
-                alert("Error al guardar en base de datos: " + (datosRespuesta.error || "Ocurrió un error."));
+                alert("Error en el servidor: " + (datosRespuesta.error || "Ocurrió un error al despachar el correo."));
             }
 
         } catch (error) {

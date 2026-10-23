@@ -46,7 +46,7 @@ if (serviceAccount && getApps().length === 0) {
 // 3. Inicializar Resend
 const resend = new Resend(process.env.RESEND_API_KEY || '');
 
-// Middleware de verificación de token Firebase
+// Middleware de verificación de token Firebase corregido
 const verificarToken = async (req, res, next) => {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -56,7 +56,7 @@ const verificarToken = async (req, res, next) => {
     const token = authHeader.split(' ')[1];
 
     try {
-        const decodedToken = await admin.auth().verifyIdToken(token);
+        const decodedToken = await getAuth().verifyIdToken(token);
         req.user = decodedToken;
         req.usuarioFirebase = decodedToken;
         next();
