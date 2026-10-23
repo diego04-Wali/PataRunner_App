@@ -106,7 +106,7 @@ app.get('/', (req, res) => {
 import { Resend } from 'resend';
 
 // Inicializar Resend con tu API Key (puedes usar variable de entorno o la clave directa)
-const resend = new Resend(process.env.RESEND_API_KEY || 're_AQUI_TU_API_KEY_DE_RESEND');
+const resend = new Resend(process.env.RESEND_API_KEY || 're_VbGquYEz_2hApjUuEgAK2pGVe7YLZUUE6');
 
 // ==========================================
 // RUTA DE REGISTRO
