@@ -173,35 +173,11 @@ app.get('/', (req, res) => {
 // ==========================================
 // 1. RUTA DE REGISTRO CON ENVÍO OTP POR WHATSAPP
 // ==========================================
-app.post(['/usuarios/registro', '/api/usuarios/registro'], async (req, res) => {
-    try {
-        const { codigoEstudiantil, nombres, apellidos, carrera, email, telefono, password } = req.body;
-        
-        // Generar código OTP de 6 dígitos
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        const nombreCompleto = `${nombres} ${apellidos}`;
 
-        // Insertar directamente en registros_pendientes con las columnas correctas de tu tabla
-        await pool.query(
-            `INSERT INTO registros_pendientes 
-            (codigo_alumno, correo_personal, nombre_completo, password_hash, carrera, token_verificacion, telefono, codigo_otp, expira_en) 
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW() + INTERVAL '10 minutes')`,
-            [codigoEstudiantil, email, nombreCompleto, password, carrera, otp, telefono, otp]
-        );
 
-        // Formatear el número y enviar el código por WhatsApp
-        const cleanPhone = telefono.replace(/\D/g, '');
-        const chatId = `${cleanPhone}@c.us`;
-        
-        await wpClient.sendMessage(chatId, `Tu código de verificación de PataRunner es: ${otp}`);
-
-        return res.status(200).json({ success: true, message: 'Código OTP enviado por WhatsApp' });
-    } catch (error) {
-        console.error('❌ Error en /usuarios/registro:', error);
-        return res.status(500).json({ success: false, error: error.message });
-    }
-});
-
+// ==========================================
+// 1. RUTA DE REGISTRO CON ENVÍO OTP POR WHATSAPP
+// ==========================================
 app.post(['/usuarios/registro', '/api/usuarios/registro'], async (req, res) => {
     try {
         console.log('BODY RECIBIDO:', req.body); // Permite verificar los datos en los logs de Render
@@ -209,19 +185,19 @@ app.post(['/usuarios/registro', '/api/usuarios/registro'], async (req, res) => {
         // Desestructurar todas las posibles variantes de nombres que envíe el frontend
         const { 
             codigoEstudiantil, codigo_estudiantil, codigoAlumno, codigo_alumno, codigo,
-            nombres, apellidos, nombreCompleto,
+            nombres, apellidos, nombreCompleto, nombre_completo,
             carrera, 
             email, correo, correo_personal, 
             telefono, celular,
-            password, contrasena
+            password, contrasena, password_hash
         } = req.body;
 
         // Asignar el valor disponible para cada campo obligatorio
         const finalCodigo = codigoEstudiantil || codigo_estudiantil || codigoAlumno || codigo_alumno || codigo;
         const finalEmail = email || correo || correo_personal;
         const finalTelefono = telefono || celular;
-        const finalPassword = password || contrasena;
-        const finalNombre = nombreCompleto || `${nombres || ''} ${apellidos || ''}`.trim();
+        const finalPassword = password || contrasena || password_hash;
+        const finalNombre = nombre_completo || nombreCompleto || `${nombres || ''} ${apellidos || ''}`.trim();
 
         // Validar que los datos requeridos no lleguen vacíos
         if (!finalCodigo || !finalEmail || !finalTelefono || !finalPassword) {
