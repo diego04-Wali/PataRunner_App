@@ -43,21 +43,18 @@ if (serviceAccount && getApps().length === 0) {
     console.warn("⚠️ Advertencia: FIREBASE_SERVICE_ACCOUNT no está configurado.");
 }
 
-// 3. Configurar el transporte explícito de Gmail con Nodemailer (para Render)
+// 3. Configurar el transporte de Gmail con puerto 587 (STARTTLS compatible con Render)
 const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
-    port: 465,
-    secure: true, // Conexión SSL directa por el puerto 465
+    port: 587,
+    secure: false, // IMPORTANTE: debe ser false para el puerto 587
     auth: {
         user: process.env.GMAIL_USER,
         pass: process.env.GMAIL_PASS
     },
     tls: {
-        rejectUnauthorized: false // Evita bloqueos de certificados en la nube
-    },
-    connectionTimeout: 10000, // Límite de 10 segundos para conectar
-    greetingTimeout: 5000,
-    socketTimeout: 15000
+        rejectUnauthorized: false
+    }
 });
 
 // Middleware de verificación de token Firebase corregido
