@@ -100,7 +100,7 @@ function configurarEventosAuth() {
     }
 
     // ==========================================
-    // 2. LÓGICA DE REGISTRO (Paso 1: Datos + WhatsApp OTP)
+    // 2. LÓGICA DE REGISTRO (Paso 1: Datos + OTP a Correo Personal)
     // ==========================================
     const btnRegister = document.getElementById('btn-register');
     if (btnRegister) {
@@ -133,7 +133,7 @@ function configurarEventosAuth() {
             const nombreCompleto = `${nombres} ${apellidos}`;
 
             try {
-                btnRegister.textContent = "Enviando código...";
+                btnRegister.textContent = "Enviando código a correo...";
                 btnRegister.disabled = true;
 
                 const respuesta = await fetch('/api/usuarios/registro', {
@@ -152,11 +152,12 @@ function configurarEventosAuth() {
                 const data = await respuesta.json();
 
                 if (respuesta.ok) {
-                    // Guardar el número en memoria para la validación del modal
+                    // Guardar correo y teléfono en memoria para la validación del modal
+                    window.correoEnRegistro = correoPersonal;
                     window.telefonoEnRegistro = telefono;
                     
                     const phoneDisplay = document.getElementById('otp-display-phone');
-                    if (phoneDisplay) phoneDisplay.textContent = `+51 ${telefono}`;
+                    if (phoneDisplay) phoneDisplay.textContent = correoPersonal; // Mostrar correo en lugar de teléfono
 
                     // Mostrar modal OTP
                     const modalOTP = document.getElementById('modal-otp-whatsapp');
@@ -164,7 +165,7 @@ function configurarEventosAuth() {
 
                     Swal.fire({
                         title: '¡Código enviado!',
-                        text: `Hemos enviado un código de 6 dígitos a tu WhatsApp (+51 ${telefono}).`,
+                        text: `Hemos enviado un código de 6 dígitos a tu correo personal (${correoPersonal}).`,
                         icon: 'success',
                         timer: 3000,
                         showConfirmButton: false
@@ -177,7 +178,7 @@ function configurarEventosAuth() {
                 console.error("Error al registrar:", error);
                 Swal.fire({ title: 'Error', text: 'Error de conexión con el servidor.', icon: 'error' });
             } finally {
-                btnRegister.textContent = "Enviar código a WhatsApp";
+                btnRegister.textContent = "Enviar código de verificación";
                 btnRegister.disabled = false;
             }
         });
@@ -193,7 +194,7 @@ function configurarEventosAuth() {
             });
 
             if (codigoIngresado.length !== 6) {
-                Swal.fire({ title: 'Código incompleto', text: 'Ingresa los 6 dígitos que recibiste por WhatsApp.', icon: 'warning' });
+                Swal.fire({ title: 'Código incompleto', text: 'Ingresa los 6 dígitos que recibiste en tu correo personal.', icon: 'warning' });
                 return;
             }
 
@@ -205,6 +206,7 @@ function configurarEventosAuth() {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
+                        correo_personal: window.correoEnRegistro,
                         telefono: window.telefonoEnRegistro,
                         codigo: codigoIngresado
                     })
