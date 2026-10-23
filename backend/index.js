@@ -6,6 +6,10 @@ import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import fs from 'fs';
 import { Resend } from 'resend';
+import * as brevo from '@getbrevo/brevo';
+
+const apiInstance = new brevo.TransactionalEmailsApi();
+apiInstance.setApiKey(brevo.TransactionalEmailsApiApiKeys.apiKey, 'xsmtpsib-1acbae53650795a8094fd1b7463c165860f56762c56784ee29801613bf1c31e9-A1V89zWuYkb3V1ww');
 
 const resend = new Resend('re_VbGquYEz_2hApjUuEgAK2pGVe7YLZUUE6');
 
@@ -144,24 +148,26 @@ app.post(['/usuarios/registro', '/api/usuarios/registro'], async (req, res) => {
             message: 'Código de verificación enviado a tu correo personal.' 
         });
 
-        // 4. Enviar correo vía API HTTP con Resend (Evita bloqueos de puertos SMTP en Render)
-        resend.emails.send({
-            from: 'PataRunner <onboarding@resend.dev>',
-            to: finalEmail,
-            subject: 'Tu código de verificación de PataRunner 🏃‍♂️',
-            html: `
-                <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px; max-width: 500px; margin: auto;">
-                    <h2 style="color: #4f46e5; text-align: center;">PataRunner</h2>
-                    <p>Hola <strong>${finalNombre}</strong>,</p>
-                    <p>Ingresa el siguiente código de 6 dígitos para verificar tu cuenta:</p>
-                    <div style="font-size: 32px; font-weight: bold; color: #4f46e5; letter-spacing: 6px; padding: 15px 0; text-align: center; background-color: #f3f4f6; border-radius: 6px; margin: 15px 0;">
-                        ${otp}
-                    </div>
-                    <p style="color: #666; font-size: 12px; text-align: center;">Este código expira en 10 minutos.</p>
+        // Enviar correo OTP vía HTTP con Brevo
+        const sendSmtpEmail = new brevo.SendSmtpEmail();
+        sendSmtpEmail.subject = "Tu código de verificación de PataRunner 🏃‍♂️";
+        sendSmtpEmail.htmlContent = `
+            <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px; max-width: 500px; margin: auto;">
+                <h2 style="color: #4f46e5; text-align: center;">PataRunner</h2>
+                <p>Hola <strong>${finalNombre}</strong>,</p>
+                <p>Ingresa el siguiente código de 6 dígitos para verificar tu cuenta:</p>
+                <div style="font-size: 32px; font-weight: bold; color: #4f46e5; letter-spacing: 6px; padding: 15px 0; text-align: center; background-color: #f3f4f6; border-radius: 6px; margin: 15px 0;">
+                    ${otp}
                 </div>
-            `
-        }).then(data => console.log(`✅ OTP enviado exitosamente por Resend a ${finalEmail}:`, data))
-          .catch(err => console.error('❌ Error enviando correo por Resend:', err.message));
+                <p style="color: #666; font-size: 12px; text-align: center;">Este código expira en 10 minutos.</p>
+            </div>
+        `;
+        sendSmtpEmail.sender = { "name": "PataRunner UTP", "email": "terronesdiego04@gmail.com" };
+        sendSmtpEmail.to = [{ "email": finalEmail, "name": finalNombre }];
+
+        apiInstance.sendTransacEmail(sendSmtpEmail)
+            .then(data => console.log(`✅ OTP enviado exitosamente por Brevo a ${finalEmail}:`, data))
+            .catch(err => console.error('❌ Error enviando correo por Brevo:', err));
 
     } catch (error) {
         console.error('❌ Error general en /usuarios/registro:', error);
