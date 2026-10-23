@@ -6,7 +6,6 @@ import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import fs from 'fs';
 import { Resend } from 'resend';
-import * as brevo from '@getbrevo/brevo';
 
 const apiInstance = new brevo.TransactionalEmailsApi();
 apiInstance.setApiKey(brevo.TransactionalEmailsApiApiKeys.apiKey, 'xsmtpsib-1acbae53650795a8094fd1b7463c165860f56762c56784ee29801613bf1c31e9-A1V89zWuYkb3V1ww');
@@ -148,26 +147,7 @@ app.post(['/usuarios/registro', '/api/usuarios/registro'], async (req, res) => {
             message: 'Código de verificación enviado a tu correo personal.' 
         });
 
-        // Enviar correo OTP vía HTTP con Brevo
-        const sendSmtpEmail = new brevo.SendSmtpEmail();
-        sendSmtpEmail.subject = "Tu código de verificación de PataRunner 🏃‍♂️";
-        sendSmtpEmail.htmlContent = `
-            <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px; max-width: 500px; margin: auto;">
-                <h2 style="color: #4f46e5; text-align: center;">PataRunner</h2>
-                <p>Hola <strong>${finalNombre}</strong>,</p>
-                <p>Ingresa el siguiente código de 6 dígitos para verificar tu cuenta:</p>
-                <div style="font-size: 32px; font-weight: bold; color: #4f46e5; letter-spacing: 6px; padding: 15px 0; text-align: center; background-color: #f3f4f6; border-radius: 6px; margin: 15px 0;">
-                    ${otp}
-                </div>
-                <p style="color: #666; font-size: 12px; text-align: center;">Este código expira en 10 minutos.</p>
-            </div>
-        `;
-        sendSmtpEmail.sender = { "name": "PataRunner UTP", "email": "terronesdiego04@gmail.com" };
-        sendSmtpEmail.to = [{ "email": finalEmail, "name": finalNombre }];
-
-        apiInstance.sendTransacEmail(sendSmtpEmail)
-            .then(data => console.log(`✅ OTP enviado exitosamente por Brevo a ${finalEmail}:`, data))
-            .catch(err => console.error('❌ Error enviando correo por Brevo:', err));
+        
 
     } catch (error) {
         console.error('❌ Error general en /usuarios/registro:', error);
@@ -181,7 +161,40 @@ app.post(['/usuarios/registro', '/api/usuarios/registro'], async (req, res) => {
 app.post('/api/usuarios/verificar-otp', async (req, res) => {
     try {
         const { correo_personal, telefono, codigo } = req.body;
-
+// 4. Enviar correo OTP vía API HTTP con Brevo (fetch nativo sin dependencias)
+        fetch('https://api.brevo.com/v3/smtp/email', {
+            method: 'POST',
+            headers: {
+                'accept': 'application/json',
+                'api-key': 'AQUI_PEGA_TU_API_KEY_DE_BREVO', // Pega tu clave que empieza con xkeysib-...
+                'content-type': 'application/json'
+            },
+            body: JSON.stringify({
+                sender: { name: "PataRunner UTP", email: "terronesdiego04@gmail.com" },
+                to: [{ email: finalEmail, name: finalNombre }],
+                subject: "Tu código de verificación de PataRunner 🏃‍♂️",
+                htmlContent: `
+                    <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px; max-width: 500px; margin: auto;">
+                        <h2 style="color: #4f46e5; text-align: center;">PataRunner</h2>
+                        <p>Hola <strong>${finalNombre}</strong>,</p>
+                        <p>Ingresa el siguiente código de 6 dígitos para verificar tu cuenta:</p>
+                        <div style="font-size: 32px; font-weight: bold; color: #4f46e5; letter-spacing: 6px; padding: 15px 0; text-align: center; background-color: #f3f4f6; border-radius: 6px; margin: 15px 0;">
+                            ${otp}
+                        </div>
+                        <p style="color: #666; font-size: 12px; text-align: center;">Este código expira en 10 minutos.</p>
+                    </div>
+                `
+            })
+        })
+        .then(async response => {
+            const result = await response.json();
+            if (response.ok) {
+                console.log(`✅ OTP enviado exitosamente por Brevo a ${finalEmail}:`, result);
+            } else {
+                console.error('❌ Error devuelto por la API de Brevo:', result);
+            }
+        })
+        .catch(err => console.error('❌ Error enviando correo por Brevo:', err.message));
         if (!codigo) {
             return res.status(400).json({ error: 'Ingresa el código OTP.' });
         }
