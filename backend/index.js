@@ -94,13 +94,18 @@ app.get('/', (req, res) => {
 });
 
 // ==========================================
-// RUTA DE REGISTRO DE USUARIO (ROBUSTA CON NODEMAILER)
+// RUTA DE REGISTRO DE USUARIO
 // ==========================================
 app.post('/api/usuarios/registro', async (req, res) => {
     try {
         const { firebase_uid, codigo_alumno, correo_institucional, nombre_completo, carrera, verificado } = req.body;
 
-        // 1. Guardar o actualizar en Neon PostgreSQL
+        // 1. Asegurar que el correo tenga el dominio @utp.edu.pe
+        const correoDestino = correo_institucional.includes('@') 
+            ? correo_institucional.toLowerCase() 
+            : `${correo_institucional.toLowerCase()}@utp.edu.pe`;
+
+        // 2. Guardar o actualizar en Neon PostgreSQL
         const query = `
             INSERT INTO usuarios (id_rol, firebase_uid, codigo_alumno, correo_institucional, nombre_completo, carrera, verificado)
             VALUES (1, $1, $2, $3, $4, $5, $6)
@@ -116,18 +121,16 @@ app.post('/api/usuarios/registro', async (req, res) => {
         const values = [
             firebase_uid, 
             codigo_alumno, 
-            correo_institucional.toLowerCase(), 
+            correoDestino, 
             nombre_completo, 
             carrera, 
             verificado || false
         ];
 
-       // 1. Asegurar que el correo tenga el dominio @utp.edu.pe
-        const correoDestino = correo_institucional.includes('@') 
-            ? correo_institucional.toLowerCase() 
-            : `${correo_institucional.toLowerCase()}@utp.edu.pe`;
+        // Se declara 'result' explícitamente para responder en el res.json
+        const result = await pool.query(query, values);
 
-        // 2. Intentar generar el enlace con Firebase Admin
+        // 3. Generar el enlace con Firebase Admin
         let verificationLink = '';
         try {
             const actionCodeSettings = {
@@ -145,7 +148,7 @@ app.post('/api/usuarios/registro', async (req, res) => {
             throw new Error(`Error en Firebase Auth: ${firebaseErr.message}`);
         }
 
-        // 3. Despachar el correo mediante la API HTTP de EmailJS (Puerto 443)
+        // 4. Despachar el correo mediante la API HTTP de EmailJS (Puerto 443)
         const responseEmailJS = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
             method: 'POST',
             headers: {
@@ -178,7 +181,7 @@ app.post('/api/usuarios/registro', async (req, res) => {
         });
 
     } catch (error) {
-        console.error(" Error general en el endpoint de registro:", error.message);
+        console.error("Error general en el endpoint de registro:", error.message);
         res.status(500).json({ 
             success: false, 
             error: error.message || "Error interno al procesar el registro." 
