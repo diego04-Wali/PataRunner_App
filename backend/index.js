@@ -205,7 +205,7 @@ app.post(['/usuarios/registro', '/api/usuarios/registro'], async (req, res) => {
 // ==========================================
 // 2. RUTA DE VERIFICACIÓN OTP E INSERCIÓN EN POSTGRESQL
 // ==========================================
-aapp.post(['/usuarios/registro', '/api/usuarios/registro'], async (req, res) => {
+app.post(['/usuarios/registro', '/api/usuarios/registro'], async (req, res) => {
     try {
         console.log('BODY RECIBIDO:', req.body); // Imprime los datos en la consola de Render para verificar
 
