@@ -26,12 +26,7 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 // ==========================================
 const wpClient = new Client({
     authStrategy: new LocalAuth(),
-    webVersionCache: {
-        type: 'remote',
-        remotePath: 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2412.54.html',
-    },
     puppeteer: {
-        executablePath: puppeteer.executablePath(),
         headless: true,
         args: [
             '--no-sandbox',
@@ -40,10 +35,8 @@ const wpClient = new Client({
             '--disable-accelerated-2d-canvas',
             '--no-first-run',
             '--no-zygote',
-            '--disable-gpu',
             '--single-process',
-            '--disable-extensions',
-            '--renderer-process-limit=1'
+            '--disable-gpu'
         ]
     }
 });
@@ -625,4 +618,14 @@ const PORT = process.env.PORT || port || 3000;
 
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Servidor PataRunner ejecutándose en el puerto ${PORT}`);
+});
+
+app.get('/test-whatsapp', async (req, res) => {
+    try {
+        const testNumber = '51937275669@c.us'; // Tu número con prefijo 51
+        await wpClient.sendMessage(testNumber, '¡Hola! Test de verificación de PataRunner 🚀');
+        return res.send('Mensaje de prueba enviado con éxito a WhatsApp.');
+    } catch (error) {
+        return res.status(500).send(`Error al enviar test: ${error.message}`);
+    }
 });
