@@ -205,66 +205,48 @@ app.post(['/usuarios/registro', '/api/usuarios/registro'], async (req, res) => {
 // ==========================================
 // 2. RUTA DE VERIFICACIÓN OTP E INSERCIÓN EN POSTGRESQL
 // ==========================================
-app.post('/api/usuarios/verificar-otp', async (req, res) => {
-    const { telefono, codigo } = req.body;
-
-    if (!telefono || !codigo) {
-        return res.status(400).json({ error: 'El teléfono y el código son obligatorios.' });
-    }
-
+aapp.post(['/usuarios/registro', '/api/usuarios/registro'], async (req, res) => {
     try {
-        // Consultar el código más reciente que aún no haya expirado
-        const otpResult = await pool.query(
-            'SELECT * FROM codigos_otp WHERE telefono = $1 AND codigo = $2 AND expira_en > NOW() ORDER BY creado_en DESC LIMIT 1',
-            [telefono, codigo]
+        console.log('BODY RECIBIDO:', req.body); // Imprime los datos en la consola de Render para verificar
+
+        const { 
+            codigoEstudiantil, 
+            codigoAlumno, 
+            nombres, 
+            apellidos, 
+            carrera, 
+            email, 
+            correo_personal, 
+            telefono, 
+            password 
+        } = req.body;
+        
+        // Captura el código y el correo sin importar cómo los envíe el frontend
+        const finalCodigo = codigoEstudiantil || codigoAlumno;
+        const finalEmail = email || correo_personal;
+
+        // Generar código OTP de 6 dígitos
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const nombreCompleto = `${nombres || ''} ${apellidos || ''}`.trim();
+
+        // Insertar en registros_pendientes asegurando los campos correctos
+        await pool.query(
+            `INSERT INTO registros_pendientes 
+            (codigo_alumno, correo_personal, nombre_completo, password_hash, carrera, token_verificacion, telefono, codigo_otp, expira_en) 
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW() + INTERVAL '10 minutes')`,
+            [finalCodigo, finalEmail, nombreCompleto, password, carrera, otp, telefono, otp]
         );
 
-        if (otpResult.rows.length === 0) {
-            return res.status(400).json({ error: 'Código incorrecto o expirado.' });
-        }
+        // Formatear el número y enviar el código por WhatsApp
+        const cleanPhone = telefono.replace(/\D/g, '');
+        const chatId = `${cleanPhone}@c.us`;
+        
+        await wpClient.sendMessage(chatId, `Tu código de verificación de PataRunner es: ${otp}`);
 
-        // Obtener datos del usuario desde registros_pendientes
-        const regPendiente = await pool.query(
-            'SELECT * FROM registros_pendientes WHERE telefono = $1 ORDER BY id_pendiente DESC LIMIT 1',
-            [telefono]
-        );
-
-        let datosUser = regPendiente.rows[0];
-
-        // Insertar o actualizar la cuenta en la tabla definitiva de usuarios
-        const queryUsuario = `
-            INSERT INTO usuarios (id_rol, codigo_alumno, nombre_completo, carrera, correo_personal, telefono, verificado)
-            VALUES (1, $1, $2, $3, $4, $5, true)
-            ON CONFLICT (codigo_alumno) DO UPDATE 
-            SET nombre_completo = EXCLUDED.nombre_completo,
-                carrera = EXCLUDED.carrera,
-                correo_personal = EXCLUDED.correo_personal,
-                telefono = EXCLUDED.telefono,
-                verificado = true
-            RETURNING id_usuario, codigo_alumno, correo_personal, telefono;
-        `;
-
-        const userResult = await pool.query(queryUsuario, [
-            datosUser ? datosUser.codigo_alumno : 'UUNKNOWN',
-            datosUser ? datosUser.nombre_completo : 'Usuario PataRunner',
-            datosUser ? datosUser.carrera : 'General',
-            datosUser ? datosUser.correo_personal : null,
-            telefono
-        ]);
-
-        // Limpiar registros temporales
-        await pool.query('DELETE FROM codigos_otp WHERE telefono = $1', [telefono]);
-        await pool.query('DELETE FROM registros_pendientes WHERE telefono = $1', [telefono]);
-
-        res.status(200).json({
-            success: true,
-            message: '¡Cuenta verificada con éxito!',
-            usuario: userResult.rows[0]
-        });
-
+        return res.status(200).json({ success: true, message: 'Código OTP enviado por WhatsApp' });
     } catch (error) {
-        console.error("Error al verificar OTP:", error);
-        res.status(500).json({ error: 'Error interno al validar el código OTP.' });
+        console.error('❌ Error en /usuarios/registro:', error);
+        return res.status(500).json({ success: false, error: error.message });
     }
 });
 
