@@ -4,439 +4,14 @@ window.fetch = function(...args) {
     let [url, config] = args;
     config = config || {};
     
-    // Solo agregar la cabecera si la petición va hacia Ngrok
     if (url && url.toString().includes('ngrok-free.dev')) {
         config.headers = Object.assign({ 'ngrok-skip-browser-warning': 'true' }, config.headers || {});
     }
     
     return originalFetch(url, config);
 };
-  // Importamos Firebase desde su CDN oficial
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, sendPasswordResetEmail, createUserWithEmailAndPassword, sendEmailVerification } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-  const firebaseConfig = {
-    apiKey: "AIzaSyBzWJYQIzZMkE_TzfgUtRRhh9t_ycIorIk",
-    authDomain: "patarunner-1b348.firebaseapp.com",
-    projectId: "patarunner-1b348",
-    storageBucket: "patarunner-1b348.firebasestorage.app",
-    messagingSenderId: "1052394949698",
-    appId: "1:1052394949698:web:9bd4e443b00b424a4931db",
-    measurementId: "G-DL5H5ZBGEH"
-  };
 
-  // Inicializamos la app
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  
-// --- Lógica para el botón de mostrar/ocultar contraseña ---
-const btnTogglePassword = document.getElementById("btn-toggle-password");
-const campoPassword = document.getElementById("password-input"); 
-const iconEye = document.getElementById("icon-eye");
-const iconEyeOff = document.getElementById("icon-eye-off");
-
-if (btnTogglePassword) {
-    btnTogglePassword.addEventListener("click", () => {
-        if (campoPassword.type === "password") {
-            campoPassword.type = "text";
-            iconEye.classList.add("hidden");
-            iconEyeOff.classList.remove("hidden");
-        } else {
-            campoPassword.type = "password";
-            iconEyeOff.classList.add("hidden");
-            iconEye.classList.remove("hidden");
-        }
-    });
-}
-// -----------------------------------------------------------
-
-const loginBtn = document.getElementById("login-btn");
-const screenLogin = document.getElementById("screen-login");
-
-if (loginBtn) {
-    loginBtn.addEventListener("click", async () => {
-        // 1. Capturamos el código (Fase 1 y 4) y forzamos mayúsculas
-        const codigo = document.getElementById("login-codigo").value.trim().toUpperCase();
-        const passwordInput = document.getElementById("login-password").value;
-
-        // 2. Validaciones estrictas
-        if (!codigo || !passwordInput) {
-            Swal.fire({
-                title: 'Campos incompletos',
-                text: 'Por favor, ingresa tu código y contraseña.',
-                icon: 'warning',
-                confirmButtonColor: '#2563eb'
-            });
-            return;
-        }
-
-        // 3. Generación de correo
-        let emailInput = "";
-
-        if (codigo === "ADMIN01") {
-            emailInput = "terronesdiego04@gmail.com";
-        } else {
-            if (!codigo.startsWith('U') || codigo.length !== 9) {
-                Swal.fire({
-                    title: 'Código inválido',
-                    text: 'El código de alumno debe empezar con "U" y tener 8 números.',
-                    icon: 'warning',
-                    confirmButtonColor: '#2563eb'
-                });
-                return;
-            }
-            emailInput = `${codigo}@utp.edu.pe`;
-        }
-
-        try {
-            loginBtn.textContent = "Iniciando...";
-            loginBtn.disabled = true;
-
-            // 4. Intentamos iniciar sesión con Firebase Auth
-            // 🟢 CÓDIGO CORREGIDO:
-// 1. Iniciar sesión en Firebase
-            const userCredential = await signInWithEmailAndPassword(auth, emailInput, passwordInput);
-
-            // 2. Forzar la recarga de datos desde los servidores de Firebase
-            await userCredential.user.reload();
-
-            // 3. Obtener la referencia del usuario activo tras la recarga
-            const user = auth.currentUser;
-
-            // 🔍 IMPRIMIR EN CONSOLA EL ESTADO REAL
-            console.log("ID de usuario:", user.uid);
-            console.log("¿Email verificado en Firebase?:", user.emailVerified);
-
-            // 4. Evaluar la verificación
-            if (!user.emailVerified && codigo !== "ADMIN01") {
-                Swal.fire({
-                    title: 'Correo no verificado',
-                    text: 'Debes verificar tu correo institucional en tu bandeja de entrada antes de ingresar a PataRunner.',
-                    icon: 'warning',
-                    confirmButtonColor: '#2563eb'
-                });
-                await auth.signOut();
-                return;
-            }
-
-            // 5. ¡CLAVE!: 'true' fuerza la renovación del token con la verificación de Firebase
-            const token = await user.getIdToken(true);
-            sessionStorage.setItem('token', token);
-
-            // 6. Enviamos el token al backend en Render
-            const response = await fetch('/api/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-
-            const data = await response.json();
-
-            // 7. Procesamos la respuesta de la base de datos (Neon)
-if (response.ok) {
-    console.log("Acceso concedido:", data);
-
-    // Guardado persistente (localStorage) y de pestaña (sessionStorage)
-    localStorage.setItem('token', token);
-    localStorage.setItem('usuario', JSON.stringify(data.usuario));
-    localStorage.setItem('userId', data.usuario.id_usuario);
-    localStorage.setItem('isRunnerStatus', data.usuario.id_rol === 2 ? 'true' : 'false');
-
-    sessionStorage.setItem('token', token);
-    sessionStorage.setItem('usuario', JSON.stringify(data.usuario));
-    sessionStorage.setItem('userId', data.usuario.id_usuario);
-    sessionStorage.setItem('isRunnerStatus', data.usuario.id_rol === 2 ? 'true' : 'false');
-
-                if (typeof window.aplicarEstadoRunner === 'function') {
-                    window.aplicarEstadoRunner();
-                }      
-                if (typeof cargarMisPedidos === 'function') {
-                    cargarMisPedidos();
-                }
-
-                // Ocultamos el login
-                if (screenLogin) {
-                    screenLogin.classList.add("hidden");
-                }
-
-                // Redirección por roles (ADMIN, RUNNER, ALUMNO)
-                if (data.usuario && data.usuario.id_rol === 3) {
-                    const bottomNav = document.getElementById('bottom-nav-bar');
-                    if (bottomNav) bottomNav.classList.add('hidden');
-                    
-                    const topBar = document.getElementById('role-switcher-bar');
-                    if (topBar) topBar.classList.add('hidden');
-
-                    document.querySelectorAll('div[id^="tab-"]').forEach(tab => tab.classList.add('hidden'));
-
-                    const tabAdmin = document.getElementById('tab-admin');
-                    if (tabAdmin) {
-                        tabAdmin.classList.remove('hidden', 'pb-24');
-                        tabAdmin.classList.add('pb-6');
-                    }
-                    
-                    if (typeof cargarUsuariosAdmin === 'function') {
-                        cargarUsuariosAdmin();
-                    }
-                } else if (data.usuario && data.usuario.id_rol === 2) {
-                    sessionStorage.setItem('isRunnerStatus', 'true');
-                    if (typeof isRunner !== 'undefined') { isRunner = true; } 
-                    
-                    if (typeof window.setActiveRole === 'function') {
-                        window.setActiveRole('alumno');
-                    }
-                    
-                    const btnRunner = document.getElementById("role-btn-runner");
-                    if (btnRunner) {
-                        btnRunner.disabled = false;
-                        btnRunner.classList.remove("opacity-50", "cursor-not-allowed");
-                        btnRunner.innerHTML = "Runner";
-                    }
-                } else {
-                    sessionStorage.setItem('isRunnerStatus', 'false');
-                    if (typeof isRunner !== 'undefined') { isRunner = false; }
-                    
-                    const btnRunner = document.getElementById("role-btn-runner");
-                    if (btnRunner) {
-                        btnRunner.disabled = true;
-                        btnRunner.classList.add("opacity-50", "cursor-not-allowed");
-                        btnRunner.innerHTML = '<i data-lucide="lock" class="w-3 h-3"></i> Runner';
-                    }
-                    if (window.lucide) {
-                        lucide.createIcons();
-                    }
-                }
-            } else {
-                // ⚠️ Limpiar basura en caché si el backend rechaza el acceso
-    localStorage.clear();
-    sessionStorage.clear();
-                Swal.fire({
-                    title: 'Acceso denegado',
-                    text: data.error || 'Ocurrió un error al ingresar.',
-                    icon: 'error',
-                    confirmButtonColor: '#2563eb'
-                });
-            }
-
-        } catch (error) {
-            console.error("Error en Firebase:", error.code, error.message);
-            if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found') {
-                Swal.fire({
-                    title: 'Credenciales incorrectas',
-                    text: 'Código de alumno o contraseña incorrectos.',
-                    icon: 'error',
-                    confirmButtonColor: '#2563eb'
-                });
-            } else {
-                Swal.fire({
-                    title: 'Error de autenticación',
-                    text: 'Hubo un error al intentar ingresar. Revisa tus datos.',
-                    icon: 'error',
-                    confirmButtonColor: '#2563eb'
-                });
-            }
-        } finally {
-            loginBtn.textContent = "Iniciar sesión";
-            loginBtn.disabled = false;
-        }
-    });
-}
-
-// --- 1. Botón inicial: Abre la pantalla de postulación como ventana superpuesta ---
-const btnSerRunner = document.getElementById("btn-ser-runner");
-
-if (btnSerRunner) {
-    btnSerRunner.addEventListener("click", () => {
-        // Ya no ocultamos el inicio. Solo mostramos la ventana flotante por encima.
-        const pantallaPostular = document.getElementById("postular-runner");
-        pantallaPostular.classList.remove("hidden");
-        pantallaPostular.style.display = "flex";
-    });
-}
-// --- 2. Nuevo Botón Azul: Confirma y asciende a Runner en la BD ---
-const btnPostularRunner = document.getElementById("btn-postular-runner");
-
-if (btnPostularRunner) {
-    btnPostularRunner.addEventListener("click", async () => {
-        const user = auth.currentUser;
-        if (!user) {
-            alert("Error: Debes iniciar sesión primero.");
-            return;
-        }
-
-        // Estado de carga inicial
-        btnPostularRunner.innerText = "Postulando...";
-        btnPostularRunner.disabled = true;
-
-        try {
-            const token = await user.getIdToken();
-
-            const response = await fetch('/api/usuarios/rol', {
-                method: 'PUT',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                // 1. Éxito: Cambiamos el botón a color VERDE
-                btnPostularRunner.innerText = "✓ Ya eres Runner";
-                btnPostularRunner.classList.remove("bg-blue-500", "hover:bg-blue-600");
-                btnPostularRunner.classList.add("bg-emerald-600");
-                
-                // 2. Pausa de 1.5 segundos para que veas la animación
-                setTimeout(() => {
-                    // Ocultamos la pantalla de postulación
-                    document.getElementById("postular-runner").classList.add("hidden");
-                    
-                    // Activamos la lógica de insignias y cambio de pestaña de main.js
-                    const btnInsignias = document.getElementById("apply-runner-btn");
-                    if (btnInsignias) btnInsignias.click();
-                }, 1500);
-
-            } else {
-                alert("Error: " + data.error);
-                btnPostularRunner.innerText = "Postular como Runner";
-                btnPostularRunner.disabled = false;
-            }
-        } catch (error) {
-            console.error("Error conectando con el servidor:", error);
-            alert("Ocurrió un error al intentar conectarse al servidor.");
-            btnPostularRunner.innerText = "Postular como Runner";
-            btnPostularRunner.disabled = false;
-        }
-    });
-}
-
-// ==========================================
-// FASE 2: REGISTRO EN FIREBASE Y VERIFICACIÓN (VÍA BACKEND + RESEND)
-// ==========================================
-const btnRegister = document.getElementById('btn-register');
-
-if (btnRegister) {
-    btnRegister.addEventListener('click', async () => {
-        // 1. Capturamos todos los valores del formulario
-        const codigo = document.getElementById('register-codigo').value.trim();
-        const nombres = document.getElementById('register-nombres').value.trim();
-        const apellidos = document.getElementById('register-apellidos').value.trim();
-        const carrera = document.getElementById('register-carrera').value;
-        const password = document.getElementById('register-password').value;
-        const terms = document.getElementById('register-terms').checked;
-
-        // 2. Validaciones estrictas
-        if (!codigo || !nombres || !apellidos || !carrera || !password) {
-            alert("Por favor, completa todos los campos del formulario.");
-            return;
-        }
-
-        if (!terms) {
-            alert("Debes aceptar el uso de datos para continuar.");
-            return;
-        }
-
-        const formatoCodigo = /^U\d{8}$/i;
-        if (!formatoCodigo.test(codigo)) {
-            alert("El código de alumno debe comenzar con la letra 'U' y contener exactamente ocho dígitos.");
-            return;
-        }
-
-        const correoInstitucional = `${codigo.toUpperCase()}@utp.edu.pe`;
-        const nombreCompleto = `${nombres.trim()} ${apellidos.trim()}`;
-
-        try {
-            btnRegister.textContent = "Creando cuenta...";
-            btnRegister.disabled = true;
-            btnRegister.classList.add("opacity-70");
-
-            // 1. Crear la cuenta en Firebase Auth Client
-            const userCredential = await createUserWithEmailAndPassword(auth, correoInstitucional, password);
-            const user = userCredential.user;
-
-            // 2. Registrar en PostgreSQL y despachar el correo con Resend a través de nuestro Backend
-            const respuestaBD = await fetch('/api/usuarios/registro', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    firebase_uid: user.uid,
-                    codigo_alumno: codigo.toUpperCase(),
-                    nombre_completo: nombreCompleto,
-                    carrera: carrera,
-                    correo_institucional: correoInstitucional,
-                    verificado: false
-                })
-            });
-
-            const datosRespuesta = await respuestaBD.json();
-
-            if (respuestaBD.ok) {
-                alert(`¡Registro exitoso!\n\nHemos enviado un correo de verificación oficial a:\n${correoInstitucional}\n\nPor favor, revisa tu bandeja de entrada o spam antes de iniciar sesión.`);
-
-                document.getElementById('register-codigo').value = '';
-                document.getElementById('register-nombres').value = '';
-                document.getElementById('register-apellidos').value = '';
-                document.getElementById('register-carrera').value = '';
-                document.getElementById('register-password').value = '';
-                document.getElementById('register-terms').checked = false;
-
-                document.getElementById('register-form').classList.add('hidden');
-                document.getElementById('login-form').classList.remove('hidden');
-            } else {
-                alert("Error en el servidor: " + (datosRespuesta.error || "Ocurrió un error al despachar el correo."));
-            }
-
-        } catch (error) {
-            console.error("Error en el registro de Firebase:", error);
-            
-            if (error.code === 'auth/email-already-in-use') {
-                alert("Ya existe una cuenta asociada a este código de alumno.");
-            } else if (error.code === 'auth/weak-password') {
-                alert("La contraseña es muy débil. Debe tener al menos 6 caracteres.");
-            } else {
-                alert("Ocurrió un error al crear la cuenta: " + error.message);
-            }
-        } finally {
-            btnRegister.textContent = "Registrarme";
-            btnRegister.disabled = false;
-            btnRegister.classList.remove("opacity-70");
-        }
-    });
-}
-
-// Recuperación de Contraseña mediante correo institucional con Firebase Auth
-window.recuperarContrasenaModal = async function() {
-    const correo = prompt('Ingresa tu correo institucional UTP para enviarte un enlace de recuperación:');
-    
-    if (!correo || correo.trim() === '') return;
-
-    const correoLimpio = correo.trim().toLowerCase();
-
-    if (!correoLimpio.endsWith('@utp.edu.pe')) {
-        alert('Por favor, ingresa un correo institucional válido (@utp.edu.pe).');
-        return;
-    }
-
-    try {
-        await sendPasswordResetEmail(auth, correoLimpio);
-        alert('¡Correo de recuperación enviado! Revisa tu bandeja de entrada o spam de tu correo institucional UTP para restablecer tu contraseña.');
-    } catch (error) {
-        console.error('Error al enviar correo de recuperación:', error);
-        if (error.code === 'auth/user-not-found') {
-            alert('El correo ingresado no está registrado en PataRunner.');
-        } else {
-            alert('No se pudo enviar el correo de recuperación: ' + error.message);
-        }
-    }
-};
-// =================================================================
-// AUTO-LOGIN: RESTAURAR SESIÓN AL REFRESCAR O NAVEGAR
-// =================================================================
-
-// 1. SINCRONIZACIÓN INMEDIATA (Ejecuta al cargar el script)
-// Garantiza que sessionStorage tenga los datos antes de que main.js lea sus variables
+// --- AUTO-LOGIN: RESTAURAR SESIÓN AL REFRESCAR ---
 (function sincronizarSesionInmediata() {
     const tokenPersistente = localStorage.getItem('token');
     const usuarioPersistente = localStorage.getItem('usuario');
@@ -452,53 +27,297 @@ window.recuperarContrasenaModal = async function() {
     }
 })();
 
-// 2. RESTAURACIÓN DE INTERFAZ (Se ejecuta cuando el DOM esté listo)
+// --- LÓGICA AL CARGAR EL DOM ---
 document.addEventListener("DOMContentLoaded", () => {
+    // 1. Restaurar sesión si existe
+    restaurarSesionInterfaz();
+
+    // 2. Configurar eventos de botones de inicio/registro y OTP
+    configurarEventosAuth();
+
+    // 3. Configurar navegabilidad automática entre las 6 cajas OTP
+    configurarEntradaOTP();
+});
+
+// ==========================================
+// 1. LÓGICA DE INICIO DE SESIÓN
+// ==========================================
+function configurarEventosAuth() {
+    const loginBtn = document.getElementById("login-btn");
+    if (loginBtn) {
+        loginBtn.addEventListener("click", async () => {
+            const identificador = document.getElementById("login-codigo").value.trim();
+            const passwordInput = document.getElementById("login-password").value;
+
+            if (!identificador || !passwordInput) {
+                Swal.fire({
+                    title: 'Campos incompletos',
+                    text: 'Por favor, ingresa tu código de alumno, correo personal o teléfono y tu contraseña.',
+                    icon: 'warning',
+                    confirmButtonColor: '#2563eb'
+                });
+                return;
+            }
+
+            try {
+                loginBtn.textContent = "Iniciando...";
+                loginBtn.disabled = true;
+
+                // Consulta directa a nuestro backend en Express/PostgreSQL
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ identificador, password: passwordInput })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    guardarSesion(data.token, data.usuario);
+                    aplicarPermisosRol(data.usuario);
+                } else {
+                    Swal.fire({
+                        title: 'Acceso denegado',
+                        text: data.error || 'Ocurrió un error al ingresar.',
+                        icon: 'error',
+                        confirmButtonColor: '#2563eb'
+                    });
+                }
+
+            } catch (error) {
+                console.error("Error en el login:", error);
+                Swal.fire({
+                    title: 'Error de servidor',
+                    text: 'No se pudo conectar con el servidor. Inténtalo más tarde.',
+                    icon: 'error',
+                    confirmButtonColor: '#2563eb'
+                });
+            } finally {
+                loginBtn.textContent = "Iniciar sesión";
+                loginBtn.disabled = false;
+            }
+        });
+    }
+
+    // ==========================================
+    // 2. LÓGICA DE REGISTRO (Paso 1: Datos + WhatsApp OTP)
+    // ==========================================
+    const btnRegister = document.getElementById('btn-register');
+    if (btnRegister) {
+        btnRegister.addEventListener('click', async () => {
+            const codigo = document.getElementById('register-codigo').value.trim().toUpperCase();
+            const nombres = document.getElementById('register-nombres').value.trim();
+            const apellidos = document.getElementById('register-apellidos').value.trim();
+            const carrera = document.getElementById('register-carrera').value;
+            const correoPersonal = document.getElementById('register-correo').value.trim();
+            const telefono = document.getElementById('register-telefono').value.trim();
+            const password = document.getElementById('register-password').value;
+            const terms = document.getElementById('register-terms').checked;
+
+            if (!codigo || !nombres || !apellidos || !carrera || !correoPersonal || !telefono || !password) {
+                Swal.fire({ title: 'Atención', text: 'Por favor, completa todos los campos.', icon: 'warning' });
+                return;
+            }
+
+            if (!terms) {
+                Swal.fire({ title: 'Atención', text: 'Debes aceptar los términos y el uso de datos.', icon: 'warning' });
+                return;
+            }
+
+            const regexTelefono = /^9\d{8}$/;
+            if (!regexTelefono.test(telefono)) {
+                Swal.fire({ title: 'Teléfono inválido', text: 'Ingresa un número de celular válido de 9 dígitos que empiece con 9.', icon: 'warning' });
+                return;
+            }
+
+            const nombreCompleto = `${nombres} ${apellidos}`;
+
+            try {
+                btnRegister.textContent = "Enviando código...";
+                btnRegister.disabled = true;
+
+                const respuesta = await fetch('/api/usuarios/registro', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        codigo_alumno: codigo,
+                        nombre_completo: nombreCompleto,
+                        carrera: carrera,
+                        correo_personal: correoPersonal,
+                        telefono: telefono,
+                        password: password
+                    })
+                });
+
+                const data = await respuesta.json();
+
+                if (respuesta.ok) {
+                    // Guardar el número en memoria para la validación del modal
+                    window.telefonoEnRegistro = telefono;
+                    
+                    const phoneDisplay = document.getElementById('otp-display-phone');
+                    if (phoneDisplay) phoneDisplay.textContent = `+51 ${telefono}`;
+
+                    // Mostrar modal OTP
+                    const modalOTP = document.getElementById('modal-otp-whatsapp');
+                    if (modalOTP) modalOTP.classList.remove('hidden');
+
+                    Swal.fire({
+                        title: '¡Código enviado!',
+                        text: `Hemos enviado un código de 6 dígitos a tu WhatsApp (+51 ${telefono}).`,
+                        icon: 'success',
+                        timer: 3000,
+                        showConfirmButton: false
+                    });
+                } else {
+                    Swal.fire({ title: 'Error', text: data.error || 'No se pudo enviar el código.', icon: 'error' });
+                }
+
+            } catch (error) {
+                console.error("Error al registrar:", error);
+                Swal.fire({ title: 'Error', text: 'Error de conexión con el servidor.', icon: 'error' });
+            } finally {
+                btnRegister.textContent = "Enviar código a WhatsApp";
+                btnRegister.disabled = false;
+            }
+        });
+    }
+
+    // Botón de Confirmación OTP
+    const btnConfirmOTP = document.getElementById('btn-confirm-otp');
+    if (btnConfirmOTP) {
+        btnConfirmOTP.addEventListener('click', async () => {
+            let codigoIngresado = "";
+            document.querySelectorAll('.otp-field').forEach(input => {
+                codigoIngresado += input.value.trim();
+            });
+
+            if (codigoIngresado.length !== 6) {
+                Swal.fire({ title: 'Código incompleto', text: 'Ingresa los 6 dígitos que recibiste por WhatsApp.', icon: 'warning' });
+                return;
+            }
+
+            try {
+                btnConfirmOTP.textContent = "Validando...";
+                btnConfirmOTP.disabled = true;
+
+                const response = await fetch('/api/usuarios/verificar-otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        telefono: window.telefonoEnRegistro,
+                        codigo: codigoIngresado
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    cerrarModalOTP();
+                    
+                    Swal.fire({
+                        title: '¡Cuenta verificada!',
+                        text: 'Tu registro ha sido exitoso. Ya puedes iniciar sesión en PataRunner.',
+                        icon: 'success'
+                    });
+
+                    // Limpiar campos y alternar vistas
+                    document.getElementById('register-form').classList.add('hidden');
+                    document.getElementById('login-form').classList.remove('hidden');
+
+                } else {
+                    Swal.fire({ title: 'Error', text: data.error || 'Código incorrecto o expirado.', icon: 'error' });
+                }
+
+            } catch (error) {
+                console.error("Error al validar OTP:", error);
+                Swal.fire({ title: 'Error', text: 'Ocurrió un problema al validar el código.', icon: 'error' });
+            } finally {
+                btnConfirmOTP.textContent = "Validar y Crear Cuenta";
+                btnConfirmOTP.disabled = false;
+            }
+        });
+    }
+}
+
+// ==========================================
+// 3. AUTONAVEGACIÓN EN CAJAS DE TEXTO OTP
+// ==========================================
+function configurarEntradaOTP() {
+    const otpFields = document.querySelectorAll('.otp-field');
+    
+    otpFields.forEach((field, index) => {
+        field.addEventListener('keyup', (e) => {
+            if (e.key >= '0' && e.key <= '9') {
+                if (index < otpFields.length - 1) {
+                    otpFields[index + 1].focus();
+                }
+            } else if (e.key === 'Backspace') {
+                if (index > 0) {
+                    otpFields[index - 1].focus();
+                }
+            }
+        });
+    });
+}
+
+// ==========================================
+// FUNCIONES DE SOPORTE Y NAVEGACIÓN
+// ==========================================
+window.cerrarModalOTP = function() {
+    const modalOTP = document.getElementById('modal-otp-whatsapp');
+    if (modalOTP) modalOTP.classList.add('hidden');
+    document.querySelectorAll('.otp-field').forEach(input => input.value = '');
+};
+
+function guardarSesion(token, usuario) {
+    localStorage.setItem('token', token);
+    localStorage.setItem('usuario', JSON.stringify(usuario));
+    localStorage.setItem('userId', usuario.id_usuario);
+    localStorage.setItem('isRunnerStatus', usuario.id_rol === 2 ? 'true' : 'false');
+
+    sessionStorage.setItem('token', token);
+    sessionStorage.setItem('usuario', JSON.stringify(usuario));
+    sessionStorage.setItem('userId', usuario.id_usuario);
+    sessionStorage.setItem('isRunnerStatus', usuario.id_rol === 2 ? 'true' : 'false');
+}
+
+function aplicarPermisosRol(usuario) {
+    const screenLogin = document.getElementById("screen-login");
+    if (screenLogin) screenLogin.classList.add("hidden");
+
+    if (usuario && usuario.id_rol === 3) {
+        const bottomNav = document.getElementById('bottom-nav-bar');
+        if (bottomNav) bottomNav.classList.add('hidden');
+        
+        const topBar = document.getElementById('role-switcher-bar');
+        if (topBar) topBar.classList.add('hidden');
+
+        document.querySelectorAll('div[id^="tab-"]').forEach(tab => tab.classList.add('hidden'));
+
+        const tabAdmin = document.getElementById('tab-admin');
+        if (tabAdmin) {
+            tabAdmin.classList.remove('hidden', 'pb-24');
+            tabAdmin.classList.add('pb-6');
+        }
+        if (typeof cargarUsuariosAdmin === 'function') cargarUsuariosAdmin();
+
+    } else {
+        if (typeof window.aplicarEstadoRunner === 'function') window.aplicarEstadoRunner();
+        if (typeof cargarMisPedidos === 'function') cargarMisPedidos();
+    }
+}
+
+function restaurarSesionInterfaz() {
     const usuarioGuardado = sessionStorage.getItem('usuario');
     const tokenGuardado = sessionStorage.getItem('token');
 
     if (usuarioGuardado && tokenGuardado) {
         try {
             const usuario = JSON.parse(usuarioGuardado);
-            const screenLogin = document.getElementById("screen-login");
-
-            // Ocultar pantalla de login
-            if (screenLogin) {
-                screenLogin.classList.add("hidden");
-            }
-
-            // Si es Administrador
-            if (usuario.id_rol === 3) {
-                const bottomNav = document.getElementById('bottom-nav-bar');
-                if (bottomNav) bottomNav.classList.add('hidden');
-                
-                const topBar = document.getElementById('role-switcher-bar');
-                if (topBar) topBar.classList.add('hidden');
-
-                document.querySelectorAll('div[id^="tab-"]').forEach(tab => tab.classList.add('hidden'));
-
-                const tabAdmin = document.getElementById('tab-admin');
-                if (tabAdmin) {
-                    tabAdmin.classList.remove('hidden', 'pb-24');
-                    tabAdmin.classList.add('pb-6');
-                }
-                if (typeof cargarUsuariosAdmin === 'function') {
-                    cargarUsuariosAdmin();
-                }
-            } else {
-                // Si es Alumno / Runner
-                if (typeof window.aplicarEstadoRunner === 'function') {
-                    window.aplicarEstadoRunner();
-                }
-                if (typeof cargarMisPedidos === 'function') {
-                    cargarMisPedidos();
-                }
-                if (typeof cargarDatosPerfil === 'function') {
-                    cargarDatosPerfil();
-                }
-            }
+            aplicarPermisosRol(usuario);
         } catch (e) {
             console.error("Error al restaurar sesión activa:", e);
         }
     }
-});
+}
