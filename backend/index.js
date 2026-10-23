@@ -22,8 +22,8 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-        user: process.env.EMAIL_USER || 'tu_correo_personal@gmail.com',
-        pass: process.env.EMAIL_PASS || 'xxxx xxxx xxxx xxxx' 
+        user: process.env.EMAIL_USER || 'terronesdiego04@gmail.com',
+        pass: process.env.EMAIL_PASS || 'dgdrfzlcfopnbvmx' 
     }
 });
 
