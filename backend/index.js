@@ -28,6 +28,7 @@ const wpClient = new Client({
     authStrategy: new LocalAuth(),
     puppeteer: {
         headless: true,
+        executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || null,
         args: [
             '--no-sandbox',
             '--disable-setuid-sandbox',
@@ -36,7 +37,9 @@ const wpClient = new Client({
             '--no-first-run',
             '--no-zygote',
             '--single-process',
-            '--disable-gpu'
+            '--disable-gpu',
+            '--no-default-browser-check',
+            '--disable-extensions'
         ]
     }
 });
