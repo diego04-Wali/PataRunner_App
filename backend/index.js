@@ -5,13 +5,7 @@ import cron from 'node-cron';
 import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import fs from 'fs';
-import puppeteer from 'puppeteer';
-import QRCode from 'qrcode';
-
-// --- IMPORTACIONES DE WHATSAPP ---
-import pkg from 'whatsapp-web.js';
-const { Client, LocalAuth } = pkg;
-import qrcode from 'qrcode-terminal';
+import nodemailer from 'nodemailer';
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -22,79 +16,19 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // ==========================================
-// INICIALIZACIÓN DEL BOT DE WHATSAPP
+// CONFIGURACIÓN DE NODEMAILER (CORREO PERSONAL)
 // ==========================================
-const wpClient = new Client({
-    authStrategy: new LocalAuth(),
-    puppeteer: {
-        headless: true,
-        executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || null,
-        args: [
-            '--no-sandbox',
-            '--disable-setuid-sandbox',
-            '--disable-dev-shm-usage',
-            '--disable-accelerated-2d-canvas',
-            '--no-first-run',
-            '--no-zygote',
-            '--single-process',
-            '--disable-gpu',
-            '--no-default-browser-check',
-            '--disable-extensions'
-        ]
+// NOTA: Reemplaza con tus credenciales personales de Gmail / Contraseña de Aplicación
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.EMAIL_USER || 'tu_correo_personal@gmail.com',
+        pass: process.env.EMAIL_PASS || 'xxxx xxxx xxxx xxxx' 
     }
-});
-
-// Variable para almacenar la imagen del código QR
-let qrImageBase64 = '';
-
-wpClient.on('qr', async (qr) => {
-    console.log('⚡ Nuevo código QR generado para WhatsApp.');
-    try {
-        // Convierte el código QR a una imagen Base64
-        qrImageBase64 = await QRCode.toDataURL(qr);
-    } catch (err) {
-        console.error('Error al generar imagen QR:', err);
-    }
-});
-
-// Ruta para ver el QR directamente en el navegador
-app.get('/qr', (req, res) => {
-    if (qrImageBase64) {
-        res.send(`
-            <html>
-                <body style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; font-family:sans-serif; background-color:#f4f4f9;">
-                    <h2>Escanea este QR con el WhatsApp de PataRunner</h2>
-                    <img src="${qrImageBase64}" style="width:300px; height:300px; border:10px solid white; border-radius:12px; box-shadow:0 4px 10px rgba(0,0,0,0.1);" />
-                    <p>Refresca la página si el código expira.</p>
-                </body>
-            </html>
-        `);
-    } else {
-        res.send(`
-            <html>
-                <body style="display:flex; align-items:center; justify-content:center; height:100vh; font-family:sans-serif;">
-                    <h3>El bot se está iniciando o ya está conectado. Refresca en unos segundos...</h3>
-                </body>
-            </html>
-        `);
-    }
-});
-
-wpClient.on('ready', () => {
-    console.log(' Bot de WhatsApp de PataRunner conectado y listo para enviar códigos OTP.');
-});
-
-wpClient.on('auth_failure', (msg) => {
-    console.error('❌ Error de autenticación en WhatsApp:', msg);
-});
-
-console.log('⏳ Iniciando navegador Chromium para WhatsApp...');
-wpClient.initialize().catch(err => {
-    console.error('❌ Error al inicializar WhatsApp Web:', err);
 });
 
 // ==========================================
-// CONFIGURACIÓN OPCIONAL FIREBASE ADMIN
+// CONFIGURACIÓN FIREBASE ADMIN SDK
 // ==========================================
 let serviceAccount = null;
 
@@ -136,7 +70,6 @@ const verificarToken = async (req, res, next) => {
         req.usuarioFirebase = decodedToken;
         next();
     } catch (error) {
-        // En caso de tokens directos de PostgreSQL
         req.user = { uid: token };
         next();
     }
@@ -163,12 +96,11 @@ const verificarAdmin = async (req, res, next) => {
 
 // Ruta de prueba base
 app.get('/', (req, res) => {
-    res.send('Servidor de PataRunner (WhatsApp OTP Ready) funcionando correctamente 🚀');
+    res.send('Servidor de PataRunner (Firebase & Email Ready) funcionando correctamente 🚀');
 });
 
-
 // ==========================================
-// 1. RUTA DE REGISTRO CON ENVÍO OTP POR WHATSAPP
+// 1. RUTA DE REGISTRO CON ENVÍO OTP A CORREO PERSONAL
 // ==========================================
 app.post(['/usuarios/registro', '/api/usuarios/registro'], async (req, res) => {
     try {
@@ -184,57 +116,81 @@ app.post(['/usuarios/registro', '/api/usuarios/registro'], async (req, res) => {
         } = req.body;
 
         const finalCodigo = codigoEstudiantil || codigo_estudiantil || codigoAlumno || codigo_alumno || codigo;
-        const finalEmail = email || correo || correo_personal;
+        const finalEmail = correo_personal || correo || email;
         const finalTelefono = telefono || celular;
         const finalPassword = password || contrasena || password_hash;
         const finalNombre = nombre_completo || nombreCompleto || `${nombres || ''} ${apellidos || ''}`.trim();
 
-        if (!finalCodigo || !finalEmail || !finalTelefono || !finalPassword) {
+        if (!finalCodigo || !finalEmail || !finalPassword) {
             return res.status(400).json({ 
                 success: false, 
-                error: 'Faltan datos obligatorios (código, correo, teléfono o contraseña).' 
+                error: 'Faltan datos obligatorios (código, correo personal o contraseña).' 
             });
         }
 
+        // 1. Registrar o verificar usuario en Firebase Auth
+        let firebaseUid = null;
+        try {
+            if (getApps().length > 0) {
+                const userRecord = await getAuth().createUser({
+                    email: finalEmail,
+                    password: finalPassword,
+                    displayName: finalNombre
+                });
+                firebaseUid = userRecord.uid;
+                console.log('🔥 Usuario creado en Firebase Auth UID:', firebaseUid);
+            }
+        } catch (fbErr) {
+            if (fbErr.code === 'auth/email-already-exists') {
+                const existingUser = await getAuth().getUserByEmail(finalEmail);
+                firebaseUid = existingUser.uid;
+            } else {
+                console.warn('⚠️ No se pudo sincro con Firebase Auth:', fbErr.message);
+            }
+        }
+
+        // 2. Generar OTP de 6 dígitos
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-        // 1. Guardar OTP en BD
+        // 3. Guardar OTP en BD
         await pool.query(
             `INSERT INTO codigos_otp (telefono, codigo, expira_en) 
              VALUES ($1, $2, NOW() + INTERVAL '10 minutes')`,
-            [finalTelefono, otp]
+            [finalTelefono || '000000000', otp]
         );
 
-        // 2. Guardar registro pendiente en BD
+        // 4. Guardar registro pendiente en BD
         await pool.query(
             `INSERT INTO registros_pendientes 
             (codigo_alumno, correo_personal, nombre_completo, password_hash, carrera, token_verificacion, telefono, codigo_otp, expira_en) 
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW() + INTERVAL '10 minutes')`,
-            [finalCodigo, finalEmail, finalNombre, finalPassword, carrera || '', otp, finalTelefono, otp]
+            [finalCodigo, finalEmail, finalNombre, finalPassword, carrera || '', firebaseUid || otp, finalTelefono || '', otp]
         );
 
-        // 3. Enviar mensaje por WhatsApp
-        let cleanPhone = finalTelefono.replace(/\D/g, '');
-        if (!cleanPhone.startsWith('51') && cleanPhone.length === 9) {
-            cleanPhone = `51${cleanPhone}`;
-        }
-        const chatId = `${cleanPhone}@c.us`;
+        // 5. Enviar correo electrónico mediante Nodemailer
+        const mailOptions = {
+            from: '"PataRunner" <tu_correo_personal@gmail.com>',
+            to: finalEmail,
+            subject: 'Tu código de verificación de PataRunner 🏃‍♂️',
+            html: `
+                <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px; max-width: 500px; margin: auto;">
+                    <h2 style="color: #4f46e5; text-align: center;">PataRunner</h2>
+                    <p>Hola <strong>${finalNombre}</strong>,</p>
+                    <p>Ingresa el siguiente código de 6 dígitos para verificar tu cuenta e iniciar sesión:</p>
+                    <div style="font-size: 32px; font-weight: bold; color: #4f46e5; letter-spacing: 6px; padding: 15px 0; text-align: center; background-color: #f3f4f6; border-radius: 6px; margin: 15px 0;">
+                        ${otp}
+                    </div>
+                    <p style="color: #666; font-size: 12px; text-align: center;">Este código expira en 10 minutos.</p>
+                </div>
+            `
+        };
 
-        if (wpClient && wpClient.info) {
-            try {
-                await wpClient.sendMessage(chatId, `Tu código de verificación de PataRunner es: ${otp}`);
-                console.log(`✅ OTP enviado por WhatsApp a ${chatId}`);
-            } catch (wpErr) {
-                console.error('❌ Error enviando WhatsApp:', wpErr.message);
-            }
-        } else {
-            console.warn('⚠️ WhatsApp no está listo ni autenticado. Escanea el QR en /qr');
-        }
+        await transporter.sendMail(mailOptions);
+        console.log(`✅ OTP enviado exitosamente al correo personal: ${finalEmail}`);
 
-        // Única respuesta al cliente frontend
         return res.status(200).json({ 
             success: true, 
-            message: 'Registro guardado y código OTP procesado.' 
+            message: 'Código de verificación enviado a tu correo personal.' 
         });
 
     } catch (error) {
@@ -244,7 +200,7 @@ app.post(['/usuarios/registro', '/api/usuarios/registro'], async (req, res) => {
 });
 
 // ==========================================
-// 3. RUTA DE INICIO DE SESIÓN
+// 2. RUTA DE INICIO DE SESIÓN
 // ==========================================
 app.post('/api/login', async (req, res) => {
     try {
@@ -256,7 +212,6 @@ app.post('/api/login', async (req, res) => {
 
         const idLimpio = identificador.trim().toLowerCase();
 
-        // Buscar usuario en PostgreSQL
         const result = await pool.query(
             `SELECT * FROM usuarios 
              WHERE LOWER(codigo_alumno) = $1 
@@ -271,7 +226,6 @@ app.post('/api/login', async (req, res) => {
 
         const usuario = result.rows[0];
 
-        // Verificar si la cuenta está suspendida por Cliente Ausente
         if (usuario.is_blocked) {
             return res.status(403).json({ error: 'Tu cuenta ha sido suspendida preventivamente por un reporte no resuelto.' });
         }
@@ -585,7 +539,6 @@ app.post('/api/reportes', async (req, res) => {
             [id_pedido || null, id_usuario, motivo]
         );
 
-        // Si el reporte es por cliente ausente, suspendemos preventivamente la cuenta del cliente
         if (motivo && motivo.toLowerCase().includes('ausente') && id_pedido) {
             await pool.query(
                 `UPDATE usuarios 
@@ -621,14 +574,4 @@ const PORT = process.env.PORT || port || 3000;
 
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Servidor PataRunner ejecutándose en el puerto ${PORT}`);
-});
-
-app.get('/test-whatsapp', async (req, res) => {
-    try {
-        const testNumber = '51937275669@c.us'; // Tu número con prefijo 51
-        await wpClient.sendMessage(testNumber, '¡Hola! Test de verificación de PataRunner 🚀');
-        return res.send('Mensaje de prueba enviado con éxito a WhatsApp.');
-    } catch (error) {
-        return res.status(500).send(`Error al enviar test: ${error.message}`);
-    }
 });
