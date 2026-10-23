@@ -18,8 +18,12 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 // ==========================================
 // CONFIGURACIÓN DE NODEMAILER (CORREO PERSONAL)
 // ==========================================
-// NOTA: Reemplaza con tus credenciales personales de Gmail / Contraseña de Aplicación
+// NOTA: Reemplaza con tus credenciales personales 
+// de Gmail / Contraseña de Aplicación
 const transporter = nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
     service: 'gmail',
     auth: {
         user: process.env.EMAIL_USER || 'terronesdiego04@gmail.com',
