@@ -173,24 +173,25 @@ app.get('/', (req, res) => {
 // ==========================================
 // 1. RUTA DE REGISTRO CON ENVÍO OTP POR WHATSAPP
 // ==========================================
-app.post('/usuarios/registro', async (req, res) => {
+app.post(['/usuarios/registro', '/api/usuarios/registro'], async (req, res) => {
     try {
         const { codigoEstudiantil, nombres, apellidos, carrera, email, telefono, password } = req.body;
         
         // Generar código OTP de 6 dígitos
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
+        // 1. Guardar el código OTP en la base de datos Neon
         await pool.query(
-    `INSERT INTO codigos_otp (telefono, codigo, expira_en) VALUES ($1, $2, NOW() + INTERVAL '10 minutes')`,
-    [telefono, otp]
-);
+            `INSERT INTO codigos_otp (telefono, codigo, expira_en) VALUES ($1, $2, NOW() + INTERVAL '10 minutes')`,
+            [telefono, otp]
+        );
 
-// (Opcional) Guardar los datos temporales del usuario si usas registros pendientes
-await pool.query(
-    `INSERT INTO registros_pendientes (codigo_estudiantil, nombres, apellidos, carrera, email, telefono, password) 
-     VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-    [codigoEstudiantil, nombres, apellidos, carrera, email, telefono, password]
-);
+        // (Opcional) Guardar los datos temporales del usuario si usas registros pendientes
+        await pool.query(
+            `INSERT INTO registros_pendientes (codigo_estudiantil, nombres, apellidos, carrera, email, telefono, password) 
+             VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+            [codigoEstudiantil, nombres, apellidos, carrera, email, telefono, password]
+        );
 
         // 2. Formatear el número y enviar el código por WhatsApp
         const cleanPhone = telefono.replace(/\D/g, '');
