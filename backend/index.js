@@ -198,14 +198,14 @@ app.post(['/usuarios/registro', '/api/usuarios/registro'], async (req, res) => {
 
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-        // 1. Guardar el OTP en codigos_otp
+        // 1. Guardar OTP en BD
         await pool.query(
             `INSERT INTO codigos_otp (telefono, codigo, expira_en) 
              VALUES ($1, $2, NOW() + INTERVAL '10 minutes')`,
             [finalTelefono, otp]
         );
 
-        // 2. Guardar el registro temporal en registros_pendientes
+        // 2. Guardar registro pendiente en BD
         await pool.query(
             `INSERT INTO registros_pendientes 
             (codigo_alumno, correo_personal, nombre_completo, password_hash, carrera, token_verificacion, telefono, codigo_otp, expira_en) 
@@ -213,34 +213,28 @@ app.post(['/usuarios/registro', '/api/usuarios/registro'], async (req, res) => {
             [finalCodigo, finalEmail, finalNombre, finalPassword, carrera || '', otp, finalTelefono, otp]
         );
 
-        // 3. Responder de inmediato al Frontend
-        res.status(200).json({ 
-            success: true, 
-            message: 'Registro exitoso y código OTP procesado correctamente.' 
-        });
-
-        // 3. ENVIAR EL MENSAJE POR WHATSAPP DE FORMA SEGURA
+        // 3. Enviar mensaje por WhatsApp
         let cleanPhone = finalTelefono.replace(/\D/g, '');
         if (!cleanPhone.startsWith('51') && cleanPhone.length === 9) {
             cleanPhone = `51${cleanPhone}`;
         }
         const chatId = `${cleanPhone}@c.us`;
 
-        try {
-            // Verificar si el cliente tiene la propiedad 'info' (indica sesión activa)
-            if (wpClient && wpClient.info && wpClient.info.wid) {
+        if (wpClient && wpClient.info) {
+            try {
                 await wpClient.sendMessage(chatId, `Tu código de verificación de PataRunner es: ${otp}`);
                 console.log(`✅ OTP enviado por WhatsApp a ${chatId}`);
-            } else {
-                console.warn('⚠️ WhatsApp no está listo ni autenticado. Escanea el QR en /qr');
+            } catch (wpErr) {
+                console.error('❌ Error enviando WhatsApp:', wpErr.message);
             }
-        } catch (wpErr) {
-            console.error('❌ Error enviando mensaje por WhatsApp:', wpErr.message);
+        } else {
+            console.warn('⚠️ WhatsApp no está listo ni autenticado. Escanea el QR en /qr');
         }
 
+        // Única respuesta al cliente frontend
         return res.status(200).json({ 
             success: true, 
-            message: 'Registro guardado correctamente.' 
+            message: 'Registro guardado y código OTP procesado.' 
         });
 
     } catch (error) {
