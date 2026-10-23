@@ -206,6 +206,7 @@ app.post('/api/usuarios/verificar-otp', async (req, res) => {
         const pendiente = otpResult.rows[0];
 
         // 2. Mover registro a la tabla usuarios (usando solo las columnas existentes)
+       // 2. Mover registro a la tabla usuarios (asegurando correo personal y teléfono)
         await pool.query(
             `INSERT INTO usuarios (
                 codigo_alumno, 
@@ -217,8 +218,12 @@ app.post('/api/usuarios/verificar-otp', async (req, res) => {
                 id_rol, 
                 verificado
             ) VALUES ($1, $2, $3, $4, $5, $6, 1, true)
-            ON CONFLICT (correo_personal) DO UPDATE 
-            SET verificado = true`,
+            ON CONFLICT (codigo_alumno) DO UPDATE 
+            SET verificado = true,
+                correo_personal = EXCLUDED.correo_personal,
+                telefono = EXCLUDED.telefono,
+                nombre_completo = EXCLUDED.nombre_completo,
+                carrera = EXCLUDED.carrera`,
             [
                 pendiente.codigo_alumno, 
                 pendiente.correo_personal, 
