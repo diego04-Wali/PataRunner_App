@@ -122,7 +122,10 @@ app.post('/api/usuarios/registro', async (req, res) => {
             verificado || false
         ];
 
-        const result = await pool.query(query, values);
+       // 1. Asegurar que el correo tenga el dominio @utp.edu.pe
+        const correoDestino = correo_institucional.includes('@') 
+            ? correo_institucional.toLowerCase() 
+            : `${correo_institucional.toLowerCase()}@utp.edu.pe`;
 
         // 2. Intentar generar el enlace con Firebase Admin
         let verificationLink = '';
@@ -133,12 +136,12 @@ app.post('/api/usuarios/registro', async (req, res) => {
             };
 
             verificationLink = await getAuth().generateEmailVerificationLink(
-                correo_institucional.toLowerCase(),
+                correoDestino,
                 actionCodeSettings
             );
-            console.log(" Enlace de verificación generado con éxito.");
+            console.log("Enlace de verificación generado con éxito.");
         } catch (firebaseErr) {
-            console.error(" Error específico de Firebase Admin al generar enlace:", firebaseErr);
+            console.error("Error específico de Firebase Admin al generar enlace:", firebaseErr);
             throw new Error(`Error en Firebase Auth: ${firebaseErr.message}`);
         }
 
@@ -153,7 +156,7 @@ app.post('/api/usuarios/registro', async (req, res) => {
                 template_id: process.env.EMAILJS_TEMPLATE_ID,
                 user_id: process.env.EMAILJS_PUBLIC_KEY,
                 template_params: {
-                    to_email: correo_institucional.toLowerCase(),
+                    to_email: correoDestino,
                     user_name: nombre_completo,
                     verification_link: verificationLink
                 }
