@@ -26,6 +26,10 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 // ==========================================
 const wpClient = new Client({
     authStrategy: new LocalAuth(),
+    webVersionCache: {
+        type: 'remote',
+        remotePath: 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2412.54.html',
+    },
     puppeteer: {
         executablePath: puppeteer.executablePath(),
         headless: true,
@@ -85,7 +89,10 @@ wpClient.on('auth_failure', (msg) => {
     console.error('❌ Error de autenticación en WhatsApp:', msg);
 });
 
-wpClient.initialize();
+console.log('⏳ Iniciando navegador Chromium para WhatsApp...');
+wpClient.initialize().catch(err => {
+    console.error('❌ Error al inicializar WhatsApp Web:', err);
+});
 
 // ==========================================
 // CONFIGURACIÓN OPCIONAL FIREBASE ADMIN
