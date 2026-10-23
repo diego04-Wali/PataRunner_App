@@ -5,12 +5,6 @@ import cron from 'node-cron';
 import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import fs from 'fs';
-import { Resend } from 'resend';
-
-const apiInstance = new brevo.TransactionalEmailsApi();
-apiInstance.setApiKey(brevo.TransactionalEmailsApiApiKeys.apiKey, 'xsmtpsib-1acbae53650795a8094fd1b7463c165860f56762c56784ee29801613bf1c31e9-A1V89zWuYkb3V1ww');
-
-const resend = new Resend('re_VbGquYEz_2hApjUuEgAK2pGVe7YLZUUE6');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -19,8 +13,6 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
-
-
 
 // ==========================================
 // CONFIGURACIÓN FIREBASE ADMIN SDK
@@ -94,9 +86,8 @@ app.get('/', (req, res) => {
     res.send('Servidor de PataRunner (Firebase & Email Ready) funcionando correctamente 🚀');
 });
 
-
 // ==========================================
-// RUTA DE REGISTRO
+// RUTA DE REGISTRO CON ENVÍO OTP
 // ==========================================
 app.post(['/usuarios/registro', '/api/usuarios/registro'], async (req, res) => {
     try {
@@ -147,26 +138,12 @@ app.post(['/usuarios/registro', '/api/usuarios/registro'], async (req, res) => {
             message: 'Código de verificación enviado a tu correo personal.' 
         });
 
-        
-
-    } catch (error) {
-        console.error('❌ Error general en /usuarios/registro:', error);
-        return res.status(500).json({ success: false, error: error.message });
-    }
-});
-
-// ==========================================
-// RUTA DE VERIFICACIÓN DE OTP POR CORREO
-// ==========================================
-app.post('/api/usuarios/verificar-otp', async (req, res) => {
-    try {
-        const { correo_personal, telefono, codigo } = req.body;
-// 4. Enviar correo OTP vía API HTTP con Brevo (fetch nativo sin dependencias)
+        // 4. Enviar correo OTP vía API HTTP con Brevo (fetch nativo en puerto 443)
         fetch('https://api.brevo.com/v3/smtp/email', {
             method: 'POST',
             headers: {
                 'accept': 'application/json',
-                'api-key': 'AQUI_PEGA_TU_API_KEY_DE_BREVO', // Pega tu clave que empieza con xkeysib-...
+                'api-key': process.env.BREVO_API_KEY || 'xsmtpsib-1acbae53650795a8094fd1b7463c165860f56762c56784ee29801613bf1c31e9-A1V89zWuYkb3V1ww',
                 'content-type': 'application/json'
             },
             body: JSON.stringify({
@@ -195,6 +172,20 @@ app.post('/api/usuarios/verificar-otp', async (req, res) => {
             }
         })
         .catch(err => console.error('❌ Error enviando correo por Brevo:', err.message));
+
+    } catch (error) {
+        console.error('❌ Error general en /usuarios/registro:', error);
+        return res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// ==========================================
+// RUTA DE VERIFICACIÓN DE OTP POR CORREO
+// ==========================================
+app.post('/api/usuarios/verificar-otp', async (req, res) => {
+    try {
+        const { correo_personal, telefono, codigo } = req.body;
+
         if (!codigo) {
             return res.status(400).json({ error: 'Ingresa el código OTP.' });
         }
