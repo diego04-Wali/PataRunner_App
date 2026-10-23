@@ -15,19 +15,14 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// ==========================================
-// CONFIGURACIÓN DE NODEMAILER (CORREO PERSONAL)
-// ==========================================
-// NOTA: Reemplaza con tus credenciales personales 
-// de Gmail / Contraseña de Aplicación
+// Transporter para Gmail por puerto 465 SSL
 const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
     port: 465,
     secure: true,
-    service: 'gmail',
     auth: {
-        user: process.env.EMAIL_USER || 'terronesdiego04@gmail.com',
-        pass: process.env.EMAIL_PASS || 'dgdrfzlcfopnbvmx' 
+        user: 'terronesdiego04@gmail.com',
+        pass: 'dgdrfzlcfopnbvmx' // Tu contraseña de aplicación de 16 caracteres
     }
 });
 
@@ -103,10 +98,6 @@ app.get('/', (req, res) => {
     res.send('Servidor de PataRunner (Firebase & Email Ready) funcionando correctamente 🚀');
 });
 
-import { Resend } from 'resend';
-
-// Inicializar Resend con tu API Key (puedes usar variable de entorno o la clave directa)
-const resend = new Resend(process.env.RESEND_API_KEY || 're_VbGquYEz_2hApjUuEgAK2pGVe7YLZUUE6');
 
 // ==========================================
 // RUTA DE REGISTRO
@@ -161,8 +152,9 @@ app.post(['/usuarios/registro', '/api/usuarios/registro'], async (req, res) => {
         });
 
         // 4. Enviar correo usando Resend (HTTP)
-        resend.emails.send({
-            from: 'PataRunner <onboarding@resend.dev>', // Dominio de prueba oficial de Resend
+        // 4. Enviar correo usando Nodemailer por puerto 465 SSL
+        transporter.sendMail({
+            from: '"PataRunner UTP" <terronesdiego04@gmail.com>',
             to: finalEmail,
             subject: 'Tu código de verificación de PataRunner 🏃‍♂️',
             html: `
@@ -176,8 +168,8 @@ app.post(['/usuarios/registro', '/api/usuarios/registro'], async (req, res) => {
                     <p style="color: #666; font-size: 12px; text-align: center;">Este código expira en 10 minutos.</p>
                 </div>
             `
-        }).then(data => console.log(`✅ OTP enviado exitosamente por Resend a ${finalEmail}:`, data))
-          .catch(err => console.error('❌ Error enviando correo por Resend:', err.message));
+        }).then(() => console.log(`✅ OTP enviado exitosamente por correo a: ${finalEmail}`))
+          .catch(err => console.error('❌ Error enviando correo por Nodemailer:', err.message));
 
     } catch (error) {
         console.error('❌ Error general en /usuarios/registro:', error);
