@@ -185,7 +185,7 @@ app.post(['/usuarios/registro', '/api/usuarios/registro'], async (req, res) => {
     }
 });
 
- // ==========================================
+// ==========================================
 // RUTA DE VERIFICACIÓN DE OTP POR CORREO
 // ==========================================
 app.post('/api/usuarios/verificar-otp', async (req, res) => {
@@ -196,7 +196,7 @@ app.post('/api/usuarios/verificar-otp', async (req, res) => {
             return res.status(400).json({ error: 'Ingresa el código OTP.' });
         }
 
-        // 1. Buscar OTP en codigos_otp o registros_pendientes
+        // 1. Buscar OTP activo en registros_pendientes
         const otpResult = await pool.query(
             `SELECT * FROM registros_pendientes 
              WHERE (correo_personal = $1 OR telefono = $2) 
@@ -211,16 +211,32 @@ app.post('/api/usuarios/verificar-otp', async (req, res) => {
 
         const pendiente = otpResult.rows[0];
 
-        // 2. Mover registro a la tabla usuarios
+        // 2. Mover registro a la tabla usuarios (usando solo las columnas existentes)
         await pool.query(
-            `INSERT INTO usuarios (codigo_alumno, correo_personal, nombre_completo, password_hash, carrera, telefono, id_rol)
-             VALUES ($1, $2, $3, $4, $5, $6, 1)
-             ON CONFLICT (correo_personal) DO NOTHING`,
-            [pendiente.codigo_alumno, pendiente.correo_personal, pendiente.nombre_completo, pendiente.password_hash, pendiente.carrera, pendiente.telefono]
+            `INSERT INTO usuarios (
+                codigo_alumno, 
+                correo_personal, 
+                nombre_completo, 
+                carrera, 
+                telefono, 
+                firebase_uid, 
+                id_rol, 
+                verificado
+            ) VALUES ($1, $2, $3, $4, $5, $6, 1, true)
+            ON CONFLICT (correo_personal) DO UPDATE 
+            SET verificado = true`,
+            [
+                pendiente.codigo_alumno, 
+                pendiente.correo_personal, 
+                pendiente.nombre_completo, 
+                pendiente.carrera, 
+                pendiente.telefono, 
+                pendiente.token_verificacion || null
+            ]
         );
 
-        // 3. Limpiar el registro pendiente
-        await pool.query('DELETE FROM registros_pendientes WHERE id_registro = $1', [pendiente.id_registro]);
+        // 3. Limpiar el registro pendiente usando "id_pendiente"
+        await pool.query('DELETE FROM registros_pendientes WHERE id_pendiente = $1', [pendiente.id_pendiente]);
 
         return res.status(200).json({ success: true, message: 'Cuenta verificada correctamente.' });
 
