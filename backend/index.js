@@ -157,13 +157,14 @@ app.post(['/usuarios/registro', '/api/usuarios/registro'], async (req, res) => {
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
         // 3. Guardar OTP en BD
+        // 1. Guardar OTP en BD
         await pool.query(
             `INSERT INTO codigos_otp (telefono, codigo, expira_en) 
              VALUES ($1, $2, NOW() + INTERVAL '10 minutes')`,
             [finalTelefono || '000000000', otp]
         );
 
-        // 4. Guardar registro pendiente en BD
+        // 2. Guardar registro pendiente en BD
         await pool.query(
             `INSERT INTO registros_pendientes 
             (codigo_alumno, correo_personal, nombre_completo, password_hash, carrera, token_verificacion, telefono, codigo_otp, expira_en) 
@@ -171,31 +172,30 @@ app.post(['/usuarios/registro', '/api/usuarios/registro'], async (req, res) => {
             [finalCodigo, finalEmail, finalNombre, finalPassword, carrera || '', firebaseUid || otp, finalTelefono || '', otp]
         );
 
-        // 5. Enviar correo electrónico mediante Nodemailer
-        const mailOptions = {
-            from: '"PataRunner" <tu_correo_personal@gmail.com>',
+        // 3. Responder de inmediato al cliente para que la app avance
+        res.status(200).json({ 
+            success: true, 
+            message: 'Código de verificación enviado a tu correo personal.' 
+        });
+
+        // 4. Enviar correo en segundo plano
+        transporter.sendMail({
+            from: '"PataRunner" <terronesdiego04@gmail.com>',
             to: finalEmail,
             subject: 'Tu código de verificación de PataRunner 🏃‍♂️',
             html: `
                 <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px; max-width: 500px; margin: auto;">
                     <h2 style="color: #4f46e5; text-align: center;">PataRunner</h2>
                     <p>Hola <strong>${finalNombre}</strong>,</p>
-                    <p>Ingresa el siguiente código de 6 dígitos para verificar tu cuenta e iniciar sesión:</p>
+                    <p>Ingresa el siguiente código de 6 dígitos para verificar tu cuenta:</p>
                     <div style="font-size: 32px; font-weight: bold; color: #4f46e5; letter-spacing: 6px; padding: 15px 0; text-align: center; background-color: #f3f4f6; border-radius: 6px; margin: 15px 0;">
                         ${otp}
                     </div>
                     <p style="color: #666; font-size: 12px; text-align: center;">Este código expira en 10 minutos.</p>
                 </div>
             `
-        };
-
-        await transporter.sendMail(mailOptions);
-        console.log(`✅ OTP enviado exitosamente al correo personal: ${finalEmail}`);
-
-        return res.status(200).json({ 
-            success: true, 
-            message: 'Código de verificación enviado a tu correo personal.' 
-        });
+        }).then(() => console.log(`✅ OTP enviado exitosamente por correo a: ${finalEmail}`))
+          .catch(err => console.error('❌ Error enviando correo:', err.message));
 
     } catch (error) {
         console.error('❌ Error general en /usuarios/registro:', error);
