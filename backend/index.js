@@ -97,7 +97,7 @@ app.get('/', (req, res) => {
 });
 
 // ==========================================
-// RUTA DE REGISTRO DE USUARIO (CON RESEND Y FIREBASE)
+// RUTA DE REGISTRO DE USUARIO (ROBUSTA)
 // ==========================================
 app.post('/api/usuarios/registro', async (req, res) => {
     try {
@@ -127,19 +127,26 @@ app.post('/api/usuarios/registro', async (req, res) => {
 
         const result = await pool.query(query, values);
 
-        // 2. Generar el enlace oficial de verificación con Firebase Admin (ES Modules)
-        const actionCodeSettings = {
-            url: 'https://patarunnerapp-frontend.vercel.app',
-            handleCodeInApp: false
-        };
+        // 2. Intentar generar el enlace con Firebase Admin
+        let verificationLink = '';
+        try {
+            const actionCodeSettings = {
+                url: 'https://patarunnerapp-frontend.vercel.app',
+                handleCodeInApp: false
+            };
 
-        const verificationLink = await getAuth().generateEmailVerificationLink(
-            correo_institucional.toLowerCase(),
-            actionCodeSettings
-        );
+            verificationLink = await getAuth().generateEmailVerificationLink(
+                correo_institucional.toLowerCase(),
+                actionCodeSettings
+            );
+            console.log(" Enlace de verificación generado con éxito.");
+        } catch (firebaseErr) {
+            console.error(" Error específico de Firebase Admin al generar enlace:", firebaseErr);
+            throw new Error(`Error en Firebase Auth: ${firebaseErr.message}`);
+        }
 
-        // 3. Despachar el correo directamente por Resend
-        await resend.emails.send({
+        // 3. Despachar el correo por Resend (solo si el enlace se generó)
+        const emailResponse = await resend.emails.send({
             from: 'PataRunner UTP <onboarding@resend.dev>',
             to: [correo_institucional.toLowerCase()],
             subject: 'PataRunner - Confirma tu correo institucional',
@@ -158,18 +165,19 @@ app.post('/api/usuarios/registro', async (req, res) => {
             `
         });
 
+        console.log(" Correo enviado por Resend ID:", emailResponse.id);
+
         res.status(201).json({
             success: true,
             message: 'Registro completado. Revisa tu correo institucional para verificar tu cuenta.',
             usuario: result.rows[0]
         });
 
-    }  catch (error) {
-        // Cambiar console.error para ver la traza completa y el código de error
-        console.error("Error detallado en registro:", error);
+    } catch (error) {
+        console.error(" Error general en el endpoint de registro:", error.message);
         res.status(500).json({ 
             success: false, 
-            error: error.message || "Error al procesar el registro." 
+            error: error.message || "Error interno al procesar el registro." 
         });
     }
 });
