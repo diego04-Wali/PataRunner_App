@@ -5,9 +5,9 @@ import cron from 'node-cron';
 import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import fs from 'fs';
-import { Resend } from 'resend';
+const { Resend } = require('resend');
 
-// Inicializar Resend con tu API Key válida
+// Inicializar Resend con tu API Key
 const resend = new Resend('re_VbGquYEz_2hApjUuEgAK2pGVe7YLZUUE6');
 
 const app = express();
