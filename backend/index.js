@@ -4,7 +4,7 @@ import pool from './db.js';
 import cron from 'node-cron';
 import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
-import { Resend } from 'resend';
+import nodemailer from 'nodemailer';
 import fs from 'fs';
 
 const app = express();
@@ -43,8 +43,14 @@ if (serviceAccount && getApps().length === 0) {
     console.warn("⚠️ Advertencia: FIREBASE_SERVICE_ACCOUNT no está configurado.");
 }
 
-// 3. Inicializar Resend
-const resend = new Resend(process.env.RESEND_API_KEY || '');
+// 3. Configurar el transporte de Gmail con Nodemailer
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.GMAIL_USER,
+        pass: process.env.GMAIL_PASS
+    }
+});
 
 // Middleware de verificación de token Firebase corregido
 const verificarToken = async (req, res, next) => {
@@ -97,7 +103,7 @@ app.get('/', (req, res) => {
 });
 
 // ==========================================
-// RUTA DE REGISTRO DE USUARIO (ROBUSTA)
+// RUTA DE REGISTRO DE USUARIO (ROBUSTA CON NODEMAILER)
 // ==========================================
 app.post('/api/usuarios/registro', async (req, res) => {
     try {
@@ -145,10 +151,10 @@ app.post('/api/usuarios/registro', async (req, res) => {
             throw new Error(`Error en Firebase Auth: ${firebaseErr.message}`);
         }
 
-        // 3. Despachar el correo por Resend (solo si el enlace se generó)
-        const emailResponse = await resend.emails.send({
-            from: 'PataRunner UTP <onboarding@resend.dev>',
-            to: [correo_institucional.toLowerCase()],
+        // 3. Despachar el correo directamente con Nodemailer via Gmail
+        const mailOptions = {
+            from: `"PataRunner UTP" <${process.env.GMAIL_USER}>`,
+            to: correo_institucional.toLowerCase(),
             subject: 'PataRunner - Confirma tu correo institucional',
             html: `
                 <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
@@ -163,9 +169,10 @@ app.post('/api/usuarios/registro', async (req, res) => {
                     <p style="font-size: 12px; color: #777;">Si no solicitaste este registro, puedes ignorar este mensaje.</p>
                 </div>
             `
-        });
+        };
 
-        console.log(" Correo enviado por Resend ID:", emailResponse.id);
+        const info = await transporter.sendMail(mailOptions);
+        console.log("✉️ Correo despachado con éxito por Nodemailer ID:", info.messageId);
 
         res.status(201).json({
             success: true,
