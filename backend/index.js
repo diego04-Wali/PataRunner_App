@@ -103,8 +103,13 @@ app.get('/', (req, res) => {
     res.send('Servidor de PataRunner (Firebase & Email Ready) funcionando correctamente 🚀');
 });
 
+import { Resend } from 'resend';
+
+// Inicializar Resend con tu API Key (puedes usar variable de entorno o la clave directa)
+const resend = new Resend(process.env.RESEND_API_KEY || 're_AQUI_TU_API_KEY_DE_RESEND');
+
 // ==========================================
-// 1. RUTA DE REGISTRO CON ENVÍO OTP A CORREO PERSONAL
+// RUTA DE REGISTRO
 // ==========================================
 app.post(['/usuarios/registro', '/api/usuarios/registro'], async (req, res) => {
     try {
@@ -132,55 +137,32 @@ app.post(['/usuarios/registro', '/api/usuarios/registro'], async (req, res) => {
             });
         }
 
-        // 1. Registrar o verificar usuario en Firebase Auth
-        let firebaseUid = null;
-        try {
-            if (getApps().length > 0) {
-                const userRecord = await getAuth().createUser({
-                    email: finalEmail,
-                    password: finalPassword,
-                    displayName: finalNombre
-                });
-                firebaseUid = userRecord.uid;
-                console.log('🔥 Usuario creado en Firebase Auth UID:', firebaseUid);
-            }
-        } catch (fbErr) {
-            if (fbErr.code === 'auth/email-already-exists') {
-                const existingUser = await getAuth().getUserByEmail(finalEmail);
-                firebaseUid = existingUser.uid;
-            } else {
-                console.warn('⚠️ No se pudo sincro con Firebase Auth:', fbErr.message);
-            }
-        }
-
-        // 2. Generar OTP de 6 dígitos
+        // 1. Generar OTP de 6 dígitos
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-        // 3. Guardar OTP en BD
-        // 1. Guardar OTP en BD
+        // 2. Guardar OTP y registro pendiente en Neon DB
         await pool.query(
             `INSERT INTO codigos_otp (telefono, codigo, expira_en) 
              VALUES ($1, $2, NOW() + INTERVAL '10 minutes')`,
             [finalTelefono || '000000000', otp]
         );
 
-        // 2. Guardar registro pendiente en BD
         await pool.query(
             `INSERT INTO registros_pendientes 
             (codigo_alumno, correo_personal, nombre_completo, password_hash, carrera, token_verificacion, telefono, codigo_otp, expira_en) 
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW() + INTERVAL '10 minutes')`,
-            [finalCodigo, finalEmail, finalNombre, finalPassword, carrera || '', firebaseUid || otp, finalTelefono || '', otp]
+            [finalCodigo, finalEmail, finalNombre, finalPassword, carrera || '', otp, finalTelefono || '', otp]
         );
 
-        // 3. Responder de inmediato al cliente para que la app avance
+        // 3. Responder de inmediato al cliente
         res.status(200).json({ 
             success: true, 
             message: 'Código de verificación enviado a tu correo personal.' 
         });
 
-        // 4. Enviar correo en segundo plano
-        transporter.sendMail({
-            from: '"PataRunner" <terronesdiego04@gmail.com>',
+        // 4. Enviar correo usando Resend (HTTP)
+        resend.emails.send({
+            from: 'PataRunner <onboarding@resend.dev>', // Dominio de prueba oficial de Resend
             to: finalEmail,
             subject: 'Tu código de verificación de PataRunner 🏃‍♂️',
             html: `
@@ -194,12 +176,57 @@ app.post(['/usuarios/registro', '/api/usuarios/registro'], async (req, res) => {
                     <p style="color: #666; font-size: 12px; text-align: center;">Este código expira en 10 minutos.</p>
                 </div>
             `
-        }).then(() => console.log(`✅ OTP enviado exitosamente por correo a: ${finalEmail}`))
-          .catch(err => console.error('❌ Error enviando correo:', err.message));
+        }).then(data => console.log(`✅ OTP enviado exitosamente por Resend a ${finalEmail}:`, data))
+          .catch(err => console.error('❌ Error enviando correo por Resend:', err.message));
 
     } catch (error) {
         console.error('❌ Error general en /usuarios/registro:', error);
         return res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+ // ==========================================
+// RUTA DE VERIFICACIÓN DE OTP POR CORREO
+// ==========================================
+app.post('/api/usuarios/verificar-otp', async (req, res) => {
+    try {
+        const { correo_personal, telefono, codigo } = req.body;
+
+        if (!codigo) {
+            return res.status(400).json({ error: 'Ingresa el código OTP.' });
+        }
+
+        // 1. Buscar OTP en codigos_otp o registros_pendientes
+        const otpResult = await pool.query(
+            `SELECT * FROM registros_pendientes 
+             WHERE (correo_personal = $1 OR telefono = $2) 
+               AND codigo_otp = $3 
+               AND expira_en > NOW()`,
+            [correo_personal, telefono, codigo]
+        );
+
+        if (otpResult.rows.length === 0) {
+            return res.status(400).json({ error: 'Código incorrecto o expirado.' });
+        }
+
+        const pendiente = otpResult.rows[0];
+
+        // 2. Mover registro a la tabla usuarios
+        await pool.query(
+            `INSERT INTO usuarios (codigo_alumno, correo_personal, nombre_completo, password_hash, carrera, telefono, id_rol)
+             VALUES ($1, $2, $3, $4, $5, $6, 1)
+             ON CONFLICT (correo_personal) DO NOTHING`,
+            [pendiente.codigo_alumno, pendiente.correo_personal, pendiente.nombre_completo, pendiente.password_hash, pendiente.carrera, pendiente.telefono]
+        );
+
+        // 3. Limpiar el registro pendiente
+        await pool.query('DELETE FROM registros_pendientes WHERE id_registro = $1', [pendiente.id_registro]);
+
+        return res.status(200).json({ success: true, message: 'Cuenta verificada correctamente.' });
+
+    } catch (error) {
+        console.error('Error al verificar OTP:', error);
+        return res.status(500).json({ error: 'Error interno al validar el código.' });
     }
 });
 
