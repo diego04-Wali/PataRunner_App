@@ -217,24 +217,23 @@ app.post(['/usuarios/registro', '/api/usuarios/registro'], async (req, res) => {
             [finalCodigo, finalEmail, finalNombre, finalPassword, carrera || '', otp, finalTelefono, otp]
         );
 
-        // 3. Enviar el mensaje por WhatsApp de forma segura
-        const cleanPhone = finalTelefono.replace(/\D/g, '');
+        // 3. ENVIAR EL MENSAJE POR WHATSAPP (CON PREFIJO DE PAÍS Y ENVÍO SEGURO)
+        let cleanPhone = finalTelefono.replace(/\D/g, '');
+        if (!cleanPhone.startsWith('51') && cleanPhone.length === 9) {
+            cleanPhone = `51${cleanPhone}`;
+        }
         const chatId = `${cleanPhone}@c.us`;
 
         try {
-            if (wpClient && wpClient.info) {
-                await wpClient.sendMessage(chatId, `Tu código de verificación de PataRunner es: ${otp}`);
-                console.log(`✅ OTP enviado por WhatsApp a ${chatId}`);
-            } else {
-                console.warn('⚠️ Cliente de WhatsApp reconectando o no inicializado aún.');
-            }
+            await wpClient.sendMessage(chatId, `Tu código de verificación de PataRunner es: ${otp}`);
+            console.log(`✅ OTP enviado exitosamente por WhatsApp a ${chatId}`);
         } catch (wpErr) {
             console.error('❌ Error al enviar mensaje con WhatsApp:', wpErr.message);
         }
 
         return res.status(200).json({ 
             success: true, 
-            message: 'Registro exitoso y código OTP procesado correctamente.' 
+            message: 'Registro exitoso y código OTP enviado por WhatsApp.' 
         });
 
     } catch (error) {
