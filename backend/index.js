@@ -43,20 +43,6 @@ if (serviceAccount && getApps().length === 0) {
     console.warn("⚠️ Advertencia: FIREBASE_SERVICE_ACCOUNT no está configurado.");
 }
 
-// 3. Configurar el transporte de Gmail con puerto 587 (STARTTLS compatible con Render)
-const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: false, // IMPORTANTE: debe ser false para el puerto 587
-    auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_PASS
-    },
-    tls: {
-        rejectUnauthorized: false
-    }
-});
-
 // Middleware de verificación de token Firebase corregido
 const verificarToken = async (req, res, next) => {
     const authHeader = req.headers.authorization;
@@ -156,28 +142,31 @@ app.post('/api/usuarios/registro', async (req, res) => {
             throw new Error(`Error en Firebase Auth: ${firebaseErr.message}`);
         }
 
-        // 3. Despachar el correo directamente con Nodemailer via Gmail
-        const mailOptions = {
-            from: `"PataRunner UTP" <${process.env.GMAIL_USER}>`,
-            to: correo_institucional.toLowerCase(),
-            subject: 'PataRunner - Confirma tu correo institucional',
-            html: `
-                <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
-                    <h2>¡Hola, ${nombre_completo}!</h2>
-                    <p>Bienvenido a <b>PataRunner UTP</b>. Para completar tu registro y acceder a la plataforma, confirma tu correo institucional haciendo clic en el siguiente enlace:</p>
-                    <p style="margin: 25px 0;">
-                        <a href="${verificationLink}" style="background-color: #2563eb; color: white; padding: 12px 20px; text-decoration: none; border-radius: 6px; font-weight: bold;">Verificar mi correo institucional</a>
-                    </p>
-                    <p>Si el botón no abre, copia y pega esta dirección en tu navegador:</p>
-                    <p><a href="${verificationLink}">${verificationLink}</a></p>
-                    <hr style="border: none; border-top: 1px solid #eee; margin-top: 30px;">
-                    <p style="font-size: 12px; color: #777;">Si no solicitaste este registro, puedes ignorar este mensaje.</p>
-                </div>
-            `
-        };
+        // 3. Despachar el correo mediante la API HTTP de EmailJS (Puerto 443)
+        const responseEmailJS = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                service_id: process.env.EMAILJS_SERVICE_ID,
+                template_id: process.env.EMAILJS_TEMPLATE_ID,
+                user_id: process.env.EMAILJS_PUBLIC_KEY,
+                template_params: {
+                    to_email: correo_institucional.toLowerCase(),
+                    user_name: nombre_completo,
+                    verification_link: verificationLink
+                }
+            })
+        });
 
-        const info = await transporter.sendMail(mailOptions);
-        console.log("✉️ Correo despachado con éxito por Nodemailer ID:", info.messageId);
+        if (!responseEmailJS.ok) {
+            const errorText = await responseEmailJS.text();
+            console.error("Error respuesta EmailJS:", errorText);
+            throw new Error('No se pudo enviar el correo de verificación.');
+        }
+
+        console.log("✉️ Correo despachado con éxito mediante EmailJS API");
 
         res.status(201).json({
             success: true,
