@@ -43,13 +43,21 @@ if (serviceAccount && getApps().length === 0) {
     console.warn("⚠️ Advertencia: FIREBASE_SERVICE_ACCOUNT no está configurado.");
 }
 
-// 3. Configurar el transporte de Gmail con Nodemailer
+// 3. Configurar el transporte explícito de Gmail con Nodemailer (para Render)
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true, // Conexión SSL directa por el puerto 465
     auth: {
         user: process.env.GMAIL_USER,
         pass: process.env.GMAIL_PASS
-    }
+    },
+    tls: {
+        rejectUnauthorized: false // Evita bloqueos de certificados en la nube
+    },
+    connectionTimeout: 10000, // Límite de 10 segundos para conectar
+    greetingTimeout: 5000,
+    socketTimeout: 15000
 });
 
 // Middleware de verificación de token Firebase corregido
