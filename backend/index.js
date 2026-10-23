@@ -226,16 +226,25 @@ app.post(['/usuarios/registro', '/api/usuarios/registro'], async (req, res) => {
         );
 
         // 3. Enviar el mensaje por WhatsApp mediante Puppeteer
+        // 3. Enviar el mensaje por WhatsApp de forma segura
         const cleanPhone = finalTelefono.replace(/\D/g, '');
         const chatId = `${cleanPhone}@c.us`;
         
-        await wpClient.sendMessage(chatId, `Tu código de verificación de PataRunner es: ${otp}`);
+        try {
+            if (wpClient && wpClient.info) {
+                await wpClient.sendMessage(chatId, `Tu código de verificación de PataRunner es: ${otp}`);
+                console.log(`✅ Mensaje de OTP enviado a ${chatId}`);
+            } else {
+                console.warn('⚠️ WhatsApp Web no está listo aún o se está reconectando.');
+            }
+        } catch (wpError) {
+            console.error('❌ Error al enviar mensaje por WhatsApp:', wpError);
+        }
 
-        return res.status(200).json({ success: true, message: 'Código OTP enviado por WhatsApp' });
-    } catch (error) {
-        console.error('❌ Error en /usuarios/registro:', error);
-        return res.status(500).json({ success: false, error: error.message });
-    }
+        return res.status(200).json({ 
+            success: true, 
+            message: 'Registro completado y código OTP generado.' 
+        });
 });
 
 // ==========================================
