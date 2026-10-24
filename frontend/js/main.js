@@ -2715,50 +2715,56 @@ setInterval(async () => {
                     if (pedidoAyer.estado === 'En Camino') {
                         
                        // CASO A: El Runner abandonó o la cuenta fue restringida (El pedido ya regresó a 'Pendiente')
-if (pedidoHoy.estado === 'Pendiente') {
-            // ESCENARIO 1: El pedido ya se republicó automáticamente
-            const modal = document.getElementById('modal-cancelacion');
-            if (modal) {
-                const textoModal = modal.querySelector('p');
-                if (textoModal) {
-                    textoModal.textContent = "Tu Runner tuvo un inconveniente. Tu pedido se ha republicado automáticamente y ya estamos buscando un nuevo compañero.";
+if (pedidoHoy.estado === 'Cancelado' && !pedidoHoy.alerta_mostrada) {
+    pedidoHoy.alerta_mostrada = true; // Evitar bucle de la alerta
+
+    Swal.fire({
+        title: 'Entrega cancelada',
+        text: 'Tu Runner canceló la entrega. ¿Deseas volver a publicar tu pedido para que otro Runner lo tome?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#2563eb',
+        cancelButtonColor: '#dc2626',
+        confirmButtonText: 'Sí, volver a pedir',
+        cancelButtonText: 'No, gracias',
+        allowOutsideClick: false
+    }).then(async (result) => {
+        if (result.isConfirmed) {
+            try {
+                const res = await fetch(`/api/pedidos/${pedidoHoy.id_pedido}/republicar`, {
+                    method: 'PUT'
+                });
+                if (res.ok) {
+                    Swal.fire({
+                        title: '¡Pedido republicado!',
+                        text: 'Buscando un nuevo Runner cercano...',
+                        icon: 'success',
+                        confirmButtonColor: '#2563eb'
+                    });
+                    if (typeof cargarMisPedidos === 'function') cargarMisPedidos();
+                    if (typeof cargarPedidosPendientes === 'function') cargarPedidosPendientes();
                 }
-
-                // Ocultamos el botón "Republicar"
-                const btnRepublicar = document.getElementById('republicar-btn') || modal.querySelector('button[onclick*="republicar"]');
-                if (btnRepublicar) btnRepublicar.classList.add('hidden');
-
-                // Cambiamos el texto del botón a "Entendido"
-                const btnCerrar = modal.querySelector('button[onclick*="cerrarModalCancelacion"]') || modal.querySelector('button:not(.hidden)');
-                if (btnCerrar) btnCerrar.textContent = "Entendido";
-
-                modal.classList.remove('hidden');
+            } catch (err) {
+                console.error("Error al republicar:", err);
             }
-            if (typeof cargarMisPedidos === 'function') cargarMisPedidos();
-
-        } else if (pedidoHoy.estado === 'Cancelado') {
-            // ESCENARIO 2: El Runner canceló manualmente y pregunta si desea volver a pedir
-            const modal = document.getElementById('modal-cancelacion');
-            if (modal) {
-                window.pedidoCanceladoTemporal = pedidoHoy.id_pedido;
-
-                const textoModal = modal.querySelector('p');
-                if (textoModal) {
-                    textoModal.textContent = "Tu Runner canceló la entrega. ¿Deseas volver a publicar tu pedido para que otro Runner lo tome?";
-                }
-
-                // Mostramos el botón "Republicar"
-                const btnRepublicar = document.getElementById('republicar-btn') || modal.querySelector('button[onclick*="republicar"]');
-                if (btnRepublicar) btnRepublicar.classList.remove('hidden');
-
-                // Devolvemos el texto original "No, gracias" para la pregunta
-                const btnCerrar = modal.querySelector('button[onclick*="cerrarModalCancelacion"]') || modal.querySelector('button:not(.hidden)');
-                if (btnCerrar) btnCerrar.textContent = "No, gracias";
-
-                modal.classList.remove('hidden');
+        } else {
+            try {
+                await fetch(`/api/pedidos/${pedidoHoy.id_pedido}/cancelar-definitivo`, {
+                    method: 'PUT'
+                });
+                Swal.fire({
+                    title: 'Pedido cancelado',
+                    text: 'Tu pedido ha sido cancelado definitivamente.',
+                    icon: 'info',
+                    confirmButtonColor: '#2563eb'
+                });
+                if (typeof cargarMisPedidos === 'function') cargarMisPedidos();
+            } catch (err) {
+                console.error("Error al cancelar definitivo:", err);
             }
-            if (typeof cargarMisPedidos === 'function') cargarMisPedidos();
         }
+    });
+}
                         
                         // CASO B: El Runner ENTREGÓ el pedido
                         if (pedidoHoy.estado === 'Entregado') {
