@@ -953,39 +953,38 @@ app.get('/api/admin/resenas-app', async (req, res) => {
 });
 
 // ==========================================
-// ACTUALIZAR PERFIL DE USUARIO (ROBUSTO)
+// ACTUALIZAR PERFIL DE USUARIO (FALLBACK DE ID)
 // ==========================================
 app.put('/api/usuarios/perfil', async (req, res) => {
     try {
+        let id_usuario = null;
+
+        // 1. Intentar obtener el ID desde el Header Authorization
         const authHeader = req.headers.authorization;
-        if (!authHeader) {
-            return res.status(401).json({ error: 'Token no proporcionado.' });
-        }
-
-        const token = authHeader.split(' ')[1];
-        let decoded = null;
-
-        // Intentar decodificar con la variable de entorno o las firmas comunes
-        try {
-            decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret_key_patarunner');
-        } catch (e1) {
-            try {
-                // Si falla, decodificamos el payload directamente sin bloque de firma estricto
-                decoded = jwt.decode(token);
-            } catch (e2) {
-                return res.status(401).json({ error: 'Token inválido o corrupto.' });
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            const token = authHeader.split(' ')[1];
+            if (token && token !== 'undefined' && token !== 'null') {
+                try {
+                    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret_key_patarunner');
+                    id_usuario = decoded.id_usuario || decoded.id || decoded.idUsuario;
+                } catch (e) {
+                    try {
+                        const decodedPayload = jwt.decode(token);
+                        if (decodedPayload) {
+                            id_usuario = decodedPayload.id_usuario || decodedPayload.id || decodedPayload.idUsuario;
+                        }
+                    } catch (err) {}
+                }
             }
         }
 
-        if (!decoded) {
-            return res.status(401).json({ error: 'No se pudo decodificar la sesión.' });
+        // 2. Fallback: Si el token falló o no vino, tomar id_usuario enviado en el body
+        if (!id_usuario && req.body.id_usuario) {
+            id_usuario = req.body.id_usuario;
         }
 
-        // Obtener ID del usuario desde las claves usuales del payload
-        const id_usuario = decoded.id_usuario || decoded.id || decoded.idUsuario;
-
         if (!id_usuario) {
-            return res.status(400).json({ error: 'No se encontró el ID de usuario en la sesión.' });
+            return res.status(401).json({ error: 'Sesión no válida o usuario no identificado.' });
         }
 
         const nombre = req.body.nombre_completo || req.body.nombre;

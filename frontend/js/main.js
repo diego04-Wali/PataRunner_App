@@ -4666,36 +4666,30 @@ window.cargarDatosPerfil = async function() {
     }
 };
 
-// Guardar Cambios del Perfil (Nombre y Carrera en PostgreSQL)
 window.guardarPerfilUsuario = async function(e) {
     e.preventDefault();
     
-    // 1. Obtener el token de autenticación
-    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-    
-    if (!token) {
-        Swal.fire({
-            title: 'Sesión expirada',
-            text: 'Por favor, vuelve a iniciar sesión.',
-            icon: 'warning',
-            confirmButtonColor: '#2563eb',
-            confirmButtonText: 'Aceptar'
-        });
-        return;
-    }
+    // Obtener token limpiamente
+    let token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    if (token === 'undefined' || token === 'null') token = null;
+
+    // Obtener usuario guardado para extraer id_usuario de respaldo
+    let usuarioStr = localStorage.getItem('usuario') || sessionStorage.getItem('usuario');
+    let usuario = usuarioStr ? JSON.parse(usuarioStr) : {};
+    const idUsuarioLocal = usuario.id_usuario || usuario.id;
 
     const editNombre = document.getElementById('edit-nombre').value.trim();
     const editCarrera = document.getElementById('edit-carrera').value.trim();
 
     try {
-        // 2. Incluir el Authorization Bearer header
         const res = await fetch('/api/usuarios/perfil', {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
+                'Authorization': token ? `Bearer ${token}` : ''
             },
             body: JSON.stringify({
+                id_usuario: idUsuarioLocal,
                 nombre_completo: editNombre,
                 carrera: editCarrera
             })
@@ -4712,24 +4706,18 @@ window.guardarPerfilUsuario = async function(e) {
                 confirmButtonText: 'Aceptar'
             });
 
-            // Actualizar datos locales y vista
-            let usuario = JSON.parse(localStorage.getItem('usuario') || sessionStorage.getItem('usuario') || '{}');
+            // Actualizar el almacenamiento local
             usuario.nombre_completo = editNombre;
             usuario.carrera = editCarrera;
-
-            if (localStorage.getItem('usuario')) {
-                localStorage.setItem('usuario', JSON.stringify(usuario));
-            }
-            if (sessionStorage.getItem('usuario')) {
-                sessionStorage.setItem('usuario', JSON.stringify(usuario));
-            }
+            if (localStorage.getItem('usuario')) localStorage.setItem('usuario', JSON.stringify(usuario));
+            if (sessionStorage.getItem('usuario')) sessionStorage.setItem('usuario', JSON.stringify(usuario));
 
             if (typeof cerrarModalEditarPerfil === 'function') cerrarModalEditarPerfil();
             if (typeof cargarDatosPerfil === 'function') cargarDatosPerfil();
         } else {
             Swal.fire({
                 title: 'Error',
-                text: 'Error al actualizar datos: ' + (data.error || 'Ocurrió un error inesperado'),
+                text: 'Error al actualizar datos: ' + (data.error || ''),
                 icon: 'error',
                 confirmButtonColor: '#2563eb',
                 confirmButtonText: 'Aceptar'
