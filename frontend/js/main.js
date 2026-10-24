@@ -5345,3 +5345,72 @@ window.cerrarModalResenaApp = function() {
         modal.classList.remove('flex');
     }
 };
+// ==========================================
+// PREVISUALIZAR Y SUBIR FOTO DE PERFIL
+// ==========================================
+window.previsualizarFotoPerfil = async function(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Validar que sea una imagen y no supere los 3MB
+    if (!file.type.startsWith('image/')) {
+        Swal.fire({ title: 'Error', text: 'Selecciona un archivo de imagen válido.', icon: 'error' });
+        return;
+    }
+    if (file.size > 3 * 1024 * 1024) {
+        Swal.fire({ title: 'Imagen muy pesada', text: 'La imagen no debe superar los 3MB.', icon: 'warning' });
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+        const base64Image = e.target.result;
+        
+        // Mostrar vista previa en la interfaz inmediatamente
+        const imgPreview = document.getElementById('profile-img-preview');
+        if (imgPreview) imgPreview.src = base64Image;
+
+        // Obtener credenciales del usuario
+        let token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        let usuarioStr = localStorage.getItem('usuario') || sessionStorage.getItem('usuario');
+        let usuario = usuarioStr ? JSON.parse(usuarioStr) : {};
+        const idUsuarioLocal = usuario.id_usuario || usuario.id;
+
+        try {
+            const res = await fetch('/api/usuarios/foto', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': token ? `Bearer ${token}` : ''
+                },
+                body: JSON.stringify({
+                    id_usuario: idUsuarioLocal,
+                    foto_perfil: base64Image
+                })
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                Swal.fire({
+                    title: '¡Foto actualizada!',
+                    text: 'Tu foto de perfil se ha guardado correctamente.',
+                    icon: 'success',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+
+                // Actualizar storage local
+                usuario.foto_perfil = base64Image;
+                if (localStorage.getItem('usuario')) localStorage.setItem('usuario', JSON.stringify(usuario));
+                if (sessionStorage.getItem('usuario')) sessionStorage.setItem('usuario', JSON.stringify(usuario));
+            } else {
+                Swal.fire({ title: 'Error', text: data.error || 'No se pudo guardar la foto.', icon: 'error' });
+            }
+        } catch (err) {
+            console.error('Error al subir foto de perfil:', err);
+            Swal.fire({ title: 'Error de conexión', text: 'Ocurrió un error al conectar con el servidor.', icon: 'error' });
+        }
+    };
+    reader.readAsDataURL(file);
+};
