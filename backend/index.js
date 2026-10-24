@@ -957,18 +957,26 @@ app.get('/api/admin/resenas-app', async (req, res) => {
 // ==========================================
 app.put('/api/usuarios/perfil', async (req, res) => {
     try {
-        const token = req.headers.authorization?.split(' ')[1];
-        if (!token) {
+        const authHeader = req.headers.authorization;
+        if (!authHeader) {
             return res.status(401).json({ error: 'Token no proporcionado.' });
         }
 
-        // Decodificar el token para extraer el id del usuario
+        const token = authHeader.split(' ')[1];
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret_key_patarunner');
-        const id_usuario = decoded.id_usuario || decoded.id;
+        
+        // Extrae el ID probando las variaciones comunes del payload
+        const id_usuario = decoded.id_usuario || decoded.id || decoded.idUsuario;
 
-        const { nombre_completo, carrera } = req.body;
+        if (!id_usuario) {
+            return res.status(400).json({ error: 'No se pudo identificar el usuario desde el token.' });
+        }
 
-        if (!nombre_completo || !carrera) {
+        // Acepta nombre o nombre_completo según lo envié el frontend
+        const nombre = req.body.nombre_completo || req.body.nombre;
+        const carrera = req.body.carrera;
+
+        if (!nombre || !carrera) {
             return res.status(400).json({ error: 'El nombre y la carrera son obligatorios.' });
         }
 
@@ -977,11 +985,11 @@ app.put('/api/usuarios/perfil', async (req, res) => {
              SET nombre_completo = $1, carrera = $2 
              WHERE id_usuario = $3 
              RETURNING id_usuario, nombre_completo, carrera, codigo_alumno, id_rol`,
-            [nombre_completo, carrera, id_usuario]
+            [nombre, carrera, id_usuario]
         );
 
         if (result.rowCount === 0) {
-            return res.status(404).json({ error: 'Usuario no encontrado.' });
+            return res.status(404).json({ error: 'Usuario no encontrado en la base de datos.' });
         }
 
         res.status(200).json({
@@ -989,7 +997,7 @@ app.put('/api/usuarios/perfil', async (req, res) => {
             usuario: result.rows[0]
         });
     } catch (error) {
-        console.error("Error en PUT /api/usuarios/perfil:", error.message);
+        console.error("Error detallado en PUT /api/usuarios/perfil:", error);
         res.status(500).json({ error: 'Error interno al actualizar el perfil.' });
     }
 });
