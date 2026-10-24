@@ -3344,52 +3344,101 @@ function mostrarModulo(idModulo) {
     }
 }
 
-// Configurar el arrastre del menú horizontal (Solo se ejecuta si el panel existe)
+// Manejo del formulario de reseña de la app
 document.addEventListener('DOMContentLoaded', () => {
-    const slider = document.getElementById('admin-menu-tabs');
-    if (!slider) return;
+    let calificacionApp = 0;
 
-    let isDown = false;
-    let startX;
-    let scrollLeft;
-    let isDragging = false;
-
-    slider.addEventListener('mousedown', (e) => {
-        isDown = true;
-        isDragging = false;
-        slider.classList.add('cursor-grabbing');
-        startX = e.pageX - slider.offsetLeft;
-        scrollLeft = slider.scrollLeft;
-    });
-    slider.addEventListener('mouseleave', () => {
-        isDown = false;
-        slider.classList.remove('cursor-grabbing');
-    });
-    slider.addEventListener('mouseup', () => {
-        isDown = false;
-        slider.classList.remove('cursor-grabbing');
-    });
-    slider.addEventListener('mousemove', (e) => {
-        if(!isDown) return;
-        e.preventDefault();
-        const x = e.pageX - slider.offsetLeft;
-        const walk = (x - startX) * 2; // Velocidad de arrastre
-        if (Math.abs(walk) > 5) isDragging = true;
-        slider.scrollLeft = scrollLeft - walk;
-    });
-
-    // Evitar que el clic active los botones si estamos arrastrando
-    document.querySelectorAll('.mod-btn').forEach(btn => {
+    // Seleccionar estrellas
+    document.querySelectorAll('.star-app-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
-            if(isDragging) {
-                e.preventDefault();
-                e.stopPropagation();
-            } else {
-                const modulo = btn.id.replace('btn-', '');
-                mostrarModulo(modulo);
-            }
+            calificacionApp = parseInt(e.target.getAttribute('data-value'));
+            document.querySelectorAll('.star-app-btn').forEach((s, idx) => {
+                if (idx < calificacionApp) {
+                    s.classList.remove('text-slate-300');
+                    s.classList.add('text-amber-400');
+                } else {
+                    s.classList.remove('text-amber-400');
+                    s.classList.add('text-slate-300');
+                }
+            });
         });
     });
+
+    const formResena = document.getElementById('form-resena-app');
+    if (formResena) {
+        formResena.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            if (!calificacionApp || calificacionApp === 0) {
+                Swal.fire({
+                    title: 'Atención',
+                    text: 'Por favor selecciona al menos 1 estrella para calificar.',
+                    icon: 'warning',
+                    confirmButtonColor: '#2563eb'
+                });
+                return;
+            }
+
+            let token = localStorage.getItem('token') || sessionStorage.getItem('token');
+            let usuarioStr = localStorage.getItem('usuario') || sessionStorage.getItem('usuario');
+            let usuario = usuarioStr ? JSON.parse(usuarioStr) : {};
+            const idUsuarioLocal = usuario.id_usuario || usuario.id;
+
+            const comentarioInput = document.getElementById('input-comentario-resena');
+            const comentario = comentarioInput ? comentarioInput.value.trim() : '';
+
+            try {
+                const res = await fetch('/api/resenas-app', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': token ? `Bearer ${token}` : ''
+                    },
+                    body: JSON.stringify({
+                        id_usuario: idUsuarioLocal,
+                        calificacion: calificacionApp,
+                        comentario: comentario
+                    })
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    Swal.fire({
+                        title: '¡Gracias!',
+                        text: data.mensaje || 'Reseña enviada con éxito.',
+                        icon: 'success',
+                        confirmButtonColor: '#2563eb'
+                    });
+
+                    // Limpiar formulario y cerrar modal
+                    if (comentarioInput) comentarioInput.value = '';
+                    calificacionApp = 0;
+                    document.querySelectorAll('.star-app-btn').forEach(s => {
+                        s.classList.remove('text-amber-400');
+                        s.classList.add('text-slate-300');
+                    });
+
+                    if (typeof cerrarModalResenaApp === 'function') cerrarModalResenaApp();
+                } else {
+                    Swal.fire({
+                        title: 'Error',
+                        text: data.error || 'No se pudo guardar tu reseña.',
+                        icon: 'error',
+                        confirmButtonColor: '#2563eb'
+                    });
+                }
+            } catch (err) {
+                console.error('Error enviando reseña:', err);
+                Swal.fire({
+                    title: 'Error de conexión',
+                    text: 'No se pudo conectar con el servidor.',
+                    icon: 'error',
+                    confirmButtonColor: '#2563eb'
+                });
+            }
+        });
+    }
 });
 
 // ==========================================
