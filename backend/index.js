@@ -397,7 +397,7 @@ app.get('/api/pedidos/historial/:id_usuario', async (req, res) => {
     }
 });
 
-// --- RUTA: Registrar un Pedido completo ---
+// --- RUTA: Registrar un Pedido completo (Soporte para "Otro" / Favor personalizado) ---
 app.post('/api/pedidos', async (req, res) => {
   const { 
     id_cliente,
@@ -443,11 +443,16 @@ app.post('/api/pedidos', async (req, res) => {
         const precioUnitario = item.precio_unitario || item.precio || 0;
         const subtotal = item.subtotal || (precioUnitario * item.cantidad);
 
-        await client.query(
-          `INSERT INTO detalle_pedido (id_pedido, id_producto, cantidad, precio_unitario, subtotal) 
-           VALUES ($1, $2, $3, $4, $5)`,
-          [idPedido, item.id_producto, item.cantidad, precioUnitario, subtotal]
-        );
+        // Si id_producto es numérico válido se guarda en detalle_pedido
+        const isNumericId = !isNaN(parseInt(item.id_producto)) && isFinite(item.id_producto);
+
+        if (isNumericId) {
+          await client.query(
+            `INSERT INTO detalle_pedido (id_pedido, id_producto, cantidad, precio_unitario, subtotal) 
+             VALUES ($1, $2, $3, $4, $5)`,
+            [idPedido, parseInt(item.id_producto), item.cantidad, precioUnitario, subtotal]
+          );
+        }
       }
     }
 
