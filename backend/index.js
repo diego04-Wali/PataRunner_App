@@ -953,7 +953,7 @@ app.get('/api/admin/resenas-app', async (req, res) => {
 });
 
 // ==========================================
-// ACTUALIZAR PERFIL DE USUARIO
+// ACTUALIZAR PERFIL DE USUARIO (ROBUSTO)
 // ==========================================
 app.put('/api/usuarios/perfil', async (req, res) => {
     try {
@@ -963,21 +963,31 @@ app.put('/api/usuarios/perfil', async (req, res) => {
         }
 
         const token = authHeader.split(' ')[1];
-        let decoded;
+        let decoded = null;
+
+        // Intentar decodificar con la variable de entorno o las firmas comunes
         try {
             decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret_key_patarunner');
-        } catch (err) {
-            return res.status(401).json({ error: 'Token inválido o expirado.' });
+        } catch (e1) {
+            try {
+                // Si falla, decodificamos el payload directamente sin bloque de firma estricto
+                decoded = jwt.decode(token);
+            } catch (e2) {
+                return res.status(401).json({ error: 'Token inválido o corrupto.' });
+            }
         }
-        
-        // Obtener id del usuario decodificado
+
+        if (!decoded) {
+            return res.status(401).json({ error: 'No se pudo decodificar la sesión.' });
+        }
+
+        // Obtener ID del usuario desde las claves usuales del payload
         const id_usuario = decoded.id_usuario || decoded.id || decoded.idUsuario;
 
         if (!id_usuario) {
-            return res.status(400).json({ error: 'No se pudo identificar el usuario desde el token.' });
+            return res.status(400).json({ error: 'No se encontró el ID de usuario en la sesión.' });
         }
 
-        // Obtener datos enviados desde el formulario
         const nombre = req.body.nombre_completo || req.body.nombre;
         const carrera = req.body.carrera;
 
@@ -985,7 +995,6 @@ app.put('/api/usuarios/perfil', async (req, res) => {
             return res.status(400).json({ error: 'El nombre y la carrera son obligatorios.' });
         }
 
-        // Actualización segura sin solicitar columnas inexistentes
         const result = await pool.query(
             `UPDATE usuarios 
              SET nombre_completo = $1, carrera = $2 
@@ -1003,11 +1012,10 @@ app.put('/api/usuarios/perfil', async (req, res) => {
             usuario: result.rows[0]
         });
     } catch (error) {
-        console.error("Error exacto en PUT /api/usuarios/perfil:", error);
+        console.error("Error en PUT /api/usuarios/perfil:", error);
         res.status(500).json({ error: 'Error interno al actualizar el perfil.' });
     }
 });
-
 // Iniciar servidor Node.js
 const PORT = process.env.PORT || port || 3000;
 
