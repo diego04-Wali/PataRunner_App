@@ -747,20 +747,79 @@ app.patch('/api/admin/usuarios/:codigo/runner', async (req, res) => {
     }
 });
 
-// 4. Eliminar un usuario permanentemente
+// 4. Eliminar un usuario permanentemente (con limpieza en cascada)
 app.delete('/api/admin/usuarios/:codigo', async (req, res) => {
+    const client = await pool.connect();
     try {
         const { codigo } = req.params;
 
-        await pool.query('DELETE FROM usuarios WHERE codigo_alumno = $1', [codigo]);
+        // 1. Obtener el id_usuario asociado al código
+        const userResult = await client.query('SELECT id_usuario FROM usuarios WHERE codigo_alumno = $1', [codigo]);
+
+        if (userResult.rows.length === 0) {
+            client.release();
+            return res.status(404).json({ success: false, error: 'Usuario no encontrado.' });
+        }
+
+        const idUsuario = userResult.rows[0].id_usuario;
+
+        // Iniciar transacción SQL para borrar todo asociadamente
+        await client.query('BEGIN');
+
+        // Limpiar fotos de usuario
+        await client.query('DELETE FROM fotos_usuario WHERE id_usuario = $1', [idUsuario]);
+
+        // Limpiar reseñas
+        await client.query('DELETE FROM resenas_app WHERE id_usuario = $1', [idUsuario]);
+
+        // Limpiar reportes asociados al usuario
+        await client.query('DELETE FROM reportes WHERE id_usuario_reporta = $1', [idUsuario]);
+
+        // Limpiar chats enviados por el usuario
+        await client.query('DELETE FROM chat_pedido WHERE id_remitente = $1', [idUsuario]);
+
+        // Limpiar detalle de pedidos de los pedidos creados por el usuario o donde fue runner
+        await client.query(`
+            DELETE FROM detalle_pedido 
+            WHERE id_pedido IN (
+                SELECT id_pedido FROM pedidos WHERE id_cliente = $1 OR id_runner = $1
+            )
+        `, [idUsuario]);
+
+        // Limpiar reportes ligados a pedidos del usuario
+        await client.query(`
+            DELETE FROM reportes 
+            WHERE id_pedido IN (
+                SELECT id_pedido FROM pedidos WHERE id_cliente = $1 OR id_runner = $1
+            )
+        `, [idUsuario]);
+
+        // Limpiar chats de pedidos del usuario
+        await client.query(`
+            DELETE FROM chat_pedido 
+            WHERE id_pedido IN (
+                SELECT id_pedido FROM pedidos WHERE id_cliente = $1 OR id_runner = $1
+            )
+        `, [idUsuario]);
+
+        // Limpiar pedidos del usuario (como cliente o runner)
+        await client.query('DELETE FROM pedidos WHERE id_cliente = $1 OR id_runner = $1', [idUsuario]);
+
+        // Finalmente eliminar el registro del usuario
+        await client.query('DELETE FROM usuarios WHERE id_usuario = $1', [idUsuario]);
+
+        await client.query('COMMIT');
+        client.release();
 
         res.status(200).json({ 
             success: true, 
-            message: `Usuario ${codigo} eliminado de la base de datos.` 
+            message: `Usuario ${codigo} y todos sus registros asociados han sido eliminados de la base de datos.` 
         });
     } catch (error) {
-        console.error("Error al eliminar usuario:", error.message);
-        res.status(500).json({ error: 'No se pudo eliminar el usuario.' });
+        await client.query('ROLLBACK');
+        client.release();
+        console.error("Error al eliminar usuario en administración:", error);
+        res.status(500).json({ success: false, error: 'No se pudo eliminar el usuario por restricciones en la base de datos.' });
     }
 });
 
