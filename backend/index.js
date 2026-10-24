@@ -757,6 +757,201 @@ app.delete('/api/admin/usuarios/:codigo', async (req, res) => {
     }
 });
 
+// ==========================================
+// MÓDULO ADMIN: MONITOREO DE OPERACIONES
+// ==========================================
+app.get('/api/admin/pedidos', async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT 
+                p.id_pedido,
+                p.estado,
+                p.ubicacion_entrega,
+                p.tarifa_entrega,
+                p.descripcion_pedido,
+                p.costo_aproximado,
+                p.fecha_pedido,
+                u1.nombre_completo AS nombre_cliente,
+                u2.nombre_completo AS nombre_runner,
+                COALESCE(SUM(dp.subtotal), 0) AS total_catalogo
+            FROM pedidos p
+            LEFT JOIN usuarios u1 ON p.id_cliente = u1.id_usuario
+            LEFT JOIN usuarios u2 ON p.id_runner = u2.id_usuario
+            LEFT JOIN detalle_pedido dp ON p.id_pedido = dp.id_pedido
+            GROUP BY p.id_pedido, u1.nombre_completo, u2.nombre_completo
+            ORDER BY p.id_pedido DESC
+        `);
+        res.status(200).json(result.rows);
+    } catch (error) {
+        console.error("Error en GET /api/admin/pedidos:", error.message);
+        res.status(500).json({ error: 'Error al consultar operaciones.' });
+    }
+});
+
+// ==========================================
+// MÓDULO ADMIN: GESTIÓN DE REPORTES
+// ==========================================
+app.get('/api/admin/reportes', async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT 
+                r.id_reporte,
+                r.id_pedido,
+                r.motivo,
+                r.estado,
+                r.fecha_creacion,
+                u.codigo_alumno AS codigo_reportador,
+                u.nombre_completo AS reportador
+            FROM reportes r
+            LEFT JOIN usuarios u ON r.id_usuario_reporta = u.id_usuario
+            ORDER BY r.id_reporte DESC
+        `);
+        res.status(200).json(result.rows);
+    } catch (error) {
+        console.error("Error en GET /api/admin/reportes:", error.message);
+        res.status(500).json({ error: 'Error al obtener reportes.' });
+    }
+});
+
+app.patch('/api/admin/reportes/:id/estado', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { estado } = req.body;
+
+        await pool.query(
+            'UPDATE reportes SET estado = $1 WHERE id_reporte = $2',
+            [estado, id]
+        );
+
+        res.status(200).json({ success: true, message: `Reporte #${id} actualizado a ${estado}.` });
+    } catch (error) {
+        console.error("Error al actualizar estado del reporte:", error.message);
+        res.status(500).json({ error: 'No se pudo actualizar el reporte.' });
+    }
+});
+
+// ==========================================
+// MÓDULO ADMIN: KPIS Y ESTADÍSTICAS
+// ==========================================
+app.get('/api/admin/kpis', async (req, res) => {
+    try {
+        const pedidosHoy = await pool.query(`
+            SELECT 
+                COUNT(*) AS total_hoy,
+                COUNT(*) FILTER (WHERE estado = 'Entregado' OR estado = 'Finalizado') AS entregados_hoy,
+                COUNT(*) FILTER (WHERE estado = 'Pendiente') AS pendientes_hoy,
+                COUNT(*) FILTER (WHERE estado = 'En Camino') AS en_camino_hoy,
+                COUNT(*) FILTER (WHERE estado = 'Cancelado') AS cancelados_hoy,
+                COALESCE(SUM(tarifa_entrega) FILTER (WHERE estado = 'Entregado' OR estado = 'Finalizado'), 0) AS ganancias_runners_hoy
+            FROM pedidos 
+            WHERE DATE(fecha_pedido) = CURRENT_DATE
+        `);
+
+        const usuariosTotales = await pool.query(`
+            SELECT 
+                COUNT(*) FILTER (WHERE id_rol = 1) AS total_alumnos,
+                COUNT(*) FILTER (WHERE id_rol = 2) AS total_runners
+            FROM usuarios
+        `);
+
+        res.status(200).json({
+            pedidos: pedidosHoy.rows[0],
+            usuarios: usuariosTotales.rows[0],
+            topTienda: 'Frago Gourmet'
+        });
+    } catch (error) {
+        console.error("Error en GET /api/admin/kpis:", error.message);
+        res.status(500).json({ error: 'Error al consultar métricas.' });
+    }
+});
+
+// ==========================================
+// MÓDULO ADMIN: TIENDAS Y CATÁLOGO
+// ==========================================
+app.get('/api/admin/tiendas', async (req, res) => {
+    try {
+        const result = await pool.query('SELECT * FROM tiendas ORDER BY id_tienda ASC');
+        res.status(200).json(result.rows);
+    } catch (error) {
+        console.error("Error en GET /api/admin/tiendas:", error.message);
+        res.status(500).json({ error: 'Error al consultar tiendas.' });
+    }
+});
+
+app.post('/api/admin/tiendas', async (req, res) => {
+    try {
+        const { nombre, ubicacion } = req.body;
+        await pool.query('INSERT INTO tiendas (nombre, ubicacion) VALUES ($1, $2)', [nombre, ubicacion]);
+        res.status(201).json({ success: true, message: 'Tienda registrada con éxito.' });
+    } catch (error) {
+        console.error("Error en POST /api/admin/tiendas:", error.message);
+        res.status(500).json({ error: 'Error al guardar la tienda.' });
+    }
+});
+
+app.post('/api/admin/productos', async (req, res) => {
+    try {
+        const { id_tienda, nombre, precio, categoria, subcategoria, descripcion, imagen, stock } = req.body;
+        await pool.query(
+            `INSERT INTO productos (id_tienda, nombre, precio, categoria, subcategoria, descripcion, imagen, stock, disponible) 
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, true)`,
+            [id_tienda, nombre, precio, categoria || 'Snacks', subcategoria || 'General', descripcion || '', imagen || 'placeholder.jpg', stock || 10]
+        );
+        res.status(201).json({ success: true, message: 'Producto agregado al catálogo.' });
+    } catch (error) {
+        console.error("Error en POST /api/admin/productos:", error.message);
+        res.status(500).json({ error: 'Error al guardar el producto.' });
+    }
+});
+
+app.patch('/api/admin/productos/:id/stock', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { stock } = req.body;
+        await pool.query('UPDATE productos SET stock = $1 WHERE id_producto = $2', [stock, id]);
+        res.status(200).json({ success: true, message: 'Stock actualizado correctamente.' });
+    } catch (error) {
+        console.error("Error al actualizar stock:", error.message);
+        res.status(500).json({ error: 'Error al actualizar el stock.' });
+    }
+});
+
+app.delete('/api/admin/productos/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        await pool.query('DELETE FROM productos WHERE id_producto = $1', [id]);
+        res.status(200).json({ success: true, message: 'Producto eliminado.' });
+    } catch (error) {
+        console.error("Error al eliminar producto:", error.message);
+        res.status(500).json({ error: 'Error al eliminar el producto.' });
+    }
+});
+
+// ==========================================
+// MÓDULO ADMIN: RESEÑAS DE LA APLICACIÓN
+// ==========================================
+app.get('/api/admin/resenas-app', async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT 
+                r.id_resena,
+                r.calificacion,
+                r.comentario,
+                r.fecha_creacion,
+                u.nombre_completo,
+                u.codigo_alumno AS codigo,
+                u.carrera
+            FROM resenas_app r
+            JOIN usuarios u ON r.id_usuario = u.id_usuario
+            ORDER BY r.id_resena DESC
+        `);
+        res.status(200).json(result.rows);
+    } catch (error) {
+        console.error("Error en GET /api/admin/resenas-app:", error.message);
+        res.status(500).json({ error: 'Error al obtener las reseñas.' });
+    }
+});
+
 // Iniciar servidor Node.js
 const PORT = process.env.PORT || port || 3000;
 
