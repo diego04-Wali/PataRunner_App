@@ -963,16 +963,21 @@ app.put('/api/usuarios/perfil', async (req, res) => {
         }
 
         const token = authHeader.split(' ')[1];
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret_key_patarunner');
+        let decoded;
+        try {
+            decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret_key_patarunner');
+        } catch (err) {
+            return res.status(401).json({ error: 'Token inválido o expirado.' });
+        }
         
-        // Extrae el ID probando las variaciones comunes del payload
+        // Obtener id del usuario decodificado
         const id_usuario = decoded.id_usuario || decoded.id || decoded.idUsuario;
 
         if (!id_usuario) {
             return res.status(400).json({ error: 'No se pudo identificar el usuario desde el token.' });
         }
 
-        // Acepta nombre o nombre_completo según lo envié el frontend
+        // Obtener datos enviados desde el formulario
         const nombre = req.body.nombre_completo || req.body.nombre;
         const carrera = req.body.carrera;
 
@@ -980,11 +985,12 @@ app.put('/api/usuarios/perfil', async (req, res) => {
             return res.status(400).json({ error: 'El nombre y la carrera son obligatorios.' });
         }
 
+        // Actualización segura sin solicitar columnas inexistentes
         const result = await pool.query(
             `UPDATE usuarios 
              SET nombre_completo = $1, carrera = $2 
              WHERE id_usuario = $3 
-             RETURNING id_usuario, nombre_completo, carrera, codigo_alumno, id_rol`,
+             RETURNING id_usuario, nombre_completo, carrera, codigo_alumno`,
             [nombre, carrera, id_usuario]
         );
 
@@ -997,7 +1003,7 @@ app.put('/api/usuarios/perfil', async (req, res) => {
             usuario: result.rows[0]
         });
     } catch (error) {
-        console.error("Error detallado en PUT /api/usuarios/perfil:", error);
+        console.error("Error exacto en PUT /api/usuarios/perfil:", error);
         res.status(500).json({ error: 'Error interno al actualizar el perfil.' });
     }
 });
