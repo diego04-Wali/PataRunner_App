@@ -5441,7 +5441,7 @@ window.previsualizarFotoPerfil = function(event) {
     reader.readAsDataURL(file);
 };
 
-// 2. ENVIAR Y GUARDAR LA FOTO CONFIRMADA EN EL SERVIDOR
+// ENVIAR Y GUARDAR LA FOTO CONFIRMADA EN EL SERVIDOR
 async function guardarFotoPerfilConfirmada() {
     if (!fotoPerfilComprimidaTemp) return;
 
@@ -5451,10 +5451,22 @@ async function guardarFotoPerfilConfirmada() {
         didOpen: () => { Swal.showLoading(); }
     });
 
-    let token = localStorage.getItem('token') || sessionStorage.getItem('token');
-    let usuarioStr = localStorage.getItem('usuario') || sessionStorage.getItem('usuario');
+    let token = sessionStorage.getItem('token') || localStorage.getItem('token');
+    let usuarioStr = sessionStorage.getItem('usuario') || localStorage.getItem('usuario');
     let usuario = usuarioStr ? JSON.parse(usuarioStr) : {};
+    
+    // Obtenemos el ID del usuario directamente
     const idUsuarioLocal = usuario.id_usuario || usuario.id;
+
+    if (!idUsuarioLocal) {
+        Swal.fire({ 
+            title: 'Error de sesión', 
+            text: 'No se pudo identificar al usuario. Inicia sesión nuevamente.', 
+            icon: 'error', 
+            confirmButtonColor: '#2563eb' 
+        });
+        return;
+    }
 
     try {
         const res = await fetch('/api/usuarios/foto', {
@@ -5472,27 +5484,43 @@ async function guardarFotoPerfilConfirmada() {
         const data = await res.json();
 
         if (res.ok) {
-            // Actualizar vista previa del perfil en la página
+            // 1. Actualizar imagen en la pantalla
             const imgPreview = document.getElementById('profile-img-preview');
             if (imgPreview) imgPreview.src = fotoPerfilComprimidaTemp;
 
-            // Actualizar la memoria local del navegador
+            // 2. Actualizar las iniciales o la imagen en el contenedor principal si existe
+            const avatarContainer = document.getElementById('profile-initials');
+            if (avatarContainer && avatarContainer.parentElement) {
+                avatarContainer.parentElement.innerHTML = `<img src="${fotoPerfilComprimidaTemp}" class="w-full h-full object-cover rounded-full" id="profile-img-preview" />`;
+            }
+
+            // 3. Guardar en la memoria local (sessionStorage y localStorage)
             usuario.foto_perfil = fotoPerfilComprimidaTemp;
-            if (localStorage.getItem('usuario')) localStorage.setItem('usuario', JSON.stringify(usuario));
-            if (sessionStorage.getItem('usuario')) sessionStorage.setItem('usuario', JSON.stringify(usuario));
+            sessionStorage.setItem('usuario', JSON.stringify(usuario));
+            localStorage.setItem('usuario', JSON.stringify(usuario));
 
             Swal.fire({
                 title: '¡Foto actualizada!',
-                text: 'Tu foto de perfil ha sido guardada con éxito.',
+                text: 'Tu foto de perfil se ha guardado con éxito.',
                 icon: 'success',
                 confirmButtonColor: '#2563eb'
             });
         } else {
-            Swal.fire({ title: 'Error', text: data.error || 'No se pudo guardar la foto.', icon: 'error', confirmButtonColor: '#2563eb' });
+            Swal.fire({ 
+                title: 'Error al guardar', 
+                text: data.error || 'El servidor no pudo procesar la imagen.', 
+                icon: 'error', 
+                confirmButtonColor: '#2563eb' 
+            });
         }
     } catch (err) {
         console.error('Error al subir foto de perfil:', err);
-        Swal.fire({ title: 'Error de conexión', text: 'Ocurrió un error al conectar con el servidor.', icon: 'error', confirmButtonColor: '#2563eb' });
+        Swal.fire({ 
+            title: 'Error de conexión', 
+            text: 'Ocurrió un error al conectar con el servidor.', 
+            icon: 'error', 
+            confirmButtonColor: '#2563eb' 
+        });
     } finally {
         fotoPerfilComprimidaTemp = null;
     }
