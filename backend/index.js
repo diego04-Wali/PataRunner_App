@@ -244,6 +244,58 @@ app.post('/api/usuarios/verificar-otp', async (req, res) => {
         return res.status(500).json({ error: 'Error interno al validar el código.' });
     }
 });
+// ==========================================
+// RUTA: ACTIVAR MODO RUNNER
+// ==========================================
+app.put('/api/usuarios/activar-runner', verificarToken, async (req, res) => {
+    try {
+        const identificador = req.user?.uid || req.user?.user_id;
+
+        const result = await pool.query(
+            `UPDATE usuarios 
+             SET id_rol = 2 
+             WHERE firebase_uid = $1 OR codigo_alumno = $2 OR correo_personal = $3
+             RETURNING id_usuario, id_rol`,
+            [identificador, identificador, identificador]
+        );
+
+        res.status(200).json({ 
+            success: true, 
+            message: '¡Ahora eres un Runner oficial!' 
+        });
+    } catch (error) {
+        console.error('Error al activar rol de runner:', error);
+        res.status(500).json({ error: 'No se pudo actualizar el perfil en el servidor.' });
+    }
+});
+
+// ==========================================
+// RUTA: VERIFICAR ESTADO DEL USUARIO (ROL Y BLOQUEOS)
+// ==========================================
+app.get('/api/usuarios/estado/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const result = await pool.query(
+            'SELECT id_usuario, id_rol, is_blocked, bloqueado_runner FROM usuarios WHERE id_usuario = $1',
+            [id]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Usuario no encontrado.' });
+        }
+
+        const user = result.rows[0];
+        res.status(200).json({
+            id_usuario: user.id_usuario,
+            id_rol: user.id_rol,
+            blocked: user.is_blocked || false,
+            bloqueado_runner: user.bloqueado_runner || false
+        });
+    } catch (error) {
+        console.error('Error al consultar estado de usuario:', error);
+        res.status(500).json({ error: 'Error del servidor al consultar estado.' });
+    }
+});
 
 // ==========================================
 // 2. RUTA DE INICIO DE SESIÓN
