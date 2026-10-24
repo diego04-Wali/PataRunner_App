@@ -4669,27 +4669,41 @@ window.cargarDatosPerfil = async function() {
 // Guardar Cambios del Perfil (Nombre y Carrera en PostgreSQL)
 window.guardarPerfilUsuario = async function(e) {
     e.preventDefault();
-    const usuarioStr = sessionStorage.getItem('usuario');
-    if (!usuarioStr) return;
+    
+    // 1. Obtener el token de autenticación
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    
+    if (!token) {
+        Swal.fire({
+            title: 'Sesión expirada',
+            text: 'Por favor, vuelve a iniciar sesión.',
+            icon: 'warning',
+            confirmButtonColor: '#2563eb',
+            confirmButtonText: 'Aceptar'
+        });
+        return;
+    }
 
-    const usuario = JSON.parse(usuarioStr);
-    const nombre = document.getElementById('edit-nombre').value.trim();
-    const carrera = document.getElementById('edit-carrera').value.trim();
+    const editNombre = document.getElementById('edit-nombre').value.trim();
+    const editCarrera = document.getElementById('edit-carrera').value.trim();
 
     try {
+        // 2. Incluir el Authorization Bearer header
         const res = await fetch('/api/usuarios/perfil', {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
             body: JSON.stringify({
-                id_usuario: usuario.id_usuario,
-                nombre_completo: nombre,
-                carrera: carrera,
-                foto_perfil: usuario.foto_perfil || null
+                nombre_completo: editNombre,
+                carrera: editCarrera
             })
         });
 
         const data = await res.json();
-        if (data.success) {
+
+        if (res.ok) {
             Swal.fire({
                 title: '¡Perfil actualizado!',
                 text: '¡Perfil actualizado con éxito!',
@@ -4697,18 +4711,25 @@ window.guardarPerfilUsuario = async function(e) {
                 confirmButtonColor: '#2563eb',
                 confirmButtonText: 'Aceptar'
             });
-            
+
             // Actualizar datos locales y vista
-            usuario.nombre_completo = nombre;
-            usuario.carrera = carrera;
-            sessionStorage.setItem('usuario', JSON.stringify(usuario));
+            let usuario = JSON.parse(localStorage.getItem('usuario') || sessionStorage.getItem('usuario') || '{}');
+            usuario.nombre_completo = editNombre;
+            usuario.carrera = editCarrera;
+
+            if (localStorage.getItem('usuario')) {
+                localStorage.setItem('usuario', JSON.stringify(usuario));
+            }
+            if (sessionStorage.getItem('usuario')) {
+                sessionStorage.setItem('usuario', JSON.stringify(usuario));
+            }
 
             if (typeof cerrarModalEditarPerfil === 'function') cerrarModalEditarPerfil();
             if (typeof cargarDatosPerfil === 'function') cargarDatosPerfil();
         } else {
             Swal.fire({
                 title: 'Error',
-                text: 'Error al actualizar datos: ' + (data.error || ''),
+                text: 'Error al actualizar datos: ' + (data.error || 'Ocurrió un error inesperado'),
                 icon: 'error',
                 confirmButtonColor: '#2563eb',
                 confirmButtonText: 'Aceptar'
@@ -5232,3 +5253,58 @@ if (btnModResenas) {
         cargarResenasAdmin();
     });
 }
+// ==========================================
+// EXPOSICIÓN GLOBAL DE MODALES PARA EL HTML
+// ==========================================
+window.abrirModalEditarPerfil = function() {
+    if (typeof cargarDatosPerfil === 'function') cargarDatosPerfil();
+    const modal = document.getElementById('modal-editar-perfil');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+};
+
+window.cerrarModalEditarPerfil = function() {
+    const modal = document.getElementById('modal-editar-perfil');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+};
+
+window.abrirModalReporte = function() {
+    const inputMotivo = document.getElementById('input-motivo-reporte');
+    if (inputMotivo) inputMotivo.value = '';
+    const modal = document.getElementById('modal-reportar-incidencia');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+};
+
+window.cerrarModalReporte = function() {
+    const modal = document.getElementById('modal-reportar-incidencia');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+};
+
+window.abrirModalResenaApp = function() {
+    const inputComentario = document.getElementById('input-comentario-resena');
+    if (inputComentario) inputComentario.value = '';
+    const modal = document.getElementById('modal-resena-app');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+};
+
+window.cerrarModalResenaApp = function() {
+    const modal = document.getElementById('modal-resena-app');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+};
