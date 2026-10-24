@@ -1015,6 +1015,64 @@ app.put('/api/usuarios/perfil', async (req, res) => {
         res.status(500).json({ error: 'Error interno al actualizar el perfil.' });
     }
 });
+
+// ==========================================
+// REGISTRAR RESEÑA DE LA APLICACIÓN
+// ==========================================
+app.post('/api/resenas-app', async (req, res) => {
+    try {
+        let id_usuario = null;
+
+        // Extract ID from Authorization header
+        const authHeader = req.headers.authorization;
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            const token = authHeader.split(' ')[1];
+            if (token && token !== 'undefined' && token !== 'null') {
+                try {
+                    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret_key_patarunner');
+                    id_usuario = decoded.id_usuario || decoded.id || decoded.idUsuario;
+                } catch (e) {
+                    try {
+                        const decodedPayload = jwt.decode(token);
+                        if (decodedPayload) {
+                            id_usuario = decodedPayload.id_usuario || decodedPayload.id || decodedPayload.idUsuario;
+                        }
+                    } catch (err) {}
+                }
+            }
+        }
+
+        // Fallback to body
+        if (!id_usuario && req.body.id_usuario) {
+            id_usuario = req.body.id_usuario;
+        }
+
+        if (!id_usuario) {
+            return res.status(401).json({ error: 'Debes iniciar sesión para enviar una reseña.' });
+        }
+
+        const { calificacion, comentario } = req.body;
+
+        if (!calificacion) {
+            return res.status(400).json({ error: 'Por favor selecciona una calificación en estrellas.' });
+        }
+
+        const result = await pool.query(
+            `INSERT INTO resenas_app (id_usuario, calificacion, comentario) 
+             VALUES ($1, $2, $3) 
+             RETURNING id_resena, id_usuario, calificacion, comentario, fecha_creacion`,
+            [id_usuario, parseInt(calificacion), comentario || '']
+        );
+
+        res.status(201).json({
+            mensaje: '¡Gracias por calificar PataRunner!',
+            resena: result.rows[0]
+        });
+    } catch (error) {
+        console.error("Error en POST /api/resenas-app:", error);
+        res.status(500).json({ error: 'Error interno al guardar la reseña.' });
+    }
+});
 // Iniciar servidor Node.js
 const PORT = process.env.PORT || port || 3000;
 
