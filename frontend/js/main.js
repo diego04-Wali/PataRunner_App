@@ -2393,53 +2393,42 @@ window.agregarAlCarrito = function(id_producto, nombre, precio) {
     }
 };
 
-// ================= ANULAR PEDIDO Y MOSTRAR MODAL =================
+// ================= ANULAR PEDIDO Y LIBERAR PARA OTRO RUNNER =================
 window.anularPedido = async function(id_pedido) {
-    // 1. Confirmación interactiva con SweetAlert2 para el Runner
     const confirmacion = await Swal.fire({
         title: '¿Abandonar entrega?',
-        text: '¿Estás seguro de que deseas abandonar esta entrega? Esto podría afectar tu calificación como Runner.',
+        text: '¿Estás seguro de que deseas abandonar esta entrega? Esto liberará el pedido para que otro Runner lo tome.',
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonColor: '#ef4444', // Rojo de advertencia
+        confirmButtonColor: '#ef4444',
         cancelButtonColor: '#64748b',
         confirmButtonText: 'Sí, abandonar',
         cancelButtonText: 'Cancelar'
     });
 
-    if (!confirmacion.isConfirmed) {
-        return; // Si hace clic en "Cancelar", detenemos todo
-    }
+    if (!confirmacion.isConfirmed) return;
 
     try {
-        // 2. Si acepta, enviamos la orden de anulación al backend
         const respuesta = await fetch(`/api/pedidos/${id_pedido}/anular`, {
             method: 'PUT'
         });
         const resultado = await respuesta.json();
 
         if (resultado.success) {
-            // 3. Mensaje de éxito con SweetAlert2
             Swal.fire({
-                title: 'Entrega abandonada',
-                text: 'Has abandonado el pedido correctamente.',
+                title: 'Entrega liberada',
+                text: 'El pedido ha vuelto a la lista disponible para otros Runners.',
                 icon: 'info',
                 confirmButtonColor: '#2563eb',
                 confirmButtonText: 'Aceptar'
             });
             
-            // Desaparecemos el pedido de la vista actual del Runner
-            if (typeof cargarEntregasActivas === 'function') {
-                cargarEntregasActivas(); 
-            }
-            // Recargamos la bolsa de trabajo por si el pedido volvió a estar disponible
-            if (typeof cargarPedidosPendientes === 'function') {
-                cargarPedidosPendientes(); 
-            }
+            if (typeof cargarEntregasActivas === 'function') cargarEntregasActivas(); 
+            if (typeof cargarPedidosPendientes === 'function') cargarPedidosPendientes(); 
         } else {
             Swal.fire({
-                title: 'No se pudo anular',
-                text: resultado.error || 'Ocurrió un error al intentar anular el pedido.',
+                title: 'Error',
+                text: resultado.error || 'No se pudo liberar el pedido.',
                 icon: 'error',
                 confirmButtonColor: '#2563eb'
             });
@@ -2448,7 +2437,7 @@ window.anularPedido = async function(id_pedido) {
         console.error("Error al anular:", error);
         Swal.fire({
             title: 'Error de conexión',
-            text: 'Ocurrió un problema de conexión al intentar cancelar.',
+            text: 'Ocurrió un problema al intentar anular la entrega.',
             icon: 'error',
             confirmButtonColor: '#2563eb'
         });

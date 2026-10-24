@@ -1168,6 +1168,43 @@ app.put('/api/pedidos/:id/anular', async (req, res) => {
         res.status(500).json({ error: 'Error interno al anular la entrega.' });
     }
 });
+// ==========================================
+// OPCIÓN 1: VOLVER A PEDIR (REPUBLICAR PEDIDO)
+// ==========================================
+app.put('/api/pedidos/:id/republicar', async (req, res) => {
+    try {
+        const { id } = req.params;
+        await pool.query(
+            `UPDATE pedidos 
+             SET estado = 'Pendiente', id_runner = NULL 
+             WHERE id_pedido = $1`,
+            [id]
+        );
+        res.status(200).json({ success: true, mensaje: 'Pedido vuelto a publicar correctamente.' });
+    } catch (error) {
+        console.error("Error al republicar pedido:", error);
+        res.status(500).json({ error: 'Error al volver a publicar el pedido.' });
+    }
+});
+
+// ==========================================
+// OPCIÓN 2: NO, GRACIAS (CANCELAR DEFINITIVAMENTE)
+// ==========================================
+app.put('/api/pedidos/:id/cancelar-definitivo', async (req, res) => {
+    try {
+        const { id } = req.params;
+        await pool.query(
+            `UPDATE pedidos 
+             SET estado = 'Cancelado' 
+             WHERE id_pedido = $1`,
+            [id]
+        );
+        res.status(200).json({ success: true, mensaje: 'Pedido cancelado definitivamente.' });
+    } catch (error) {
+        console.error("Error al cancelar pedido definitivamente:", error);
+        res.status(500).json({ error: 'Error al cancelar el pedido.' });
+    }
+});
 // Iniciar servidor Node.js
 const PORT = process.env.PORT || port || 3000;
 
