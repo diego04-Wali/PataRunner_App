@@ -952,6 +952,48 @@ app.get('/api/admin/resenas-app', async (req, res) => {
     }
 });
 
+// ==========================================
+// ACTUALIZAR PERFIL DE USUARIO
+// ==========================================
+app.put('/api/usuarios/perfil', async (req, res) => {
+    try {
+        const token = req.headers.authorization?.split(' ')[1];
+        if (!token) {
+            return res.status(401).json({ error: 'Token no proporcionado.' });
+        }
+
+        // Verificar token para obtener el id del usuario
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret_key_patarunner');
+        const id_usuario = decoded.id_usuario || decoded.id;
+
+        const { nombre_completo, carrera } = req.body;
+
+        if (!nombre_completo || !carrera) {
+            return res.status(400).json({ error: 'El nombre y la carrera son obligatorios.' });
+        }
+
+        const result = await pool.query(
+            `UPDATE usuarios 
+             SET nombre_completo = $1, carrera = $2 
+             WHERE id_usuario = $3 
+             RETURNING id_usuario, nombre_completo, carrera, codigo_alumno, rol`,
+            [nombre_completo, carrera, id_usuario]
+        );
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ error: 'Usuario no encontrado.' });
+        }
+
+        res.status(200).json({
+            mensaje: 'Perfil actualizado correctamente.',
+            usuario: result.rows[0]
+        });
+    } catch (error) {
+        console.error("Error en PUT /api/usuarios/perfil:", error.message);
+        res.status(500).json({ error: 'Error interno al actualizar el perfil.' });
+    }
+});
+
 // Iniciar servidor Node.js
 const PORT = process.env.PORT || port || 3000;
 
