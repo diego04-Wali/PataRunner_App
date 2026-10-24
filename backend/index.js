@@ -962,7 +962,7 @@ app.put('/api/usuarios/perfil', async (req, res) => {
             return res.status(401).json({ error: 'Token no proporcionado.' });
         }
 
-        // Verificar token para obtener el id del usuario
+        // Decodificar el token para extraer el id del usuario
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret_key_patarunner');
         const id_usuario = decoded.id_usuario || decoded.id;
 
@@ -976,7 +976,7 @@ app.put('/api/usuarios/perfil', async (req, res) => {
             `UPDATE usuarios 
              SET nombre_completo = $1, carrera = $2 
              WHERE id_usuario = $3 
-             RETURNING id_usuario, nombre_completo, carrera, codigo_alumno, rol`,
+             RETURNING id_usuario, nombre_completo, carrera, codigo_alumno, id_rol`,
             [nombre_completo, carrera, id_usuario]
         );
 
