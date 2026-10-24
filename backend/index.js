@@ -1138,6 +1138,36 @@ app.put('/api/usuarios/foto', async (req, res) => {
         res.status(500).json({ error: 'Error interno al guardar la foto de perfil.' });
     }
 });
+// ==========================================
+// ANULAR / CANCELAR PEDIDO POR PARTE DEL RUNNER
+// ==========================================
+app.put('/api/pedidos/:id/anular', async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Se vuelve a colocar el pedido en estado 'Pendiente' y se libera el runner asignado
+        const result = await pool.query(
+            `UPDATE pedidos 
+             SET estado = 'Pendiente', id_runner = NULL 
+             WHERE id_pedido = $1 
+             RETURNING id_pedido, estado`,
+            [id]
+        );
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ error: 'Pedido no encontrado.' });
+        }
+
+        res.status(200).json({
+            success: true,
+            mensaje: 'El pedido fue liberado y volvió a estar disponible.',
+            pedido: result.rows[0]
+        });
+    } catch (error) {
+        console.error("Error en PUT /api/pedidos/:id/anular:", error.message);
+        res.status(500).json({ error: 'Error interno al anular la entrega.' });
+    }
+});
 // Iniciar servidor Node.js
 const PORT = process.env.PORT || port || 3000;
 
