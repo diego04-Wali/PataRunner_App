@@ -299,7 +299,7 @@ app.get('/api/usuarios/estado/:id', async (req, res) => {
 });
 
 // ==========================================
-// RUTA DE INICIO DE SESIÓN
+// RUTA DE INICIO DE SESIÓN (PERSISTENCIA DE FOTO)
 // ==========================================
 app.post('/api/login', async (req, res) => {
     try {
@@ -311,9 +311,10 @@ app.post('/api/login', async (req, res) => {
 
         const idLimpio = identificador.trim().toLowerCase();
 
-        // 1. Buscar al usuario en la base de datos
+        // 1. Buscar al usuario en la base de datos (incluyendo foto_perfil)
         const result = await pool.query(
-            `SELECT * FROM usuarios 
+            `SELECT id_usuario, codigo_alumno, correo_personal, nombre_completo, carrera, telefono, id_rol, is_blocked, verificado, foto_perfil 
+             FROM usuarios 
              WHERE LOWER(codigo_alumno) = $1 
                 OR LOWER(correo_personal) = $1 
                 OR telefono = $1`,
@@ -330,16 +331,16 @@ app.post('/api/login', async (req, res) => {
             return res.status(403).json({ error: 'Tu cuenta ha sido suspendida preventivamente.' });
         }
 
-        // 2. VALIDACIÓN DE CONTRASEÑA PARA ADMINISTRADOR
+        // 2. Validación de contraseña para Administrador
         if (usuario.id_rol === 3 || idLimpio === 'admin01') {
-            const ADMIN_PASSWORD_CORRECTA = '@dm1nPataRunner2026'; // 👈 Cambia esto por la contraseña que tú quieras usar
+            const ADMIN_PASSWORD_CORRECTA = '@dm1nPataRunner2026';
 
             if (!password || password !== ADMIN_PASSWORD_CORRECTA) {
                 return res.status(401).json({ error: 'Contraseña de administrador incorrecta.' });
             }
         }
 
-        // 3. Respuesta exitosa si pasa la validación
+        // 3. Respuesta exitosa con datos de sesión completos
         res.json({
             message: 'Acceso concedido',
             token: `token_patarunner_${usuario.id_usuario}`,

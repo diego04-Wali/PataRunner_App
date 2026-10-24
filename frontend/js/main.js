@@ -4785,16 +4785,36 @@ window.cargarDatosPerfil = async function() {
 
     const usuario = JSON.parse(usuarioStr);
     
-    // Validación de elementos antes de asignar valores
     const editNombre = document.getElementById('edit-nombre');
     const editCarrera = document.getElementById('edit-carrera');
     const displayName = document.getElementById('profile-display-name');
     const displayCarrera = document.getElementById('profile-display-carrera');
+    const imgPreview = document.getElementById('profile-img-preview');
 
     if (editNombre) editNombre.value = usuario.nombre_completo || '';
     if (editCarrera) editCarrera.value = usuario.carrera || '';
     if (displayName) displayName.textContent = usuario.nombre_completo || 'Estudiante';
     if (displayCarrera) displayCarrera.textContent = usuario.carrera || 'Estudiante UTP';
+    
+    // 1. Asignar la foto almacenada en memoria local
+    if (imgPreview && usuario.foto_perfil) {
+        imgPreview.src = usuario.foto_perfil;
+    }
+
+    // 2. Obtener estado actualizado del backend
+    try {
+        const res = await fetch(`/api/usuarios/estado/${usuario.id_usuario}`);
+        if (res.ok) {
+            const dataServidor = await res.json();
+            if (dataServidor.foto_perfil && imgPreview) {
+                imgPreview.src = dataServidor.foto_perfil;
+                usuario.foto_perfil = dataServidor.foto_perfil;
+                sessionStorage.setItem('usuario', JSON.stringify(usuario));
+            }
+        }
+    } catch (e) {
+        // Ignorar si falla la red
+    }
 };
 
 window.abrirModalEditarPerfil = function() {
