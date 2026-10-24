@@ -298,7 +298,7 @@ app.get('/api/usuarios/estado/:id', async (req, res) => {
 });
 
 // ==========================================
-// 2. RUTA DE INICIO DE SESIÓN
+// RUTA DE INICIO DE SESIÓN
 // ==========================================
 app.post('/api/login', async (req, res) => {
     try {
@@ -310,6 +310,7 @@ app.post('/api/login', async (req, res) => {
 
         const idLimpio = identificador.trim().toLowerCase();
 
+        // 1. Buscar al usuario en la base de datos
         const result = await pool.query(
             `SELECT * FROM usuarios 
              WHERE LOWER(codigo_alumno) = $1 
@@ -325,9 +326,19 @@ app.post('/api/login', async (req, res) => {
         const usuario = result.rows[0];
 
         if (usuario.is_blocked) {
-            return res.status(403).json({ error: 'Tu cuenta ha sido suspendida preventivamente por un reporte no resuelto.' });
+            return res.status(403).json({ error: 'Tu cuenta ha sido suspendida preventivamente.' });
         }
 
+        // 2. VALIDACIÓN DE CONTRASEÑA PARA ADMINISTRADOR
+        if (usuario.id_rol === 3 || idLimpio === 'admin01') {
+            const ADMIN_PASSWORD_CORRECTA = '@dm1nPataRunner2026'; // 👈 Cambia esto por la contraseña que tú quieras usar
+
+            if (!password || password !== ADMIN_PASSWORD_CORRECTA) {
+                return res.status(401).json({ error: 'Contraseña de administrador incorrecta.' });
+            }
+        }
+
+        // 3. Respuesta exitosa si pasa la validación
         res.json({
             message: 'Acceso concedido',
             token: `token_patarunner_${usuario.id_usuario}`,
