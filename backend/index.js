@@ -1205,6 +1205,37 @@ app.put('/api/pedidos/:id/cancelar-definitivo', async (req, res) => {
         res.status(500).json({ error: 'Error al cancelar el pedido.' });
     }
 });
+// ==========================================
+// CANCELAR PEDIDO DIRECTAMENTE POR EL ALUMNO
+// ==========================================
+app.put('/api/pedidos/:id/cancelar', async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Cambiamos el estado a 'Cancelado' solo si aún no ha sido entregado
+        const result = await pool.query(
+            `UPDATE pedidos 
+             SET estado = 'Cancelado' 
+             WHERE id_pedido = $1 AND estado = 'Pendiente'
+             RETURNING *`,
+            [id]
+        );
+
+        if (result.rowCount === 0) {
+            return res.status(400).json({ 
+                error: 'El pedido no se puede cancelar porque ya fue tomado por un Runner o no existe.' 
+            });
+        }
+
+        res.status(200).json({ 
+            success: true, 
+            mensaje: 'Pedido cancelado con éxito por el alumno.' 
+        });
+    } catch (error) {
+        console.error("Error al cancelar pedido por el alumno:", error);
+        res.status(500).json({ error: 'Error al procesar la cancelación.' });
+    }
+});
 // Iniciar servidor Node.js
 const PORT = process.env.PORT || port || 3000;
 
