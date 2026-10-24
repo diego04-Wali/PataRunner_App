@@ -5363,9 +5363,12 @@ window.cerrarModalResenaApp = function() {
 // Variable temporal para mantener la imagen comprimida antes de confirmar
 let fotoPerfilComprimidaTemp = null;
 
-// 1. SELECCIONAR Y COMPRIMIR LA IMAGEN (MUESTRA EL MODAL CON SWEETALERT2)
+// Variable global temporal para mantener la imagen comprimida
+window.fotoPerfilComprimidaTemp = null;
+
+// 1. SELECCIONAR Y COMPRIMIR LA IMAGEN (MUESTRA EL MODAL)
 window.previsualizarFotoPerfil = function(event) {
-    const file = event.target.files[0];
+    const file = event.target ? event.target.files[0] : null;
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
@@ -5408,16 +5411,16 @@ window.previsualizarFotoPerfil = function(event) {
             canvas.height = height;
             ctx.drawImage(img, 0, 0, width, height);
 
-            // Guardar Base64 comprimido
-            fotoPerfilComprimidaTemp = canvas.toDataURL('image/jpeg', 0.70);
+            // Guardar Base64 comprimido en la variable global
+            window.fotoPerfilComprimidaTemp = canvas.toDataURL('image/jpeg', 0.70);
 
-            // Mostrar el modal de previsualización interactiva con SweetAlert2
+            // Mostrar modal de confirmación
             Swal.fire({
                 title: '¿Usar esta foto de perfil?',
                 html: `
                     <div class="flex flex-col items-center justify-center my-2">
                         <div class="w-36 h-36 rounded-full overflow-hidden border-4 border-blue-600 shadow-md">
-                            <img src="${fotoPerfilComprimidaTemp}" class="w-full h-full object-cover" />
+                            <img src="${window.fotoPerfilComprimidaTemp}" class="w-full h-full object-cover" />
                         </div>
                     </div>
                 `,
@@ -5429,10 +5432,10 @@ window.previsualizarFotoPerfil = function(event) {
                 allowOutsideClick: false
             }).then((result) => {
                 if (result.isConfirmed) {
-                    guardarFotoPerfilConfirmada();
+                    window.guardarFotoPerfilConfirmada();
                 } else {
-                    fotoPerfilComprimidaTemp = null;
-                    event.target.value = ''; // Limpiar el input file
+                    window.fotoPerfilComprimidaTemp = null;
+                    if (event.target) event.target.value = '';
                 }
             });
         };
@@ -5441,12 +5444,13 @@ window.previsualizarFotoPerfil = function(event) {
     reader.readAsDataURL(file);
 };
 
-// ENVIAR Y GUARDAR LA FOTO CONFIRMADA EN EL SERVIDOR
-async function guardarFotoPerfilConfirmada() {
-    if (!fotoPerfilComprimidaTemp) return;
+// 2. GUARDAR LA FOTO EN EL SERVIDOR (GLOBAL PARA EVITAR ERRORES DE SCOPE)
+window.guardarFotoPerfilConfirmada = async function() {
+    if (!window.fotoPerfilComprimidaTemp) return;
 
     Swal.fire({
         title: 'Guardando foto...',
+        text: 'Sincronizando con el servidor...',
         allowOutsideClick: false,
         didOpen: () => { Swal.showLoading(); }
     });
@@ -5454,14 +5458,12 @@ async function guardarFotoPerfilConfirmada() {
     let token = sessionStorage.getItem('token') || localStorage.getItem('token');
     let usuarioStr = sessionStorage.getItem('usuario') || localStorage.getItem('usuario');
     let usuario = usuarioStr ? JSON.parse(usuarioStr) : {};
-    
-    // Obtenemos el ID del usuario directamente
     const idUsuarioLocal = usuario.id_usuario || usuario.id;
 
     if (!idUsuarioLocal) {
         Swal.fire({ 
             title: 'Error de sesión', 
-            text: 'No se pudo identificar al usuario. Inicia sesión nuevamente.', 
+            text: 'No se pudo identificar al usuario.', 
             icon: 'error', 
             confirmButtonColor: '#2563eb' 
         });
@@ -5477,38 +5479,32 @@ async function guardarFotoPerfilConfirmada() {
             },
             body: JSON.stringify({
                 id_usuario: idUsuarioLocal,
-                foto_perfil: fotoPerfilComprimidaTemp
+                foto_perfil: window.fotoPerfilComprimidaTemp
             })
         });
 
         const data = await res.json();
 
         if (res.ok) {
-            // 1. Actualizar imagen en la pantalla
+            // Actualizar vista previa en la interfaz
             const imgPreview = document.getElementById('profile-img-preview');
-            if (imgPreview) imgPreview.src = fotoPerfilComprimidaTemp;
+            if (imgPreview) imgPreview.src = window.fotoPerfilComprimidaTemp;
 
-            // 2. Actualizar las iniciales o la imagen en el contenedor principal si existe
-            const avatarContainer = document.getElementById('profile-initials');
-            if (avatarContainer && avatarContainer.parentElement) {
-                avatarContainer.parentElement.innerHTML = `<img src="${fotoPerfilComprimidaTemp}" class="w-full h-full object-cover rounded-full" id="profile-img-preview" />`;
-            }
-
-            // 3. Guardar en la memoria local (sessionStorage y localStorage)
-            usuario.foto_perfil = fotoPerfilComprimidaTemp;
+            // Actualizar sesión local
+            usuario.foto_perfil = window.fotoPerfilComprimidaTemp;
             sessionStorage.setItem('usuario', JSON.stringify(usuario));
             localStorage.setItem('usuario', JSON.stringify(usuario));
 
             Swal.fire({
                 title: '¡Foto actualizada!',
-                text: 'Tu foto de perfil se ha guardado con éxito.',
+                text: 'Tu foto de perfil se ha guardado correctamente.',
                 icon: 'success',
                 confirmButtonColor: '#2563eb'
             });
         } else {
             Swal.fire({ 
                 title: 'Error al guardar', 
-                text: data.error || 'El servidor no pudo procesar la imagen.', 
+                text: data.error || 'No se pudo procesar la imagen.', 
                 icon: 'error', 
                 confirmButtonColor: '#2563eb' 
             });
@@ -5522,6 +5518,6 @@ async function guardarFotoPerfilConfirmada() {
             confirmButtonColor: '#2563eb' 
         });
     } finally {
-        fotoPerfilComprimidaTemp = null;
+        window.fotoPerfilComprimidaTemp = null;
     }
-}
+};
