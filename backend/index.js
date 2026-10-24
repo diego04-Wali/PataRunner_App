@@ -678,6 +678,85 @@ cron.schedule('0 * * * *', async () => {
     }
 });
 
+// ==========================================
+// RUTAS DEL PANEL DE ADMINISTRACIÓN
+// ==========================================
+
+// 1. Obtener lista completa de usuarios
+app.get('/api/admin/usuarios', async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT id_usuario, codigo_alumno AS codigo, nombre_completo, carrera, id_rol, is_blocked, verificado 
+            FROM usuarios 
+            ORDER BY id_usuario DESC
+        `);
+        res.status(200).json(result.rows);
+    } catch (error) {
+        console.error("Error en GET /api/admin/usuarios:", error.message);
+        res.status(500).json({ error: 'Error al obtener la lista de usuarios.' });
+    }
+});
+
+// 2. Bloquear / Desbloquear cuenta de usuario
+app.patch('/api/admin/usuarios/:codigo/bloquear', async (req, res) => {
+    try {
+        const { codigo } = req.params;
+        const { blocked } = req.body;
+
+        await pool.query(
+            'UPDATE usuarios SET is_blocked = $1 WHERE codigo_alumno = $2',
+            [blocked, codigo]
+        );
+
+        res.status(200).json({ 
+            success: true, 
+            message: `Usuario ${blocked ? 'bloqueado' : 'desbloqueado'} con éxito.` 
+        });
+    } catch (error) {
+        console.error("Error al cambiar estado de bloqueo:", error.message);
+        res.status(500).json({ error: 'No se pudo actualizar el estado de bloqueo.' });
+    }
+});
+
+// 3. Asignar o quitar el rol de Runner
+app.patch('/api/admin/usuarios/:codigo/runner', async (req, res) => {
+    try {
+        const { codigo } = req.params;
+        const { isRunner } = req.body;
+        const nuevoRol = isRunner ? 2 : 1;
+
+        await pool.query(
+            'UPDATE usuarios SET id_rol = $1 WHERE codigo_alumno = $2',
+            [nuevoRol, codigo]
+        );
+
+        res.status(200).json({ 
+            success: true, 
+            message: `Rol actualizado a ${isRunner ? 'Runner' : 'Alumno'}.` 
+        });
+    } catch (error) {
+        console.error("Error al actualizar rol de runner:", error.message);
+        res.status(500).json({ error: 'No se pudo actualizar el rol.' });
+    }
+});
+
+// 4. Eliminar un usuario permanentemente
+app.delete('/api/admin/usuarios/:codigo', async (req, res) => {
+    try {
+        const { codigo } = req.params;
+
+        await pool.query('DELETE FROM usuarios WHERE codigo_alumno = $1', [codigo]);
+
+        res.status(200).json({ 
+            success: true, 
+            message: `Usuario ${codigo} eliminado de la base de datos.` 
+        });
+    } catch (error) {
+        console.error("Error al eliminar usuario:", error.message);
+        res.status(500).json({ error: 'No se pudo eliminar el usuario.' });
+    }
+});
+
 // Iniciar servidor Node.js
 const PORT = process.env.PORT || port || 3000;
 
