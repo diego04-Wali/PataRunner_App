@@ -5,6 +5,7 @@ import cron from 'node-cron';
 import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import fs from 'fs';
+import jwt from 'jsonwebtoken';
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -1071,6 +1072,65 @@ app.post('/api/resenas-app', async (req, res) => {
     } catch (error) {
         console.error("Error en POST /api/resenas-app:", error);
         res.status(500).json({ error: 'Error interno al guardar la reseña.' });
+    }
+});
+// ==========================================
+// ACTUALIZAR FOTO DE PERFIL (BASE64)
+// ==========================================
+app.put('/api/usuarios/foto', async (req, res) => {
+    try {
+        let id_usuario = null;
+
+        // Intentar extraer el ID desde el header Authorization
+        const authHeader = req.headers.authorization;
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            const token = authHeader.split(' ')[1];
+            if (token && token !== 'undefined' && token !== 'null') {
+                try {
+                    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret_key_patarunner');
+                    id_usuario = decoded.id_usuario || decoded.id || decoded.idUsuario;
+                } catch (e) {
+                    try {
+                        const decodedPayload = jwt.decode(token);
+                        if (decodedPayload) id_usuario = decodedPayload.id_usuario || decodedPayload.id || decodedPayload.idUsuario;
+                    } catch (err) {}
+                }
+            }
+        }
+
+        // Fallback al body si no vino en el token
+        if (!id_usuario && req.body.id_usuario) {
+            id_usuario = req.body.id_usuario;
+        }
+
+        if (!id_usuario) {
+            return res.status(401).json({ error: 'Sesión no válida o usuario no identificado.' });
+        }
+
+        const { foto_perfil } = req.body;
+        if (!foto_perfil) {
+            return res.status(400).json({ error: 'No se envió ninguna imagen.' });
+        }
+
+        const result = await pool.query(
+            `UPDATE usuarios 
+             SET foto_perfil = $1 
+             WHERE id_usuario = $2 
+             RETURNING id_usuario, foto_perfil`,
+            [foto_perfil, id_usuario]
+        );
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ error: 'Usuario no encontrado.' });
+        }
+
+        res.status(200).json({
+            mensaje: 'Foto de perfil actualizada correctamente.',
+            usuario: result.rows[0]
+        });
+    } catch (error) {
+        console.error("Error en PUT /api/usuarios/foto:", error);
+        res.status(500).json({ error: 'Error interno al guardar la foto de perfil.' });
     }
 });
 // Iniciar servidor Node.js
