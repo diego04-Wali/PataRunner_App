@@ -5360,23 +5360,22 @@ window.cerrarModalResenaApp = function() {
         modal.classList.remove('flex');
     }
 };
-// ==========================================
-// PREVISUALIZAR, COMPRIMIR Y SUBIR FOTO DE PERFIL
-// ==========================================
-window.previsualizarFotoPerfil = async function(event) {
+// Variable temporal para mantener la imagen comprimida antes de confirmar
+let fotoPerfilComprimidaTemp = null;
+
+// 1. SELECCIONAR Y COMPRIMIR LA IMAGEN (MUESTRA EL MODAL CON SWEETALERT2)
+window.previsualizarFotoPerfil = function(event) {
     const file = event.target.files[0];
     if (!file) return;
 
-    // Validar que sea un archivo de imagen
     if (!file.type.startsWith('image/')) {
         Swal.fire({ title: 'Error', text: 'Selecciona un archivo de imagen válido.', icon: 'error', confirmButtonColor: '#2563eb' });
         return;
     }
 
-    // Mostramos aviso de compresión si la foto es pesada
     Swal.fire({
         title: 'Procesando imagen...',
-        text: 'Optimizando tu foto para el perfil',
+        text: 'Optimizando foto para previsualización',
         allowOutsideClick: false,
         didOpen: () => { Swal.showLoading(); }
     });
@@ -5384,8 +5383,8 @@ window.previsualizarFotoPerfil = async function(event) {
     const reader = new FileReader();
     reader.onload = function(e) {
         const img = new Image();
-        img.onload = async function() {
-            // Redimensionar a un máximo de 500x500 px (ideal para avatar de perfil)
+        img.onload = function() {
+            // Redimensionar a máximo 500x500 px
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
             const maxSize = 500;
@@ -5409,56 +5408,92 @@ window.previsualizarFotoPerfil = async function(event) {
             canvas.height = height;
             ctx.drawImage(img, 0, 0, width, height);
 
-            // Generar Base64 comprimido en JPEG al 70% de calidad
-            const base64Comprimido = canvas.toDataURL('image/jpeg', 0.70);
+            // Guardar Base64 comprimido
+            fotoPerfilComprimidaTemp = canvas.toDataURL('image/jpeg', 0.70);
 
-            // Actualizar la vista previa inmediatamente
-            const imgPreview = document.getElementById('profile-img-preview');
-            if (imgPreview) imgPreview.src = base64Comprimido;
-
-            // Obtener credenciales del usuario
-            let token = localStorage.getItem('token') || sessionStorage.getItem('token');
-            let usuarioStr = localStorage.getItem('usuario') || sessionStorage.getItem('usuario');
-            let usuario = usuarioStr ? JSON.parse(usuarioStr) : {};
-            const idUsuarioLocal = usuario.id_usuario || usuario.id;
-
-            try {
-                const res = await fetch('/api/usuarios/foto', {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': token ? `Bearer ${token}` : ''
-                    },
-                    body: JSON.stringify({
-                        id_usuario: idUsuarioLocal,
-                        foto_perfil: base64Comprimido
-                    })
-                });
-
-                const data = await res.json();
-
-                if (res.ok) {
-                    Swal.fire({
-                        title: '¡Foto actualizada!',
-                        text: 'Tu foto de perfil se ha guardado correctamente.',
-                        icon: 'success',
-                        timer: 2000,
-                        showConfirmButton: false
-                    });
-
-                    // Actualizar memoria local de la sesión
-                    usuario.foto_perfil = base64Comprimido;
-                    if (localStorage.getItem('usuario')) localStorage.setItem('usuario', JSON.stringify(usuario));
-                    if (sessionStorage.getItem('usuario')) sessionStorage.setItem('usuario', JSON.stringify(usuario));
+            // Mostrar el modal de previsualización interactiva con SweetAlert2
+            Swal.fire({
+                title: '¿Usar esta foto de perfil?',
+                html: `
+                    <div class="flex flex-col items-center justify-center my-2">
+                        <div class="w-36 h-36 rounded-full overflow-hidden border-4 border-blue-600 shadow-md">
+                            <img src="${fotoPerfilComprimidaTemp}" class="w-full h-full object-cover" />
+                        </div>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonColor: '#2563eb',
+                cancelButtonColor: '#dc2626',
+                confirmButtonText: 'Sí, guardar foto',
+                cancelButtonText: 'Cancelar',
+                allowOutsideClick: false
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    guardarFotoPerfilConfirmada();
                 } else {
-                    Swal.fire({ title: 'Error', text: data.error || 'No se pudo guardar la foto.', icon: 'error', confirmButtonColor: '#2563eb' });
+                    fotoPerfilComprimidaTemp = null;
+                    event.target.value = ''; // Limpiar el input file
                 }
-            } catch (err) {
-                console.error('Error al subir foto de perfil:', err);
-                Swal.fire({ title: 'Error de conexión', text: 'Ocurrió un error al conectar con el servidor.', icon: 'error', confirmButtonColor: '#2563eb' });
-            }
+            });
         };
         img.src = e.target.result;
     };
     reader.readAsDataURL(file);
 };
+
+// 2. ENVIAR Y GUARDAR LA FOTO CONFIRMADA EN EL SERVIDOR
+async function guardarFotoPerfilConfirmada() {
+    if (!fotoPerfilComprimidaTemp) return;
+
+    Swal.fire({
+        title: 'Guardando foto...',
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading(); }
+    });
+
+    let token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    let usuarioStr = localStorage.getItem('usuario') || sessionStorage.getItem('usuario');
+    let usuario = usuarioStr ? JSON.parse(usuarioStr) : {};
+    const idUsuarioLocal = usuario.id_usuario || usuario.id;
+
+    try {
+        const res = await fetch('/api/usuarios/foto', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': token ? `Bearer ${token}` : ''
+            },
+            body: JSON.stringify({
+                id_usuario: idUsuarioLocal,
+                foto_perfil: fotoPerfilComprimidaTemp
+            })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            // Actualizar vista previa del perfil en la página
+            const imgPreview = document.getElementById('profile-img-preview');
+            if (imgPreview) imgPreview.src = fotoPerfilComprimidaTemp;
+
+            // Actualizar la memoria local del navegador
+            usuario.foto_perfil = fotoPerfilComprimidaTemp;
+            if (localStorage.getItem('usuario')) localStorage.setItem('usuario', JSON.stringify(usuario));
+            if (sessionStorage.getItem('usuario')) sessionStorage.setItem('usuario', JSON.stringify(usuario));
+
+            Swal.fire({
+                title: '¡Foto actualizada!',
+                text: 'Tu foto de perfil ha sido guardada con éxito.',
+                icon: 'success',
+                confirmButtonColor: '#2563eb'
+            });
+        } else {
+            Swal.fire({ title: 'Error', text: data.error || 'No se pudo guardar la foto.', icon: 'error', confirmButtonColor: '#2563eb' });
+        }
+    } catch (err) {
+        console.error('Error al subir foto de perfil:', err);
+        Swal.fire({ title: 'Error de conexión', text: 'Ocurrió un error al conectar con el servidor.', icon: 'error', confirmButtonColor: '#2563eb' });
+    } finally {
+        fotoPerfilComprimidaTemp = null;
+    }
+}
