@@ -713,6 +713,77 @@
               </form>
           </div>
       </div>
+      <!-- ===== MODAL: EDITAR MIS DATOS ===== -->
+      <div id="modal-editar-perfil" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[99] flex items-center justify-center p-4">
+          <div class="bg-white rounded-3xl w-full max-w-sm p-6 space-y-4 shadow-2xl">
+              <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                  <h3 class="text-base font-bold text-slate-800">Editar Perfil</h3>
+                  <button type="button" onclick="cerrarModalEditarPerfil()" class="text-slate-400 hover:text-slate-600">
+                      <i data-lucide="x" class="w-5 h-5"></i>
+                  </button>
+              </div>
+              <form onsubmit="guardarPerfilUsuario(event)" class="space-y-3">
+                  <div>
+                      <label class="text-[11px] font-semibold text-slate-600 block mb-1">Nombre Completo</label>
+                      <input type="text" id="edit-nombre" required class="w-full p-3 border border-slate-300 rounded-xl text-xs bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-600">
+                  </div>
+                  <div>
+                      <label class="text-[11px] font-semibold text-slate-600 block mb-1">Carrera Profesional</label>
+                      <input type="text" id="edit-carrera" required class="w-full p-3 border border-slate-300 rounded-xl text-xs bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-600">
+                  </div>
+                  <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-xl transition-colors shadow">
+                      Guardar Cambios
+                  </button>
+              </form>
+          </div>
+      </div>
+
+      <!-- ===== MODAL: REPORTAR PROBLEMA ===== -->
+      <div id="modal-reportar-incidencia" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[99] flex items-center justify-center p-4">
+          <div class="bg-white rounded-3xl w-full max-w-sm p-6 space-y-4 shadow-2xl">
+              <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                  <h3 class="text-base font-bold text-slate-800">Reportar un Problema</h3>
+                  <button type="button" onclick="cerrarModalReporte()" class="text-slate-400 hover:text-slate-600">
+                      <i data-lucide="x" class="w-5 h-5"></i>
+                  </button>
+              </div>
+              <form id="form-nuevo-reporte" class="space-y-3">
+                  <div>
+                      <label class="text-[11px] font-semibold text-slate-600 block mb-1">Detalla el inconveniente</label>
+                      <textarea id="input-motivo-reporte" rows="4" required placeholder="Describe lo sucedido brevemente..." class="w-full p-3 border border-slate-300 rounded-xl text-xs bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-600 resize-none"></textarea>
+                  </div>
+                  <button type="submit" class="w-full py-3 bg-red-600 hover:bg-red-700 text-white font-semibold text-xs rounded-xl transition-colors shadow">
+                      Enviar Reporte
+                  </button>
+              </form>
+          </div>
+      </div>
+
+      <!-- ===== MODAL: CALIFICAR LA APLICACIÓN ===== -->
+      <div id="modal-resena-app" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[99] flex items-center justify-center p-4">
+          <div class="bg-white rounded-3xl w-full max-w-sm p-6 space-y-4 shadow-2xl text-center">
+              <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                  <h3 class="text-base font-bold text-slate-800">Calificar PataRunner</h3>
+                  <button type="button" onclick="cerrarModalResenaApp()" class="text-slate-400 hover:text-slate-600">
+                      <i data-lucide="x" class="w-5 h-5"></i>
+                  </button>
+              </div>
+              <form id="form-resena-app" class="space-y-3">
+                  <p class="text-xs text-slate-500">¿Qué tal ha sido tu experiencia usando la plataforma?</p>
+                  <div class="flex justify-center gap-2 my-2">
+                      <button type="button" data-value="1" class="star-app-btn text-2xl text-slate-300 hover:text-amber-400 transition-colors">★</button>
+                      <button type="button" data-value="2" class="star-app-btn text-2xl text-slate-300 hover:text-amber-400 transition-colors">★</button>
+                      <button type="button" data-value="3" class="star-app-btn text-2xl text-slate-300 hover:text-amber-400 transition-colors">★</button>
+                      <button type="button" data-value="4" class="star-app-btn text-2xl text-slate-300 hover:text-amber-400 transition-colors">★</button>
+                      <button type="button" data-value="5" class="star-app-btn text-2xl text-slate-300 hover:text-amber-400 transition-colors">★</button>
+                  </div>
+                  <textarea id="input-comentario-resena" rows="3" placeholder="Déjanos una sugerencia u opinión (opcional)..." class="w-full p-3 border border-slate-300 rounded-xl text-xs bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-600 resize-none text-left"></textarea>
+                  <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-xl transition-colors shadow">
+                      Enviar Opinión
+                  </button>
+              </form>
+          </div>
+      </div>
 
     </div>
   </div>
