@@ -1145,10 +1145,10 @@ app.put('/api/pedidos/:id/anular', async (req, res) => {
     try {
         const { id } = req.params;
 
-        // Se vuelve a colocar el pedido en estado 'Pendiente' y se libera el runner asignado
+        // Marcamos el pedido como 'Cancelado' para que el cliente reciba la alerta
         const result = await pool.query(
             `UPDATE pedidos 
-             SET estado = 'Pendiente', id_runner = NULL 
+             SET estado = 'Cancelado' 
              WHERE id_pedido = $1 
              RETURNING id_pedido, estado`,
             [id]
@@ -1160,7 +1160,7 @@ app.put('/api/pedidos/:id/anular', async (req, res) => {
 
         res.status(200).json({
             success: true,
-            mensaje: 'El pedido fue liberado y volvió a estar disponible.',
+            mensaje: 'El pedido fue cancelado y el cliente ha sido notificado.',
             pedido: result.rows[0]
         });
     } catch (error) {

@@ -2778,7 +2778,7 @@ if (pedidoHoy.estado === 'Pendiente') {
     } catch (error) {
         // Silencioso para no ensuciar la consola
     }
-}, 5000);
+}, 1500);
 
 // =================================================================
 // --- NUEVAS FUNCIONES: DIRECTORIO DE TIENDAS PARA EL RUNNER ---
