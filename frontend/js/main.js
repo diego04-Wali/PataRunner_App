@@ -4448,10 +4448,15 @@ window.eliminarProductoAdmin = async function(idProducto) {
 };
 // --- FUNCIONES PARA EL MODAL DE REPORTES ---
 window.abrirModalReporte = function() {
+    const inputMotivo = document.getElementById('input-motivo-reporte');
+    if (inputMotivo) {
+        inputMotivo.value = '';
+    }
+
     const modal = document.getElementById('modal-reportar-incidencia');
     if (modal) {
         modal.classList.remove('hidden');
-        modal.style.display = 'flex';
+        modal.classList.add('flex');
     }
 };
 
@@ -4721,9 +4726,31 @@ window.guardarPerfilUsuario = async function(e) {
     }
 };
 // Abrir y cerrar modal de editar perfil
+window.cargarDatosPerfil = async function() {
+    const usuarioStr = sessionStorage.getItem('usuario') || localStorage.getItem('usuario');
+    if (!usuarioStr) return;
+
+    const usuario = JSON.parse(usuarioStr);
+    
+    // Validación de elementos antes de asignar valores
+    const editNombre = document.getElementById('edit-nombre');
+    const editCarrera = document.getElementById('edit-carrera');
+    const displayName = document.getElementById('profile-display-name');
+    const displayCarrera = document.getElementById('profile-display-carrera');
+
+    if (editNombre) editNombre.value = usuario.nombre_completo || '';
+    if (editCarrera) editCarrera.value = usuario.carrera || '';
+    if (displayName) displayName.textContent = usuario.nombre_completo || 'Estudiante';
+    if (displayCarrera) displayCarrera.textContent = usuario.carrera || 'Estudiante UTP';
+};
+
 window.abrirModalEditarPerfil = function() {
+    cargarDatosPerfil();
     const modal = document.getElementById('modal-editar-perfil');
-    if (modal) modal.classList.remove('hidden');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
 };
 
 window.cerrarModalEditarPerfil = function() {
@@ -5027,7 +5054,12 @@ window.abrirModalResenaApp = function() {
         btn.classList.remove('text-amber-400');
         btn.classList.add('text-slate-300');
     });
-    document.getElementById('input-comentario-resena').value = '';
+
+    // Validación segura para no romper la app si el input no existe
+    const inputComentario = document.getElementById('input-comentario-resena');
+    if (inputComentario) {
+        inputComentario.value = '';
+    }
 
     const modal = document.getElementById('modal-resena-app');
     if (modal) {
