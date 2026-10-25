@@ -712,17 +712,19 @@ cron.schedule('0 * * * *', async () => {
 // ==========================================
 
 // 1. Obtener lista completa de usuarios
+// GET: Obtener lista de usuarios para el panel Admin (Administradores primero)
 app.get('/api/admin/usuarios', async (req, res) => {
     try {
         const result = await pool.query(`
             SELECT id_usuario, codigo_alumno AS codigo, nombre_completo, carrera, id_rol, is_blocked, verificado 
             FROM usuarios 
-            ORDER BY id_usuario DESC
+            ORDER BY CASE WHEN id_rol = 3 THEN 0 ELSE 1 END, id_usuario ASC
         `);
+
         res.status(200).json(result.rows);
     } catch (error) {
-        console.error("Error en GET /api/admin/usuarios:", error.message);
-        res.status(500).json({ error: 'Error al obtener la lista de usuarios.' });
+        console.error("Error al obtener usuarios en admin:", error);
+        res.status(500).json({ error: 'Error al consultar la base de datos.' });
     }
 });
 
