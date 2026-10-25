@@ -2587,62 +2587,43 @@ setInterval(async () => {
     if (!userStr) return;
     const userData = JSON.parse(userStr);
 
-// 🚨 VERIFICACIÓN DE SEGURIDAD EN TIEMPO REAL
-    try {
-        const resEstado = await fetch(`/api/usuarios/estado/${userData.id_usuario}`);
-        if (resEstado.ok) {
-            const dataEstado = await resEstado.json();
+// 🚨 VERIFICACIÓN DE SEGURIDAD EN TIEMPO REAL EN EL VIGILANTE
+try {
+    const resEstado = await fetch(`/api/usuarios/estado/${userData.id_usuario}`);
+    if (resEstado.ok) {
+        const dataEstado = await resEstado.json();
+        
+        // 1. Si la cuenta fue bloqueada por completo
+        if (dataEstado.blocked) {
+            sessionStorage.clear();
+            localStorage.clear();
+            Swal.fire({
+                title: 'Cuenta suspendida',
+                text: 'Tu cuenta ha sido suspendida por un administrador.',
+                icon: 'error',
+                confirmButtonColor: '#2563eb',
+                confirmButtonText: 'Aceptar'
+            }).then(() => { window.location.reload(); });
+            return;
+        }
+
+        // 2. 🔄 SINCRONIZACIÓN AUTOMÁTICA DE ROL Y ESTADOS EN TIEMPO REAL
+        if (userData.id_rol !== dataEstado.id_rol || userData.bloqueado_runner !== dataEstado.bloqueado_runner) {
+            userData.id_rol = dataEstado.id_rol;
+            userData.bloqueado_runner = dataEstado.bloqueado_runner;
             
-            // 1. Si la cuenta fue bloqueada por completo
-if (dataEstado.blocked) {
-    // Limpiamos absolutamente toda la memoria del navegador
-    sessionStorage.clear();
-    localStorage.clear();
+            sessionStorage.setItem('usuario', JSON.stringify(userData));
+            localStorage.setItem('usuario', JSON.stringify(userData));
 
-    Swal.fire({
-        title: 'Cuenta suspendida',
-        text: 'Tu cuenta ha sido suspendida por un administrador.',
-        icon: 'error',
-        confirmButtonColor: '#2563eb',
-        confirmButtonText: 'Aceptar',
-        allowOutsideClick: false,
-        allowEscapeKey: false
-    }).then(() => {
-        window.location.reload(); // Recarga la página enviándolo directamente al Login
-    });
-    return;
-}
-
-            // 2. Si se le revocó el rol de Runner estando activo
-            if (userData.id_rol === 2 && dataEstado.id_rol === 1) {
-                Swal.fire({
-                    title: 'Permisos revocados',
-                    text: 'Un administrador ha revocado tus permisos de Runner. Tu sesión se cerrará.',
-                    icon: 'warning',
-                    confirmButtonColor: '#2563eb',
-                    confirmButtonText: 'Aceptar'
-                }).then(() => {
-                    sessionStorage.clear();
-                    window.location.reload();
-                });
-                return;
-            }
-
-            // 3. 🔄 SINCRONIZAR CAMBIOS EN TIEMPO REAL (Si el Admin habilitó/deshabilitó permisos)
-            if (userData.bloqueado_runner !== dataEstado.bloqueado_runner || userData.id_rol !== dataEstado.id_rol) {
-                userData.bloqueado_runner = dataEstado.bloqueado_runner;
-                userData.id_rol = dataEstado.id_rol;
-                sessionStorage.setItem('usuario', JSON.stringify(userData));
-                
-                // Actualizamos la interfaz del botón
-                if (typeof aplicarEstadoRunner === 'function') {
-                    aplicarEstadoRunner();
-                }
+            // Actualizamos la interfaz inmediatamente sin mostrar alerta falsa
+            if (typeof aplicarEstadoRunner === 'function') {
+                aplicarEstadoRunner();
             }
         }
-    } catch (e) {
-        // Silencioso si hay lag de red
     }
+} catch (e) {
+    // Silencioso si hay lag de red
+}
     // 1. === VIGILANTE PARA EL RUNNER (¡NUEVO!) ===
     if (typeof activeRole !== 'undefined' && activeRole === 'runner') {
         try {
@@ -3055,101 +3036,105 @@ if (runnerCheckbox && activateRunnerBtn) {
         }
     });
 
-   // 3. CONECTANDO A TU BACKEND REAL
-activateRunnerBtn.addEventListener('click', async () => {
-    const userStr = sessionStorage.getItem('usuario');
-    const token = sessionStorage.getItem('token');
+// 3. CONECTANDO A TU BACKEND REAL
+    activateRunnerBtn.addEventListener('click', async () => {
+        const userStr = sessionStorage.getItem('usuario');
+        const token = sessionStorage.getItem('token');
 
-    if (!userStr || !token) {
-        Swal.fire({
-            title: 'Error de sesión',
-            text: 'Vuelve a iniciar sesión.',
-            icon: 'warning',
-            confirmButtonColor: '#2563eb',
-            confirmButtonText: 'Aceptar'
-        });
-        return;
-    }
-
-    let userData = JSON.parse(userStr);
-
-    // 🚨 SI ESTÁ BLOQUEADO EXPLÍCITAMENTE
-    if (userData.bloqueado_runner === true) {
-        Swal.fire({
-            title: 'Acceso restringido',
-            text: 'Un administrador ha revocado y restringido tu acceso para registrarte como Runner.',
-            icon: 'error',
-            confirmButtonColor: '#2563eb',
-            confirmButtonText: 'Aceptar'
-        });
-        return;
-    }
-
-    activateRunnerBtn.disabled = true;
-    activateRunnerBtn.textContent = "Activando...";
-
-    try {
-        const respuesta = await fetch(`/api/usuarios/activar-runner`, {
-            method: 'PUT',
-            headers: { 
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            }
-        });
-
-        if (respuesta.ok) {
-            // Actualizamos la sesión local con el nuevo rol al instante
-            userData.id_rol = 2; 
-            userData.bloqueado_runner = false;
-            sessionStorage.setItem('usuario', JSON.stringify(userData));
-            localStorage.setItem('usuario', JSON.stringify(userData));
-            
-            // Cerramos la ventana modal de postulación
-            const modalPostular = document.getElementById('postular-runner');
-            if (modalPostular) {
-                modalPostular.classList.add('hidden');
-                modalPostular.style.display = 'none';
-            }
-            
-            // Reaplicamos el estado visual
-            aplicarEstadoRunner();
-
+        if (!userStr || !token) {
             Swal.fire({
-                title: '¡Felicidades!',
-                text: 'Ahora eres Runner oficial.',
-                icon: 'success',
+                title: 'Error de sesión',
+                text: 'Vuelve a iniciar sesión.',
+                icon: 'warning',
                 confirmButtonColor: '#2563eb',
                 confirmButtonText: 'Aceptar'
-            }).then(() => {
-                isRunner = true;
-                sessionStorage.setItem('isRunnerStatus', 'true');
-                if (typeof setActiveRole === 'function') {
-                    setActiveRole('runner'); 
+            });
+            return;
+        }
+
+        let userData = JSON.parse(userStr);
+
+        // 🚨 SI ESTÁ BLOQUEADO EXPLÍCITAMENTE
+        if (userData.bloqueado_runner === true) {
+            Swal.fire({
+                title: 'Acceso restringido',
+                text: 'Un administrador ha revocado y restringido tu acceso para registrarte como Runner.',
+                icon: 'error',
+                confirmButtonColor: '#2563eb',
+                confirmButtonText: 'Aceptar'
+            });
+            return;
+        }
+
+        activateRunnerBtn.disabled = true;
+        activateRunnerBtn.textContent = "Activando...";
+
+        try {
+            const respuesta = await fetch(`/api/usuarios/activar-runner`, {
+                method: 'PUT',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
                 }
             });
-        } else {
-            const dataErr = await respuesta.json();
+
+            if (respuesta.ok) {
+                const dataRespuesta = await respuesta.json();
+
+                // Actualizamos los objetos de sesión con la respuesta directa de la BD
+                userData.id_rol = 2; 
+                userData.bloqueado_runner = false;
+                sessionStorage.setItem('usuario', JSON.stringify(userData));
+                localStorage.setItem('usuario', JSON.stringify(userData));
+                
+                // Ocultar modal de postulación
+                const modalPostular = document.getElementById('postular-runner');
+                if (modalPostular) {
+                    modalPostular.classList.add('hidden');
+                    modalPostular.style.display = 'none';
+                }
+                
+                // Aplicar estado visual
+                if (typeof aplicarEstadoRunner === 'function') {
+                    aplicarEstadoRunner();
+                }
+
+                Swal.fire({
+                    title: '¡Felicidades!',
+                    text: 'Ahora eres Runner oficial.',
+                    icon: 'success',
+                    confirmButtonColor: '#2563eb',
+                    confirmButtonText: 'Aceptar'
+                }).then(() => {
+                    isRunner = true;
+                    sessionStorage.setItem('isRunnerStatus', 'true');
+                    if (typeof setActiveRole === 'function') {
+                        setActiveRole('runner'); 
+                    }
+                });
+            } else {
+                const dataErr = await respuesta.json();
+                Swal.fire({
+                    title: 'Error',
+                    text: dataErr.error || 'Error al actualizar tu perfil en el servidor.',
+                    icon: 'error',
+                    confirmButtonColor: '#2563eb'
+                });
+                activateRunnerBtn.disabled = false;
+                activateRunnerBtn.textContent = "Activar modo runner";
+            }
+        } catch (error) {
+            console.error("Error de conexión:", error);
             Swal.fire({
-                title: 'Error',
-                text: dataErr.error || 'Error al actualizar tu perfil en el servidor.',
+                title: 'Error de conexión',
+                text: 'Error de conexión con el servidor.',
                 icon: 'error',
                 confirmButtonColor: '#2563eb'
             });
             activateRunnerBtn.disabled = false;
             activateRunnerBtn.textContent = "Activar modo runner";
         }
-    } catch (error) {
-        console.error("Error de conexión:", error);
-        Swal.fire({
-            title: 'Error de conexión',
-            text: 'Error de conexión con el servidor.',
-            icon: 'error',
-            confirmButtonColor: '#2563eb'
-        });
-        activateRunnerBtn.disabled = false;
-        activateRunnerBtn.textContent = "Activar modo runner";
-    }
-});
+    });
 }
 
 async function cargarHistorialRunner() {
