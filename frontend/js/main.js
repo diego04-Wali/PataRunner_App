@@ -3036,12 +3036,12 @@ if (runnerCheckbox && activateRunnerBtn) {
         }
     });
 
-// 3. CONECTANDO A TU BACKEND REAL (VERSIÓN RESISTENTE A FALLOS DE MEMORIA)
+// 3. CONECTANDO A TU BACKEND REAL
     activateRunnerBtn.addEventListener('click', async () => {
         let token = sessionStorage.getItem('token') || localStorage.getItem('token');
         let userStr = sessionStorage.getItem('usuario') || localStorage.getItem('usuario');
 
-        if (!userStr || !token) {
+        if (!userStr) {
             Swal.fire({
                 title: 'Error de sesión',
                 text: 'No se encontró tu sesión. Vuelve a iniciar sesión.',
@@ -3054,7 +3054,7 @@ if (runnerCheckbox && activateRunnerBtn) {
 
         let userData = JSON.parse(userStr);
 
-        // 🚨 SI ESTÁ BLOQUEADO EXPLÍCITAMENTE
+        // 🚨 SI ESTÁ BLOQUEADO EXPLÍCITAMENTE POR ADMIN
         if (userData.bloqueado_runner === true) {
             Swal.fire({
                 title: 'Acceso restringido',
@@ -3074,14 +3074,17 @@ if (runnerCheckbox && activateRunnerBtn) {
                 method: 'PUT',
                 headers: { 
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
+                    'Authorization': token ? `Bearer ${token}` : ''
+                },
+                body: JSON.stringify({
+                    id_usuario: userData.id_usuario || userData.id
+                })
             });
 
             const dataRespuesta = await respuesta.json();
 
-            if (respuesta.ok) {
-                // Actualizamos los objetos de sesión con la respuesta
+            if (respuesta.ok && dataRespuesta.success) {
+                // Actualizamos los objetos de sesión con la respuesta confirmada de la BD
                 userData.id_rol = 2; 
                 userData.bloqueado_runner = false;
                 
@@ -3099,7 +3102,7 @@ if (runnerCheckbox && activateRunnerBtn) {
                     modalPostular.style.display = 'none';
                 }
                 
-                // Aplicar estado visual
+                // Aplicar cambio visual inmediato
                 if (typeof aplicarEstadoRunner === 'function') {
                     aplicarEstadoRunner();
                 }
@@ -3127,12 +3130,12 @@ if (runnerCheckbox && activateRunnerBtn) {
             console.error("Error de conexión al activar runner:", error);
             Swal.fire({
                 title: 'Error de conexión',
-                text: 'No se pudo conectar con el servidor. Inténtalo de nuevo.',
+                text: 'No se pudo conectar con el servidor.',
                 icon: 'error',
                 confirmButtonColor: '#2563eb'
             });
         } finally {
-            // Restaurar botón siempre en caso de cualquier resultado
+            // Restaurar botón siempre
             activateRunnerBtn.disabled = false;
             activateRunnerBtn.textContent = "Activar modo runner";
         }

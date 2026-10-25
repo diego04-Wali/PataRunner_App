@@ -248,21 +248,40 @@ app.post('/api/usuarios/verificar-otp', async (req, res) => {
 // ==========================================
 // RUTA: ACTIVAR MODO RUNNER
 // ==========================================
-app.put('/api/usuarios/activar-runner', verificarToken, async (req, res) => {
+app.put('/api/usuarios/activar-runner', async (req, res) => {
     try {
-        const identificador = req.user?.uid || req.user?.user_id;
+        let id_usuario = req.body.id_usuario;
 
+        // Si no viene en el body, intentar extraerlo del token Bearer
+        const authHeader = req.headers.authorization;
+        if (!id_usuario && authHeader && authHeader.startsWith('Bearer ')) {
+            const token = authHeader.split(' ')[1];
+            if (token && token.startsWith('token_patarunner_')) {
+                id_usuario = token.replace('token_patarunner_', '');
+            }
+        }
+
+        if (!id_usuario) {
+            return res.status(400).json({ error: 'No se pudo identificar la ID del usuario.' });
+        }
+
+        // Actualizamos explícitamente el id_rol a 2 (Runner) en la BD
         const result = await pool.query(
             `UPDATE usuarios 
-             SET id_rol = 2 
-             WHERE firebase_uid = $1 OR codigo_alumno = $2 OR correo_personal = $3
-             RETURNING id_usuario, id_rol`,
-            [identificador, identificador, identificador]
+             SET id_rol = 2, bloqueado_runner = false 
+             WHERE id_usuario = $1
+             RETURNING id_usuario, id_rol, bloqueado_runner`,
+            [id_usuario]
         );
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ error: 'Usuario no encontrado en la base de datos.' });
+        }
 
         res.status(200).json({ 
             success: true, 
-            message: '¡Ahora eres un Runner oficial!' 
+            message: '¡Ahora eres un Runner oficial!',
+            usuario: result.rows[0]
         });
     } catch (error) {
         console.error('Error al activar rol de runner:', error);
