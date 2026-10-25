@@ -2986,43 +2986,54 @@ function aplicarEstadoRunner() {
     if (!userStr) return;
 
     const userData = JSON.parse(userStr);
-    
-    // VERIFICAMOS SI SU ROL ES 2 (RUNNER)
-    if (userData.id_rol === 2) { 
-        if (botonAbrirPostulacion) {
-        // 1. Bloqueamos el botón y quitamos la función del modal
-        botonAbrirPostulacion.disabled = true;
-        botonAbrirPostulacion.removeAttribute('onclick');
-        
-        // 2. Cambiamos el texto y el ícono
-        botonAbrirPostulacion.innerHTML = '<i data-lucide="check-circle" class="w-5 h-5"></i> Ya eres Runner';
-        
-        // 3. Usamos className para SOBREESCRIBIR todas las clases (esto evita conflictos con el diseño azul anterior)
-        botonAbrirPostulacion.className = 'w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-slate-50 text-slate-400 font-semibold cursor-not-allowed';
-    }
-        
-       if (tabRunner) {
-        // 1. Le quitamos el bloqueo nativo para que reciba clics
-        tabRunner.disabled = false;
-        
-        // 2. Le quitamos el icono del candado dejando solo el texto
-        tabRunner.innerHTML = 'Runner';
-        
-        // 3. SOBREESCRIBIMOS las clases: quitamos la opacidad y el texto gris, y le damos color oscuro interactivo
-        tabRunner.className = 'role-btn flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[11px] font-semibold text-slate-700 hover:bg-slate-200 cursor-pointer transition-colors';
-    }
-        
-        if (window.lucide) lucide.createIcons();
-        else if (userData.bloqueado_runner) {
+
+    // CASO A: Si el usuario fue bloqueado explícitamente por un administrador
+    if (userData.bloqueado_runner === true) {
         if (botonAbrirPostulacion) {
             botonAbrirPostulacion.disabled = true;
             botonAbrirPostulacion.removeAttribute('onclick');
             botonAbrirPostulacion.innerHTML = '<i data-lucide="lock" class="w-5 h-5"></i> Acceso restringido por Admin';
             botonAbrirPostulacion.className = 'w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-red-100 text-red-600 font-semibold cursor-not-allowed';
         }
+        if (tabRunner) {
+            tabRunner.disabled = true;
+            tabRunner.classList.add('opacity-50', 'cursor-not-allowed');
+        }
         if (window.lucide) lucide.createIcons();
+        return;
     }
+    
+    // CASO B: Si el usuario ya es Runner oficial (id_rol === 2)
+    if (userData.id_rol === 2) { 
+        if (botonAbrirPostulacion) {
+            botonAbrirPostulacion.disabled = true;
+            botonAbrirPostulacion.removeAttribute('onclick');
+            botonAbrirPostulacion.innerHTML = '<i data-lucide="check-circle" class="w-5 h-5"></i> Ya eres Runner';
+            botonAbrirPostulacion.className = 'w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-slate-50 text-slate-400 font-semibold cursor-not-allowed';
+        }
+        
+        if (tabRunner) {
+            tabRunner.disabled = false;
+            tabRunner.innerHTML = 'Runner';
+            tabRunner.className = 'role-btn flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[11px] font-semibold text-slate-700 hover:bg-slate-200 cursor-pointer transition-colors';
+        }
+        if (window.lucide) lucide.createIcons();
+        return;
     }
+
+    // CASO C: Si es un alumno normal que aún no se ha postulado
+    if (botonAbrirPostulacion) {
+        botonAbrirPostulacion.disabled = false;
+        botonAbrirPostulacion.setAttribute('onclick', "document.getElementById('postular-runner').classList.remove('hidden'); document.getElementById('postular-runner').style.display='flex';");
+        botonAbrirPostulacion.innerHTML = '<i data-lucide="zap" class="w-5 h-5"></i> Postularme como Runner';
+        botonAbrirPostulacion.className = 'w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors shadow-md';
+    }
+    if (tabRunner) {
+        tabRunner.disabled = true;
+        tabRunner.className = 'role-btn flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[11px] font-semibold text-slate-400 opacity-50 cursor-not-allowed transition-colors';
+        tabRunner.innerHTML = '<i data-lucide="lock" class="w-3 h-3"></i> Runner';
+    }
+    if (window.lucide) lucide.createIcons();
 }
 // Hacemos que la función sea global para que otros archivos (como tu auth.js) puedan usarla
 window.aplicarEstadoRunner = aplicarEstadoRunner;
@@ -3045,124 +3056,100 @@ if (runnerCheckbox && activateRunnerBtn) {
     });
 
    // 3. CONECTANDO A TU BACKEND REAL
-    activateRunnerBtn.addEventListener('click', async () => {
-        const userStr = sessionStorage.getItem('usuario');
-        const token = sessionStorage.getItem('token');
+activateRunnerBtn.addEventListener('click', async () => {
+    const userStr = sessionStorage.getItem('usuario');
+    const token = sessionStorage.getItem('token');
 
-        if (!userStr || !token) {
+    if (!userStr || !token) {
         Swal.fire({
-        title: 'Error de sesión',
-        text: 'Vuelve a iniciar sesión.',
-        icon: 'warning',
-        confirmButtonColor: '#2563eb',
-        confirmButtonText: 'Aceptar'
-        });
-        return;
-        }
-
-        let userData = JSON.parse(userStr);
-
-        // 🔄 Consultar el estado más reciente directamente desde la base de datos
-        try {
-            const resEstado = await fetch(`/api/usuarios/estado/${userData.id_usuario}`);
-            if (resEstado.ok) {
-                const dataEstado = await resEstado.json();
-                userData.bloqueado_runner = dataEstado.bloqueado_runner;
-                userData.id_rol = dataEstado.id_rol;
-                sessionStorage.setItem('usuario', JSON.stringify(userData));
-            }
-        } catch (e) {
-            console.error("No se pudo verificar el estado en vivo:", e);
-        }
-
-        // 🚨 SI SIGUE RESTRINGIDO EN LA BASE DE DATOS
-        if (userData.bloqueado_runner) {
-        Swal.fire({
-        title: 'Acceso restringido',
-        text: 'Un administrador ha revocado y restringido tu acceso para registrarte como Runner.',
-        icon: 'error',
-        confirmButtonColor: '#2563eb',
-        confirmButtonText: 'Aceptar'
-        });
-        return;
-}
-
-        activateRunnerBtn.disabled = true;
-        activateRunnerBtn.textContent = "Activando...";
-
-        try {
-            const respuesta = await fetch(`/api/usuarios/activar-runner`, {
-                method: 'PUT',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-
-            if (respuesta.ok) {
-                // Actualizamos la sesión local con el nuevo rol
-                userData.id_rol = 2; 
-                sessionStorage.setItem('usuario', JSON.stringify(userData));
-                
-                // Cerramos el modal
-                document.getElementById('postular-runner').classList.add('hidden');
-                document.getElementById('postular-runner').style.display = 'none';
-                
-                // Ejecutamos la función que ahora sí existe
-                aplicarEstadoRunner();
-                
-// Buscar el botón en la barra superior
-const btnRunnerTop = document.getElementById('role-btn-runner');
-
-if (btnRunnerTop) {
-    // 1. Quitarle el bloqueo nativo
-    btnRunnerTop.disabled = false;
-    
-    // 2. Quitar los colores de "bloqueado" (los que tienes en la línea 29)
-    btnRunnerTop.classList.remove('text-slate-400', 'opacity-50', 'cursor-not-allowed');
-    
-    // 3. Ponerle colores de botón normal y que cambie el cursor al pasar el mouse
-    btnRunnerTop.classList.add('text-slate-700', 'cursor-pointer', 'hover:bg-slate-200');
-}
-
-        Swal.fire({
-            title: '¡Felicidades!',
-            text: 'Ya eres Runner.',
-            icon: 'success',
+            title: 'Error de sesión',
+            text: 'Vuelve a iniciar sesión.',
+            icon: 'warning',
             confirmButtonColor: '#2563eb',
             confirmButtonText: 'Aceptar'
-        }).then(() => {
-            // 1. Actualizamos la memoria del navegador al instante sin recargar
-            isRunner = true;
-            sessionStorage.setItem('isRunnerStatus', 'true');
-            
-            // 2. Llevamos al usuario de regreso a la pantalla principal (Inicio)
-            if (typeof setActiveRole === 'function') {
-                setActiveRole('alumno'); 
+        });
+        return;
+    }
+
+    let userData = JSON.parse(userStr);
+
+    // 🚨 SI ESTÁ BLOQUEADO EXPLÍCITAMENTE
+    if (userData.bloqueado_runner === true) {
+        Swal.fire({
+            title: 'Acceso restringido',
+            text: 'Un administrador ha revocado y restringido tu acceso para registrarte como Runner.',
+            icon: 'error',
+            confirmButtonColor: '#2563eb',
+            confirmButtonText: 'Aceptar'
+        });
+        return;
+    }
+
+    activateRunnerBtn.disabled = true;
+    activateRunnerBtn.textContent = "Activando...";
+
+    try {
+        const respuesta = await fetch(`/api/usuarios/activar-runner`, {
+            method: 'PUT',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
             }
         });
-            } else {
-                Swal.fire({
-                    title: 'Error',
-                    text: 'Error al actualizar tu perfil en el servidor.',
-                    icon: 'error',
-                    confirmButtonColor: '#2563eb'
-                });
-                activateRunnerBtn.disabled = false;
-                activateRunnerBtn.textContent = "Activar modo runner";
+
+        if (respuesta.ok) {
+            // Actualizamos la sesión local con el nuevo rol al instante
+            userData.id_rol = 2; 
+            userData.bloqueado_runner = false;
+            sessionStorage.setItem('usuario', JSON.stringify(userData));
+            localStorage.setItem('usuario', JSON.stringify(userData));
+            
+            // Cerramos la ventana modal de postulación
+            const modalPostular = document.getElementById('postular-runner');
+            if (modalPostular) {
+                modalPostular.classList.add('hidden');
+                modalPostular.style.display = 'none';
             }
-        } catch (error) {
-            console.error("Error de conexión:", error);
+            
+            // Reaplicamos el estado visual
+            aplicarEstadoRunner();
+
             Swal.fire({
-                title: 'Error de conexión',
-                text: 'Error de conexión con el servidor.',
+                title: '¡Felicidades!',
+                text: 'Ahora eres Runner oficial.',
+                icon: 'success',
+                confirmButtonColor: '#2563eb',
+                confirmButtonText: 'Aceptar'
+            }).then(() => {
+                isRunner = true;
+                sessionStorage.setItem('isRunnerStatus', 'true');
+                if (typeof setActiveRole === 'function') {
+                    setActiveRole('runner'); 
+                }
+            });
+        } else {
+            const dataErr = await respuesta.json();
+            Swal.fire({
+                title: 'Error',
+                text: dataErr.error || 'Error al actualizar tu perfil en el servidor.',
                 icon: 'error',
                 confirmButtonColor: '#2563eb'
             });
             activateRunnerBtn.disabled = false;
             activateRunnerBtn.textContent = "Activar modo runner";
         }
-    });
+    } catch (error) {
+        console.error("Error de conexión:", error);
+        Swal.fire({
+            title: 'Error de conexión',
+            text: 'Error de conexión con el servidor.',
+            icon: 'error',
+            confirmButtonColor: '#2563eb'
+        });
+        activateRunnerBtn.disabled = false;
+        activateRunnerBtn.textContent = "Activar modo runner";
+    }
+});
 }
 
 async function cargarHistorialRunner() {
