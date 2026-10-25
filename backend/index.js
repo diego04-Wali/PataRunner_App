@@ -747,21 +747,27 @@ app.patch('/api/admin/usuarios/:codigo/bloquear', async (req, res) => {
     }
 });
 
-// 3. Asignar o quitar el rol de Runner
+// Asignar o quitar el rol de Runner (restringiendo postulaciones al quitar)
 app.patch('/api/admin/usuarios/:codigo/runner', async (req, res) => {
     try {
         const { codigo } = req.params;
         const { isRunner } = req.body;
         const nuevoRol = isRunner ? 2 : 1;
+        // Si el admin quita el rol (isRunner === false), activamos bloqueado_runner = true
+        const bloqueadoRunner = !isRunner; 
 
         await pool.query(
-            'UPDATE usuarios SET id_rol = $1 WHERE codigo_alumno = $2',
-            [nuevoRol, codigo]
+            `UPDATE usuarios 
+             SET id_rol = $1, bloqueado_runner = $2 
+             WHERE codigo_alumno = $3`,
+            [nuevoRol, bloqueadoRunner, codigo]
         );
 
         res.status(200).json({ 
             success: true, 
-            message: `Rol actualizado a ${isRunner ? 'Runner' : 'Alumno'}.` 
+            message: isRunner 
+                ? 'Rol actualizado a Runner correctamente.' 
+                : 'Se le quitó el rol de Runner y se le restringieron futuras postulaciones.' 
         });
     } catch (error) {
         console.error("Error al actualizar rol de runner:", error.message);

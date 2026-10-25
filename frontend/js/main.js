@@ -2587,13 +2587,13 @@ setInterval(async () => {
     if (!userStr) return;
     const userData = JSON.parse(userStr);
 
-// 🚨 VERIFICACIÓN DE SEGURIDAD EN TIEMPO REAL EN EL VIGILANTE
+// 🚨 VERIFICACIÓN DE SEGURIDAD EN TIEMPO REAL
 try {
     const resEstado = await fetch(`/api/usuarios/estado/${userData.id_usuario}`);
     if (resEstado.ok) {
         const dataEstado = await resEstado.json();
-        
-        // 1. Si la cuenta fue bloqueada por completo
+
+        // A. Si la cuenta fue bloqueada por completo (Login suspendido)
         if (dataEstado.blocked) {
             sessionStorage.clear();
             localStorage.clear();
@@ -2607,22 +2607,45 @@ try {
             return;
         }
 
-        // 2. 🔄 SINCRONIZACIÓN AUTOMÁTICA DE ROL Y ESTADOS EN TIEMPO REAL
-        if (userData.id_rol !== dataEstado.id_rol || userData.bloqueado_runner !== dataEstado.bloqueado_runner) {
-            userData.id_rol = dataEstado.id_rol;
-            userData.bloqueado_runner = dataEstado.bloqueado_runner;
-            
+        // B. Si el admin le quitó el beneficio de Runner mientras estaba activo
+        if (userData.id_rol === 2 && dataEstado.id_rol === 1) {
+            userData.id_rol = 1;
+            userData.bloqueado_runner = true;
             sessionStorage.setItem('usuario', JSON.stringify(userData));
             localStorage.setItem('usuario', JSON.stringify(userData));
 
-            // Actualizamos la interfaz inmediatamente sin mostrar alerta falsa
+            // Notificamos sin cerrar sesión y cambiamos la vista a Alumno
+            Swal.fire({
+                title: 'Acceso a Runner revocado',
+                text: 'Un administrador ha revocado tus permisos de Runner. Podrás seguir usando la app como alumno normalmente.',
+                icon: 'warning',
+                confirmButtonColor: '#2563eb',
+                confirmButtonText: 'Entendido'
+            }).then(() => {
+                if (typeof setActiveRole === 'function') {
+                    setActiveRole('alumno');
+                }
+                if (typeof aplicarEstadoRunner === 'function') {
+                    aplicarEstadoRunner();
+                }
+            });
+            return;
+        }
+
+        // C. Sincronización continua de roles y estados
+        if (userData.id_rol !== dataEstado.id_rol || userData.bloqueado_runner !== dataEstado.bloqueado_runner) {
+            userData.id_rol = dataEstado.id_rol;
+            userData.bloqueado_runner = dataEstado.bloqueado_runner;
+            sessionStorage.setItem('usuario', JSON.stringify(userData));
+            localStorage.setItem('usuario', JSON.stringify(userData));
+
             if (typeof aplicarEstadoRunner === 'function') {
                 aplicarEstadoRunner();
             }
         }
     }
 } catch (e) {
-    // Silencioso si hay lag de red
+    // Silencioso
 }
     // 1. === VIGILANTE PARA EL RUNNER (¡NUEVO!) ===
     if (typeof activeRole !== 'undefined' && activeRole === 'runner') {
