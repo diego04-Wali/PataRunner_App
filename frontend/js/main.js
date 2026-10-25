@@ -3320,29 +3320,32 @@ function togglePassword() {
 // LÓGICA DEL PANEL DE ADMINISTRACIÓN
 // ==========================================
 
-function mostrarModulo(idModulo) {
-    // Ocultar todos los módulos
+window.mostrarModulo = function(idModulo) {
+    // Ocultar todos los módulos de la vista admin
     document.querySelectorAll('.modulo-admin').forEach(el => el.classList.add('hidden'));
-    // Quitar estilos activos de todos los botones
+
+    // Desactivar estilos activos en los botones
     document.querySelectorAll('.mod-btn').forEach(btn => {
         btn.classList.remove('bg-indigo-600', 'text-white');
         btn.classList.add('bg-white', 'text-slate-600');
     });
-    
+
     // Mostrar el módulo seleccionado
-    document.getElementById(idModulo).classList.remove('hidden');
-    // Activar el botón correspondiente
+    const modulo = document.getElementById(idModulo);
+    if (modulo) modulo.classList.remove('hidden');
+
+    // Resaltar botón activo
     const btnActivo = document.getElementById('btn-' + idModulo);
-    if(btnActivo) {
+    if (btnActivo) {
         btnActivo.classList.remove('bg-white', 'text-slate-600');
         btnActivo.classList.add('bg-indigo-600', 'text-white');
     }
 
-    // 🟢 AGREGAR ESTAS LÍNEAS AQUÍ:
-    if (idModulo === 'mod-resenas') {
+    // Cargar reseñas si entra al módulo correspondiente
+    if (idModulo === 'mod-resenas' && typeof cargarResenasAdmin === 'function') {
         cargarResenasAdmin();
     }
-}
+};
 
 // Manejo del formulario de reseña de la app
 document.addEventListener('DOMContentLoaded', () => {
@@ -5526,3 +5529,56 @@ window.guardarFotoPerfilConfirmada = async function() {
         window.fotoPerfilComprimidaTemp = null;
     }
 };
+// ==========================================
+// REGISTRO DE EVENTOS DE NAVEGACIÓN EN ADMIN
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
+    const btnModUsuarios = document.getElementById('btn-mod-usuarios');
+    const btnModPedidos = document.getElementById('btn-mod-pedidos');
+    const btnModAuditoria = document.getElementById('btn-mod-auditoria');
+    const btnModKpi = document.getElementById('btn-mod-kpi');
+    const btnModTiendas = document.getElementById('btn-mod-tiendas');
+    const btnModResenas = document.getElementById('btn-mod-resenas');
+
+    if (btnModUsuarios) {
+        btnModUsuarios.addEventListener('click', () => {
+            window.mostrarModulo('mod-usuarios');
+            if (typeof cargarUsuariosAdmin === 'function') cargarUsuariosAdmin();
+        });
+    }
+
+    if (btnModPedidos) {
+        btnModPedidos.addEventListener('click', () => {
+            window.mostrarModulo('mod-pedidos');
+            if (typeof cargarOperacionesAdmin === 'function') cargarOperacionesAdmin();
+        });
+    }
+
+    if (btnModAuditoria) {
+        btnModAuditoria.addEventListener('click', () => {
+            window.mostrarModulo('mod-auditoria');
+            if (typeof cargarReportesAdmin === 'function') cargarReportesAdmin();
+        });
+    }
+
+    if (btnModKpi) {
+        btnModKpi.addEventListener('click', () => {
+            window.mostrarModulo('mod-kpi');
+            if (typeof cargarKPIsAdmin === 'function') cargarKPIsAdmin();
+        });
+    }
+
+    if (btnModTiendas) {
+        btnModTiendas.addEventListener('click', () => {
+            window.mostrarModulo('mod-tiendas');
+            if (typeof cargarTiendasAdmin === 'function') cargarTiendasAdmin();
+        });
+    }
+
+    if (btnModResenas) {
+        btnModResenas.addEventListener('click', () => {
+            window.mostrarModulo('mod-resenas');
+            if (typeof cargarResenasAdmin === 'function') cargarResenasAdmin();
+        });
+    }
+});
