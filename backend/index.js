@@ -299,7 +299,7 @@ app.get('/api/usuarios/estado/:id', async (req, res) => {
 });
 
 // ==========================================
-// RUTA DE INICIO DE SESIÓN (PERSISTENCIA DE FOTO)
+// RUTA DE INICIO DE SESIÓN
 // ==========================================
 app.post('/api/login', async (req, res) => {
     try {
@@ -311,7 +311,7 @@ app.post('/api/login', async (req, res) => {
 
         const idLimpio = identificador.trim().toLowerCase();
 
-        // 1. Buscar al usuario en la base de datos (incluyendo foto_perfil)
+        // 1. Buscar al usuario en la base de datos
         const result = await pool.query(
             `SELECT id_usuario, codigo_alumno, correo_personal, nombre_completo, carrera, telefono, id_rol, is_blocked, verificado, foto_perfil 
              FROM usuarios 
@@ -327,8 +327,11 @@ app.post('/api/login', async (req, res) => {
 
         const usuario = result.rows[0];
 
+        // 🛑 VALIDACIÓN DE BLOQUEO DE CUENTA
         if (usuario.is_blocked) {
-            return res.status(403).json({ error: 'Tu cuenta ha sido suspendida preventivamente.' });
+            return res.status(403).json({ 
+                error: 'Tu cuenta ha sido suspendida por un administrador.' 
+            });
         }
 
         // 2. Validación de contraseña para Administrador
@@ -340,7 +343,7 @@ app.post('/api/login', async (req, res) => {
             }
         }
 
-        // 3. Respuesta exitosa con datos de sesión completos
+        // 3. Respuesta exitosa si no está bloqueado
         res.json({
             message: 'Acceso concedido',
             token: `token_patarunner_${usuario.id_usuario}`,

@@ -2594,19 +2594,24 @@ setInterval(async () => {
             const dataEstado = await resEstado.json();
             
             // 1. Si la cuenta fue bloqueada por completo
-            if (dataEstado.blocked) {
-                Swal.fire({
-                    title: 'Cuenta suspendida',
-                    text: 'Tu cuenta ha sido suspendida por un administrador.',
-                    icon: 'error',
-                    confirmButtonColor: '#2563eb',
-                    confirmButtonText: 'Aceptar'
-                }).then(() => {
-                    sessionStorage.clear();
-                    window.location.reload();
-                });
-                return;
-            }
+if (dataEstado.blocked) {
+    // Limpiamos absolutamente toda la memoria del navegador
+    sessionStorage.clear();
+    localStorage.clear();
+
+    Swal.fire({
+        title: 'Cuenta suspendida',
+        text: 'Tu cuenta ha sido suspendida por un administrador.',
+        icon: 'error',
+        confirmButtonColor: '#2563eb',
+        confirmButtonText: 'Aceptar',
+        allowOutsideClick: false,
+        allowEscapeKey: false
+    }).then(() => {
+        window.location.reload(); // Recarga la página enviándolo directamente al Login
+    });
+    return;
+}
 
             // 2. Si se le revocó el rol de Runner estando activo
             if (userData.id_rol === 2 && dataEstado.id_rol === 1) {
