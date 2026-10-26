@@ -1061,38 +1061,35 @@ if (logoutBtn) {
 }
 
   function showTab(tab) {
+    // Pestañas disponibles en el HTML
     ["inicio", "pedidos", "runner", "perfil", "historial-runner"].forEach(t => {
         const elTab = document.getElementById("tab-" + t);
         if (elTab) elTab.classList.toggle("hidden", t !== tab);
     });
     
+    // Resaltar solo el botón activo en la barra inferior
     document.querySelectorAll(".nav-btn").forEach(b => {
-        // Marcamos como activo si coincide exactamente con la pestaña mostrada
         const active = b.dataset.nav === tab || (tab === "historial-runner" && b.dataset.nav === "pedidos");
         b.classList.toggle("text-blue-600", active);
-        b.classList.toggle("text-slate-300", !active);
+        b.classList.toggle("text-slate-400", !active); // Usar text-slate-400 para íconos inactivos
     });
 
-    // Cargar misiones al entrar a Runner
+    // Cargar misiones y pedidos dinámicos al cambiar de vista
     if (tab === "runner") {
-        if(typeof cargarPedidosPendientes === 'function') cargarPedidosPendientes();
-        if(typeof cargarEntregasActivas === 'function') cargarEntregasActivas();
-    }
-    // Cargar datos del usuario al entrar al perfil
-    if (tab === "perfil") {
-        if(typeof cargarDatosPerfil === 'function') cargarDatosPerfil();
+        if (typeof cargarPedidosPendientes === 'function') cargarPedidosPendientes();
+        if (typeof cargarEntregasActivas === 'function') cargarEntregasActivas();
+    } else if (tab === "inicio") {
+        if (typeof cargarMisPedidos === 'function') cargarMisPedidos();
+    } else if (tab === "perfil") {
+        if (typeof cargarDatosPerfil === 'function') cargarDatosPerfil();
     }
 
-    // Ocultar el selector de roles si estamos en el Perfil
+    // Ocultar el conmutador superior de rol únicamente en la vista de Perfil
     const topSelector = document.getElementById('role-switcher-bar'); 
     if (topSelector) {
-        if (tab === 'perfil') {
-            topSelector.classList.add('hidden');
-        } else {
-            topSelector.classList.remove('hidden');
-        }
+        topSelector.classList.toggle('hidden', tab === 'perfil');
     }
-}
+  }
 
 
 
@@ -1135,22 +1132,27 @@ if (logoutBtn) {
     if (role === "runner" && !isRunner) return;
     activeRole = role;
 
-    // Cambiar estilos visuales del conmutador superior
-    roleBtnAlumno.classList.toggle("bg-blue-600", role === "alumno");
-    roleBtnAlumno.classList.toggle("text-white", role === "alumno");
-    roleBtnAlumno.classList.toggle("text-slate-600", role !== "alumno");
+    // 1. Actualizar el conmutador de rol superior (Alumno / Runner)
+    if (roleBtnAlumno) {
+        roleBtnAlumno.classList.toggle("bg-blue-600", role === "alumno");
+        roleBtnAlumno.classList.toggle("text-white", role === "alumno");
+        roleBtnAlumno.classList.toggle("text-slate-600", role !== "alumno");
+    }
 
-    roleBtnRunner.classList.toggle("bg-blue-600", role === "runner");
-    roleBtnRunner.classList.toggle("text-white", role === "runner");
-    if (isRunner) roleBtnRunner.classList.toggle("text-slate-600", role !== "runner");
+    if (roleBtnRunner) {
+        roleBtnRunner.classList.toggle("bg-blue-600", role === "runner");
+        roleBtnRunner.classList.toggle("text-white", role === "runner");
+        if (isRunner) roleBtnRunner.classList.toggle("text-slate-600", role !== "runner");
+    }
 
-    // 1. Mostrar/Ocultar el botón Inicio según el rol
-    navBtnInicio.classList.toggle("hidden", role !== "alumno");
+    // 2. Gestionar la visibilidad estricta de la barra inferior de navegación
+    if (navBtnInicio) navBtnInicio.classList.toggle("hidden", role !== "alumno");
+    if (navBtnRunner) navBtnRunner.classList.toggle("hidden", role === "alumno"); // En Alumno no va el botón Runner abajo
 
-    // 2. Cambiar dinámicamente el texto e ícono del botón central (Pedidos <-> Historial)
+    // 3. Cambiar el texto e ícono del botón central (Pedidos <-> Historial)
     actualizarNavSegunRol(role);
 
-    // 3. Mostrar la pantalla correspondiente
+    // 4. Forzar el cambio de pestaña correcto
     showTab(role === "alumno" ? "inicio" : "runner");
     
     // Si cambia a Runner, actualizar el botón de postulación
