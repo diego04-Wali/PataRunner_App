@@ -470,11 +470,12 @@ app.post('/api/auth/actualizar-password-token', async (req, res) => {
 
         const id_usuario = decoded.id_usuario;
 
-        // Actualizar la contraseña en la base de datos
+        // Actualizar la contraseña en la base de datos usando la columna correcta
         const updateResult = await pool.query(
-            'UPDATE usuarios SET password = $1 WHERE id_usuario = $2',
+            'UPDATE usuarios SET password_hash = $1 WHERE id_usuario = $2',
             [nuevaPassword, id_usuario]
         );
+        
 
         if (updateResult.rowCount === 0) {
             return res.status(404).json({ error: 'No se encontró el usuario asociado.' });
