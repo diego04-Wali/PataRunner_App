@@ -5819,3 +5819,73 @@ window.recuperarContrasenaModal = async function() {
         });
     }
 };
+// Detectar si la página se abrió desde el enlace del correo de recuperación
+window.addEventListener('DOMContentLoaded', async () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tokenReset = urlParams.get('token');
+    const esReset = urlParams.get('reset');
+
+    if (esReset && tokenReset) {
+        const { value: nuevaPassword, isConfirmed } = await Swal.fire({
+            title: 'Nueva Contraseña',
+            text: 'Ingresa tu nueva contraseña para la cuenta:',
+            input: 'password',
+            inputPlaceholder: 'Mínimo 6 caracteres',
+            inputAttributes: { autocapitalize: 'off', autocorrect: 'off' },
+            showCancelButton: false,
+            confirmButtonColor: '#2563eb',
+            confirmButtonText: 'Guardar nueva contraseña',
+            allowOutsideClick: false,
+            inputValidator: (value) => {
+                if (!value || value.length < 6) {
+                    return 'La contraseña debe tener al menos 6 caracteres.';
+                }
+            }
+        });
+
+        if (isConfirmed && nuevaPassword) {
+            try {
+                Swal.fire({
+                    title: 'Actualizando...',
+                    text: 'Guardando tu nueva contraseña.',
+                    allowOutsideClick: false,
+                    didOpen: () => { Swal.showLoading(); }
+                });
+
+                const respuesta = await fetch('/api/auth/actualizar-password-token', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token: tokenReset, nuevaPassword })
+                });
+
+                const data = await respuesta.json();
+
+                if (respuesta.ok) {
+                    await Swal.fire({
+                        title: '¡Listo!',
+                        text: 'Tu contraseña ha sido actualizada correctamente. Ya puedes iniciar sesión.',
+                        icon: 'success',
+                        confirmButtonColor: '#2563eb'
+                    });
+                    // Limpiar la URL para quitar el token
+                    window.location.href = window.location.pathname;
+                } else {
+                    Swal.fire({
+                        title: 'Error',
+                        text: data.error || 'El enlace expiró o no es válido.',
+                        icon: 'error',
+                        confirmButtonColor: '#2563eb'
+                    });
+                }
+            } catch (err) {
+                console.error(err);
+                Swal.fire({
+                    title: 'Error de red',
+                    text: 'No se pudo conectar con el servidor.',
+                    icon: 'error',
+                    confirmButtonColor: '#2563eb'
+                });
+            }
+        }
+    }
+});

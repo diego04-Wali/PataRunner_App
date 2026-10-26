@@ -376,7 +376,7 @@ app.post('/api/login', async (req, res) => {
 });
 
 // ==========================================
-// RUTA DE RECUPERACIÓN DE CONTRASEÑA
+// RUTA DE RECUPERACIÓN DE CONTRASEÑA CON ENLACE
 // ==========================================
 app.post('/api/auth/recuperar-password', async (req, res) => {
     try {
@@ -400,16 +400,24 @@ app.post('/api/auth/recuperar-password', async (req, res) => {
 
         const usuario = usuarioQuery.rows[0];
 
-        // 2. Generar clave temporal de 6 dígitos
-        const claveTemporal = Math.floor(100000 + Math.random() * 900000).toString();
+        // 2. Generar un token único de recuperación
+        const tokenRecuperacion = jwt.sign(
+            { id_usuario: usuario.id_usuario },
+            process.env.JWT_SECRET || 'secret_key_patarunner',
+            { expiresIn: '15m' } // El enlace expira en 15 minutos
+        );
 
         // 3. Responder de inmediato al cliente
         res.status(200).json({
             success: true,
-            mensaje: `Se envió una clave temporal de acceso al correo ${usuario.correo_personal}.`
+            mensaje: `Se ha enviado un enlace de recuperación a ${usuario.correo_personal}.`
         });
 
-        // 4. Enviar correo vía API de Brevo
+        // 4. Enlace que se enviará al correo (apunta a tu frontend o una vista de cambio de clave)
+        // Puedes cambiar localhost por tu dominio en producción
+        const enlaceReset = `http://localhost:3000?token=${tokenRecuperacion}&reset=true`;
+
+        // 5. Enviar correo vía API de Brevo
         fetch('https://api.brevo.com/v3/smtp/email', {
             method: 'POST',
             headers: {
@@ -420,16 +428,16 @@ app.post('/api/auth/recuperar-password', async (req, res) => {
             body: JSON.stringify({
                 sender: { name: "PataRunner UTP", email: "terronesdiego04@gmail.com" },
                 to: [{ email: usuario.correo_personal, name: usuario.nombre_completo }],
-                subject: "Recuperación de contraseña — PataRunner 🔑",
+                subject: "Restablece tu contraseña — PataRunner 🔒",
                 htmlContent: `
-                    <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px; max-width: 500px; margin: auto;">
+                    <div style="font-family: Arial, sans-serif; padding: 25px; border: 1px solid #e0e0e0; border-radius: 12px; max-width: 500px; margin: auto;">
                         <h2 style="color: #2563eb; text-align: center;">PataRunner</h2>
                         <p>Hola <strong>${usuario.nombre_completo}</strong>,</p>
-                        <p>Has solicitado restablecer tu contraseña. Tu clave temporal de acceso es:</p>
-                        <div style="font-size: 28px; font-weight: bold; color: #2563eb; letter-spacing: 4px; padding: 15px 0; text-align: center; background-color: #f3f4f6; border-radius: 6px; margin: 15px 0;">
-                            ${claveTemporal}
+                        <p>Has solicitado restablecer tu contraseña. Haz clic en el siguiente botón para crear una nueva contraseña:</p>
+                        <div style="text-align: center; margin: 25px 0;">
+                            <a href="${enlaceReset}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Actualizar mi contraseña</a>
                         </div>
-                        <p style="color: #666; font-size: 12px; text-align: center;">Inicia sesión con esta clave y cámbiala desde tu perfil.</p>
+                        <p style="color: #666; font-size: 12px; text-align: center;">Este enlace expirará en 15 minutos. Si no solicitaste esto, puedes ignorar este correo.</p>
                     </div>
                 `
             })
@@ -438,6 +446,36 @@ app.post('/api/auth/recuperar-password', async (req, res) => {
     } catch (error) {
         console.error("Error en recuperar-password:", error.message);
         res.status(500).json({ error: 'Error interno del servidor al procesar la solicitud.' });
+    }
+});
+// ==========================================
+// RUTA PARA GUARDAR LA NUEVA CONTRASEÑA
+// ==========================================
+app.post('/api/auth/actualizar-password-token', async (req, res) => {
+    try {
+        const { token, nuevaPassword } = req.body;
+
+        if (!token || !nuevaPassword) {
+            return res.status(400).json({ error: 'Faltan datos obligatorios.' });
+        }
+
+        // Verificar el token
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret_key_patarunner');
+        const id_usuario = decoded.id_usuario;
+
+        // Actualizar la contraseña en la base de datos
+        // Nota: Si usas hashing (bcrypt), aquí deberías encriptarla. 
+        // Si la guardas en texto plano como tu sistema actual, se guarda directo:
+        await pool.query(
+            'UPDATE usuarios SET password = $1 WHERE id_usuario = $2',
+            [nuevaPassword, id_usuario]
+        );
+
+        res.status(200).json({ success: true, mensaje: '¡Contraseña actualizada con éxito!' });
+
+    } catch (error) {
+        console.error("Error al actualizar contraseña por token:", error);
+        res.status(400).json({ error: 'El enlace es inválido o ha expirado.' });
     }
 });
 
