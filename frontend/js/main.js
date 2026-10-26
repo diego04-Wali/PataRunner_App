@@ -1061,6 +1061,12 @@ if (logoutBtn) {
 }
 
   function showTab(tab) {
+    // Si el usuario presiona inicio, forzamos el cambio al rol de alumno
+    if (tab === "inicio" && activeRole !== "alumno") {
+        setActiveRole("alumno");
+        return;
+    }
+
     // Pestañas disponibles en el HTML
     ["inicio", "pedidos", "runner", "perfil", "historial-runner"].forEach(t => {
         const elTab = document.getElementById("tab-" + t);
@@ -1071,7 +1077,7 @@ if (logoutBtn) {
     document.querySelectorAll(".nav-btn").forEach(b => {
         const active = b.dataset.nav === tab || (tab === "historial-runner" && b.dataset.nav === "pedidos");
         b.classList.toggle("text-blue-600", active);
-        b.classList.toggle("text-slate-400", !active); // Usar text-slate-400 para íconos inactivos
+        b.classList.toggle("text-slate-400", !active);
     });
 
     // Cargar misiones y pedidos dinámicos al cambiar de vista
@@ -1089,7 +1095,7 @@ if (logoutBtn) {
     if (topSelector) {
         topSelector.classList.toggle('hidden', tab === 'perfil');
     }
-  }
+}
 
 
 
@@ -1162,10 +1168,13 @@ window.setActiveRole = setActiveRole;
 window.showTab = showTab;
 
   roleBtnAlumno.addEventListener("click", () => setActiveRole("alumno"));
-  roleBtnRunner.addEventListener("click", () => setActiveRole("runner"));
+roleBtnRunner.addEventListener("click", () => setActiveRole("runner"));
 
-  setActiveRole("alumno");
+if (navBtnInicio) {
+    navBtnInicio.addEventListener("click", () => setActiveRole("alumno"));
+}
 
+setActiveRole("alumno");
   const btnPublicar = document.getElementById("cart-publish-btn");
 
 if (btnPublicar) {
