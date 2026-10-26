@@ -459,22 +459,31 @@ app.post('/api/auth/actualizar-password-token', async (req, res) => {
             return res.status(400).json({ error: 'Faltan datos obligatorios.' });
         }
 
-        // Verificar el token
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret_key_patarunner');
+        // Verificar el token utilizando la misma clave secreta
+        let decoded;
+        try {
+            decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret_key_patarunner');
+        } catch (jwtError) {
+            console.error("Error de verificación JWT:", jwtError.message);
+            return res.status(400).json({ error: 'El enlace ha expirado o no es válido.' });
+        }
+
         const id_usuario = decoded.id_usuario;
 
         // Actualizar la contraseña en la base de datos
-        // Nota: Si usas hashing (bcrypt), aquí deberías encriptarla. 
-        // Si la guardas en texto plano como tu sistema actual, se guarda directo:
-        await pool.query(
+        const updateResult = await pool.query(
             'UPDATE usuarios SET password = $1 WHERE id_usuario = $2',
             [nuevaPassword, id_usuario]
         );
 
+        if (updateResult.rowCount === 0) {
+            return res.status(404).json({ error: 'No se encontró el usuario asociado.' });
+        }
+
         res.status(200).json({ success: true, mensaje: '¡Contraseña actualizada con éxito!' });
 
     } catch (error) {
-        console.error("Error al actualizar contraseña por token:", error);
+        console.error("Error general al actualizar contraseña por token:", error.message);
         res.status(400).json({ error: 'El enlace es inválido o ha expirado.' });
     }
 });
