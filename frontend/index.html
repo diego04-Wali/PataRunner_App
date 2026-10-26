@@ -266,7 +266,13 @@
           </div>
           <div class="px-5 mb-4 flex gap-2" id="pedidos-filter-group">
             <button data-filter="activos" class="filter-btn active text-[12px] font-semibold px-3.5 py-1.5 rounded-full bg-blue-600 text-white" id="filter-activos-btn">Activos (0)</button>
-            <button id="btn-tab-historial" data-filter="historial" class="filter-btn text-[12px] font-semibold px-3.5 py-1.5 rounded-full bg-slate-100 text-slate-500">Historial</button>
+            <!-- CÓDIGO ACTUALIZADO: -->
+<button id="btn-tab-historial" 
+        data-filter="historial" 
+        onclick="if(typeof cargarHistorialPedidos === 'function') cargarHistorialPedidos();" 
+        class="filter-btn text-[12px] font-semibold px-3.5 py-1.5 rounded-full bg-slate-100 text-slate-500">
+    Historial
+</button>
           </div>
           <div id="pedidos-activos" class="px-5 space-y-3">
             <p id="pedidos-empty-text" class="text-[12.5px] text-slate-400 text-center py-8">No tienes pedidos activos.<br />Publica uno desde Inicio.</p>

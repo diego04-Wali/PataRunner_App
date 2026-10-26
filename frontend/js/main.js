@@ -5613,3 +5613,76 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+async function cargarHistorialPedidos() {
+    try {
+        const userStr = sessionStorage.getItem('usuario') || localStorage.getItem('usuario');
+        if (!userStr) return;
+
+        const userData = JSON.parse(userStr);
+        if (!userData || !userData.id_usuario) return;
+
+        const res = await fetch(`/api/pedidos/historial-cliente/${userData.id_usuario}`);
+        if (!res.ok) throw new Error('Error al obtener el historial del alumno');
+
+        const historial = await res.json();
+        const contenedor = document.getElementById('contenedor-historial');
+
+        if (!contenedor) return;
+
+        if (!historial || historial.length === 0) {
+            contenedor.innerHTML = `
+                <p class="text-[12.5px] text-slate-400 text-center py-8">
+                    No tienes pedidos finalizados o cancelados en tu historial.
+                </p>`;
+            return;
+        }
+
+        contenedor.innerHTML = '';
+
+        historial.forEach(pedido => {
+            const estadoLimpio = (pedido.estado || '').trim().toLowerCase();
+            const esEntregado = estadoLimpio === 'entregado';
+            const esCancelado = estadoLimpio === 'cancelado';
+
+            const card = document.createElement('div');
+            card.className = "rounded-2xl border border-slate-100 bg-white p-4 mb-3 shadow-sm";
+            card.innerHTML = `
+                <div class="flex items-center justify-between mb-2">
+                    <span class="px-2.5 py-0.5 rounded-full text-[10.5px] font-semibold ${
+                        esEntregado ? 'bg-emerald-100 text-emerald-700' : 
+                        esCancelado ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-700'
+                    }">
+                        ${pedido.estado}
+                    </span>
+                    <span class="text-[11px] font-mono font-semibold text-slate-400">#${String(pedido.id_pedido).padStart(4, '0')}</span>
+                </div>
+
+                <p class="text-[13px] font-bold text-slate-900 leading-snug">
+                    ${pedido.productos_resumen || 'Detalle del pedido'} • ${pedido.ubicacion_entrega || 'Sin ubicación'}
+                </p>
+                <p class="text-[11px] text-slate-400 mt-1">
+                    Runner: <span class="text-slate-600 font-medium">${pedido.nombre_runner || 'Sin asignar'}</span>
+                </p>
+
+                <div class="flex items-center gap-2 mt-3 pt-3 border-t border-slate-50">
+                    <button onclick="repetirPedido(${pedido.id_pedido})" class="flex-1 py-1.5 px-3 rounded-xl border border-slate-200 text-blue-600 text-[11px] font-semibold hover:bg-blue-50 transition-colors flex items-center justify-center gap-1">
+                        <i data-lucide="rotate-ccw" class="w-3 h-3"></i> Volver a pedir
+                    </button>
+                    ${esEntregado ? `
+                        <button onclick="abrirModalCalificarRunner(${pedido.id_pedido}, '${pedido.nombre_runner || 'Runner'}')" class="flex-1 py-1.5 px-3 rounded-xl bg-amber-50 text-amber-700 text-[11px] font-semibold hover:bg-amber-100 transition-colors flex items-center justify-center gap-1">
+                            ⭐ Calificar Runner
+                        </button>
+                    ` : ''}
+                </div>
+            `;
+            contenedor.appendChild(card);
+        });
+
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+
+    } catch (error) {
+        console.error("Error al cargar historial del alumno:", error);
+    }
+}
