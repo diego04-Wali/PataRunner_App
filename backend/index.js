@@ -613,16 +613,30 @@ app.get('/api/pedidos/historial-runner/:id_runner', async (req, res) => {
     try {
         const { id_runner } = req.params;
         const historial = await pool.query(`
-            SELECT p.*, 
-                   u.nombre_completo AS nombre_cliente,
-                   u.foto_perfil AS alumno_foto,
-                   COALESCE(STRING_AGG(pr.nombre, ', '), p.descripcion_pedido) AS productos_resumen
+            SELECT 
+                p.id_pedido,
+                p.estado,
+                p.ubicacion_entrega,
+                p.tarifa_entrega,
+                p.fecha_pedido,
+                p.descripcion_pedido,
+                p.costo_aproximado,
+                COALESCE(u.nombre_completo, 'Alumno') AS nombre_cliente,
+                u.foto_perfil AS alumno_foto,
+                COALESCE(
+                    (
+                        SELECT STRING_AGG(pr.nombre, ', ')
+                        FROM detalle_pedido dp
+                        JOIN productos pr ON dp.id_producto = pr.id_producto
+                        WHERE dp.id_pedido = p.id_pedido
+                    ),
+                    p.descripcion_pedido,
+                    'Entrega realizada'
+                ) AS productos_resumen
             FROM pedidos p
-            JOIN usuarios u ON p.id_cliente = u.id_usuario
-            LEFT JOIN detalle_pedido dp ON p.id_pedido = dp.id_pedido
-            LEFT JOIN productos pr ON dp.id_producto = pr.id_producto
-            WHERE p.id_runner = $1 AND p.estado IN ('Entregado', 'Finalizado', 'Cancelado')
-            GROUP BY p.id_pedido, u.nombre_completo, u.foto_perfil
+            LEFT JOIN usuarios u ON p.id_cliente = u.id_usuario
+            WHERE p.id_runner = $1 
+              AND LOWER(TRIM(p.estado)) IN ('entregado', 'finalizado', 'cancelado')
             ORDER BY p.fecha_pedido DESC
         `, [id_runner]);
         
@@ -632,7 +646,6 @@ app.get('/api/pedidos/historial-runner/:id_runner', async (req, res) => {
         res.status(500).json({ error: 'Error interno al consultar el historial del runner.' });
     }
 });
-
 // --- RUTA: Enviar un mensaje al chat ---
 app.post('/api/chat', async (req, res) => {
     try {

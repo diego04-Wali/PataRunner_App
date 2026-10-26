@@ -1690,8 +1690,9 @@ async function marcarEntregado(id_pedido) {
             });
             
             // Recargamos las vistas para que desaparezca de "En curso"
-            if (typeof cargarEntregasActivas === 'function') cargarEntregasActivas(); 
+           if (typeof cargarEntregasActivas === 'function') cargarEntregasActivas();
             if (typeof cargarMisPedidos === 'function') cargarMisPedidos(); // Actualiza la vista del alumno si está abierta
+            if (typeof cargarHistorialRunner === 'function') cargarHistorialRunner();
             
         } else {
             Swal.fire({
@@ -3185,76 +3186,65 @@ if (runnerCheckbox && activateRunnerBtn) {
 }
 
 async function cargarHistorialRunner() {
-    const contenedor = document.getElementById('contenedor-historial-runner');
-    if (!contenedor) return;
-
-    // 1. Obtener los datos del usuario de la sesión de forma flexible
-    const usuarioStr = sessionStorage.getItem('usuario') || localStorage.getItem('usuario');
-    if (!usuarioStr) {
-        contenedor.innerHTML = '<p class="text-slate-400 text-[12.5px] text-center py-8">Inicia sesión para ver tu historial.</p>';
-        return;
-    }
-
-    const usuario = JSON.parse(usuarioStr);
-    const idRunner = usuario.id_usuario || usuario.id_runner || usuario.id;
-
-    if (!idRunner) {
-        contenedor.innerHTML = '<p class="text-slate-400 text-[12.5px] text-center py-8">No se pudo identificar al usuario actual.</p>';
-        return;
-    }
-
-    contenedor.innerHTML = '<p class="text-slate-400 text-[12.5px] text-center py-8">Cargando historial...</p>';
-
     try {
-        const response = await fetch(`/api/pedidos/historial-runner/${idRunner}`);
-        
-        if (!response.ok) {
-            contenedor.innerHTML = '<p class="text-slate-400 text-[12.5px] text-center py-8">Aún no tienes entregas registradas en el historial.</p>';
+        if (!userData || !userData.id_usuario) return;
+
+        const res = await fetch(`/api/pedidos/historial-runner/${userData.id_usuario}`);
+        if (!res.ok) throw new Error('Error al obtener el historial');
+
+        const historial = await res.json();
+        const contenedorList = document.getElementById('historial-runner-list');
+        const totalGananciasEl = document.getElementById('runner-total-ganancias');
+
+        if (!contenedorList) return;
+
+        if (!historial || historial.length === 0) {
+            contenedorList.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-history"></i>
+                    <p>Aún no tienes entregas en tu historial.</p>
+                </div>`;
+            if (totalGananciasEl) totalGananciasEl.textContent = 'S/ 0.00';
             return;
         }
 
-        const pedidos = await response.json();
+        let totalGanado = 0;
+        contenedorList.innerHTML = '';
 
-        if (!Array.isArray(pedidos) || pedidos.length === 0) {
-            contenedor.innerHTML = '<p class="text-slate-400 text-[12.5px] text-center py-8">Aún no tienes entregas completadas o canceladas.</p>';
-            return;
-        }
+        historial.forEach(pedido => {
+            const estadoLimpio = (pedido.estado || '').trim().toLowerCase();
+            const esCancelado = estadoLimpio === 'cancelado';
+            const tarifa = parseFloat(pedido.tarifa_entrega) || 0.00;
 
-        contenedor.innerHTML = '';
-        pedidos.forEach(pedido => {
-            const estadoLimpio = (pedido.estado || '').trim();
-            const esCancelado = estadoLimpio.toLowerCase() === 'cancelado';
-            const colorBadge = esCancelado ? 'text-red-600 bg-red-100' : 'text-emerald-700 bg-emerald-50';
-            const idFormateado = '#' + (pedido.id_pedido || '0').toString().padStart(4, '0');
-            const listaProductos = pedido.productos_resumen || pedido.descripcion_pedido || 'Entrega realizada';
-            const ganancia = Number(pedido.tarifa_entrega || 0).toFixed(2);
+            if (!esCancelado) {
+                totalGanado += tarifa;
+            }
 
-            const tarjetaHTML = `
-                <div class="rounded-2xl border border-slate-100 p-4 mb-3 bg-white shadow-sm">
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold ${colorBadge}">
-                            ${pedido.estado}
-                        </span>
-                        <span class="text-[11px] font-mono font-semibold text-slate-400">${idFormateado}</span>
-                    </div>
-                    <p class="text-[14px] font-semibold text-slate-900 truncate">${listaProductos} • ${pedido.ubicacion_entrega || 'Sede UTP'}</p>
-                    <p class="text-[12px] text-slate-500 mt-0.5 mb-3">Cliente: ${pedido.nombre_cliente || 'Alumno'}</p>
-                    <div class="flex justify-between items-center border-t border-slate-50 pt-2.5">
-                        <span class="text-[12px] font-medium text-slate-500">Ganancia (Tarifa)</span>
-                        <span class="text-[13px] font-bold text-emerald-600">+ S/ ${ganancia}</span>
-                    </div>
+            const card = document.createElement('div');
+            card.className = `card-historial ${esCancelado ? 'cancelado' : ''}`;
+            card.innerHTML = `
+                <div class="card-historial-header">
+                    <span class="pedido-id">Pedido #${pedido.id_pedido}</span>
+                    <span class="badge-estado ${esCancelado ? 'badge-danger' : 'badge-success'}">
+                        ${pedido.estado}
+                    </span>
+                </div>
+                <div class="card-historial-body">
+                    <p><i class="fas fa-user"></i> <strong>Cliente:</strong> ${pedido.nombre_cliente}</p>
+                    <p><i class="fas fa-shopping-bag"></i> <strong>Pedido:</strong> ${pedido.productos_resumen}</p>
+                    <p><i class="fas fa-map-marker-alt"></i> <strong>Destino:</strong> ${pedido.ubicacion_entrega || 'Por acordar'}</p>
+                    <p class="ganancia"><strong>Ganancia:</strong> S/ ${tarifa.toFixed(2)}</p>
                 </div>
             `;
-            contenedor.innerHTML += tarjetaHTML;
+            contenedorList.appendChild(card);
         });
-        
-        if (window.lucide && typeof lucide.createIcons === 'function') {
-            lucide.createIcons();
+
+        if (totalGananciasEl) {
+            totalGananciasEl.textContent = `S/ ${totalGanado.toFixed(2)}`;
         }
 
     } catch (error) {
-        console.error("Error al cargar historial runner:", error);
-        contenedor.innerHTML = '<p class="text-slate-400 text-[12.5px] text-center py-8">Error de conexión al cargar el historial.</p>';
+        console.error("Error al cargar el historial del runner:", error);
     }
 }
 
