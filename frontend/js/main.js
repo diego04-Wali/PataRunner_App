@@ -1157,43 +1157,6 @@ function setActiveRole(role) {
     // 5. Cambiar a la vista correspondiente
     showTab(role === "alumno" ? "inicio" : "runner");
 }
-
-  function setActiveRole(role) {
-    if (role === "runner" && !isRunner) return;
-    activeRole = role;
-
-    // 1. Actualizar el conmutador de rol superior (Alumno / Runner)
-    if (roleBtnAlumno) {
-        roleBtnAlumno.classList.toggle("bg-blue-600", role === "alumno");
-        roleBtnAlumno.classList.toggle("text-white", role === "alumno");
-        roleBtnAlumno.classList.toggle("text-slate-600", role !== "alumno");
-    }
-
-    if (roleBtnRunner) {
-        roleBtnRunner.classList.toggle("bg-blue-600", role === "runner");
-        roleBtnRunner.classList.toggle("text-white", role === "runner");
-        if (isRunner) roleBtnRunner.classList.toggle("text-slate-600", role !== "runner");
-    }
-
-    // 2. Gestionar la visibilidad estricta de la barra inferior de navegación
-    if (navBtnInicio) navBtnInicio.classList.toggle("hidden", role !== "alumno");
-    if (navBtnRunner) navBtnRunner.classList.toggle("hidden", role === "alumno"); // En Alumno no va el botón Runner abajo
-
-    // 3. Cambiar el texto e ícono del botón central (Pedidos <-> Historial)
-    actualizarNavSegunRol(role);
-
-    // 4. Forzar el cambio de pestaña correcto
-    showTab(role === "alumno" ? "inicio" : "runner");
-    
-    // Si cambia a Runner, actualizar el botón de postulación
-    if (role === "runner" && isRunner) {
-        document.querySelectorAll("#btn-postular-runner").forEach(applyBtn => {
-            applyBtn.disabled = true;
-            applyBtn.classList.remove("bg-blue-600");
-            applyBtn.classList.add("bg-emerald-600");
-        });
-    }
-  }
   // Exponemos funciones clave al objeto window para que auth.js (módulo) pueda usarlas
 window.setActiveRole = setActiveRole;
 window.showTab = showTab;
