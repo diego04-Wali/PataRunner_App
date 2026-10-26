@@ -375,6 +375,102 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
+// ==========================================
+// RUTA DE RECUPERACIÓN DE CONTRASEÑA
+// ==========================================
+app.post('/api/auth/recuperar-password', async (req, res) => {
+    try {
+        const { correo } = req.body;
+
+        if (!correo) {
+            return res.status(400).json({ error: 'Debes proporcionar un correo o código.' });
+        }
+
+        // 1. Consultar usuario en la base de datos
+        const usuarioQuery = await pool.query(
+            `SELECT id_usuario, nombre_completo, correo_personal FROM usuarios 
+             WHERE LOWER(correo_personal) = LOWER($1) 
+                OR LOWER(codigo_alumno) = LOWER($1)`,
+            [correo.trim()]
+        );
+
+        if (usuarioQuery.rows.length === 0) {
+            return res.status(404).json({ error: 'No se encontró una cuenta asociada a esos datos.' });
+        }
+
+        const usuario = usuarioQuery.rows[0];
+
+        // 2. Generar clave temporal de 6 dígitos
+        const claveTemporal = Math.floor(100000 + Math.random() * 900000).toString();
+
+        // 3. Responder de inmediato al cliente
+        res.status(200).json({
+            success: true,
+            mensaje: `Se envió una clave temporal de acceso al correo ${usuario.correo_personal}.`
+        });
+
+        // 4. Enviar correo vía API de Brevo
+        fetch('https://api.brevo.com/v3/smtp/email', {
+            method: 'POST',
+            headers: {
+                'accept': 'application/json',
+                'api-key': process.env.BREVO_API_KEY || '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',
+                'content-type': 'application/json'
+            },
+            body: JSON.stringify({
+                sender: { name: "PataRunner UTP", email: "terronesdiego04@gmail.com" },
+                to: [{ email: usuario.correo_personal, name: usuario.nombre_completo }],
+                subject: "Recuperación de contraseña — PataRunner 🔑",
+                htmlContent: `
+                    <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px; max-width: 500px; margin: auto;">
+                        <h2 style="color: #2563eb; text-align: center;">PataRunner</h2>
+                        <p>Hola <strong>${usuario.nombre_completo}</strong>,</p>
+                        <p>Has solicitado restablecer tu contraseña. Tu clave temporal de acceso es:</p>
+                        <div style="font-size: 28px; font-weight: bold; color: #2563eb; letter-spacing: 4px; padding: 15px 0; text-align: center; background-color: #f3f4f6; border-radius: 6px; margin: 15px 0;">
+                            ${claveTemporal}
+                        </div>
+                        <p style="color: #666; font-size: 12px; text-align: center;">Inicia sesión con esta clave y cámbiala desde tu perfil.</p>
+                    </div>
+                `
+            })
+        }).catch(err => console.error("Error al enviar correo por Brevo:", err));
+
+    } catch (error) {
+        console.error("Error en recuperar-password:", error.message);
+        res.status(500).json({ error: 'Error interno del servidor al procesar la solicitud.' });
+    }
+});
+
+// backend/index_2.js
+app.post('/api/auth/recuperar-password', async (req, res) => {
+    try {
+        const { correo } = req.body;
+
+        if (!correo) {
+            return res.status(400).json({ error: 'Debes proporcionar un correo o código.' });
+        }
+
+        // Consultar si existe el usuario por correo o código
+        const usuarioExiste = await pool.query(
+            'SELECT * FROM usuarios WHERE LOWER(correo_institucional) = LOWER($1) OR LOWER(codigo) = LOWER($1)',
+            [correo]
+        );
+
+        if (usuarioExiste.rows.length === 0) {
+            return res.status(404).json({ error: 'No se encontró una cuenta asociada a esos datos.' });
+        }
+
+        res.status(200).json({
+            success: true,
+            mensaje: 'Se han enviado las instrucciones de recuperación a tu correo registrado.'
+        });
+
+    } catch (error) {
+        console.error("Error en recuperar-password:", error.message);
+        res.status(500).json({ error: 'Error interno del servidor al procesar la solicitud.' });
+    }
+});
+
 // --- RUTA: Obtener productos del catálogo ---
 app.get('/api/productos', async (req, res) => {
     try {
