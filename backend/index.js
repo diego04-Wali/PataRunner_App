@@ -608,6 +608,31 @@ app.get('/api/pedidos/runner/:id_runner', async (req, res) => {
     }
 });
 
+// --- RUTA: Obtener historial de entregas completadas/canceladas de un Runner ---
+app.get('/api/pedidos/historial-runner/:id_runner', async (req, res) => {
+    try {
+        const { id_runner } = req.params;
+        const historial = await pool.query(`
+            SELECT p.*, 
+                   u.nombre_completo AS nombre_cliente,
+                   u.foto_perfil AS alumno_foto,
+                   COALESCE(STRING_AGG(pr.nombre, ', '), p.descripcion_pedido) AS productos_resumen
+            FROM pedidos p
+            JOIN usuarios u ON p.id_cliente = u.id_usuario
+            LEFT JOIN detalle_pedido dp ON p.id_pedido = dp.id_pedido
+            LEFT JOIN productos pr ON dp.id_producto = pr.id_producto
+            WHERE p.id_runner = $1 AND p.estado IN ('Entregado', 'Finalizado', 'Cancelado')
+            GROUP BY p.id_pedido, u.nombre_completo, u.foto_perfil
+            ORDER BY p.fecha_pedido DESC
+        `, [id_runner]);
+        
+        res.status(200).json(historial.rows);
+    } catch (error) {
+        console.error("Error al obtener historial del runner:", error.message);
+        res.status(500).json({ error: 'Error interno al consultar el historial del runner.' });
+    }
+});
+
 // --- RUTA: Enviar un mensaje al chat ---
 app.post('/api/chat', async (req, res) => {
     try {
