@@ -5717,7 +5717,7 @@ window.recuperarContrasenaModal = async function() {
             didOpen: () => { Swal.showLoading(); }
         });
 
-        const respuesta = await fetch('https://patarunner-app.onrender.com/api/auth/recuperar-password', {
+        const respuesta = await fetch('/api/auth/recuperar-password', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ correo: correo.trim() })
@@ -5781,7 +5781,7 @@ window.recuperarContrasenaModal = async function() {
             didOpen: () => { Swal.showLoading(); }
         });
 
-        const respuesta = await fetch('https://patarunner-app.onrender.com/api/auth/recuperar-password', {
+        const respuesta = await fetch('/api/auth/recuperar-password', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ correo: correo.trim() })
