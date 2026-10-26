@@ -415,7 +415,7 @@ app.post('/api/auth/recuperar-password', async (req, res) => {
 
         // 4. Enlace que se enviará al correo (apunta a tu frontend o una vista de cambio de clave)
         // Puedes cambiar localhost por tu dominio en producción
-        const enlaceReset = `http://localhost:3000?token=${tokenRecuperacion}&reset=true`;
+        const enlaceReset = `https://patarunner-app.onrender.com?token=${tokenRecuperacion}&reset=true`;
 
         // 5. Enviar correo vía API de Brevo
         fetch('https://api.brevo.com/v3/smtp/email', {
