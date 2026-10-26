@@ -1101,21 +1101,20 @@ if (logoutBtn) {
   const navBtnPedidos = document.querySelector('.nav-btn[data-nav="pedidos"]');
   const navBtnRunner = document.querySelector('.nav-btn[data-nav="runner"]');
   const navBtnHistorial = document.getElementById('nav-btn-historial');
-
-  // --- FUNCIÓN PARA CAMBIAR TEXTO E ÍCONO DE LA NAV BAR SEGÚN ROL ---
-  function actualizarNavSegunRol(rol) {
+// --- FUNCIÓN PARA CAMBIAR TEXTO E ÍCONO DE LA NAV BAR SEGÚN ROL ---
+function actualizarNavSegunRol(rol) {
     const navBtnPedidos = document.querySelector('.nav-btn[data-nav="pedidos"]');
     if (!navBtnPedidos) return;
 
     if (rol === 'runner') {
-        // Cambiar texto e ícono a Historial cuando estás en Runner
+        // Cambiar texto e ícono a Historial cuando está en modo Runner
         navBtnPedidos.innerHTML = `
             <i data-lucide="history" class="w-5 h-5"></i>
             <span class="text-[9.5px] font-medium">Historial</span>
         `;
         navBtnPedidos.setAttribute('onclick', "showTab('historial-runner'); if(typeof cargarHistorialRunner === 'function') cargarHistorialRunner();");
     } else {
-        // Restaurar a Pedidos cuando estás en Alumno
+        // Restaurar a Pedidos cuando está en modo Alumno
         navBtnPedidos.innerHTML = `
             <i data-lucide="package" class="w-5 h-5"></i>
             <span class="text-[9.5px] font-medium">Pedidos</span>
@@ -1126,7 +1125,38 @@ if (logoutBtn) {
     if (window.lucide && typeof lucide.createIcons === 'function') {
         lucide.createIcons();
     }
-  }
+}
+
+function setActiveRole(role) {
+    // 1. Verificar el estado runner desde el storage si la variable local aún no actualizó
+    const esRunnerVerificado = isRunner || (sessionStorage.getItem('isRunnerStatus') === 'true');
+    if (role === "runner" && !esRunnerVerificado) return;
+    
+    activeRole = role;
+
+    // 2. Pintar en azul el selector superior (Alumno / Runner)
+    if (roleBtnAlumno) {
+        roleBtnAlumno.classList.toggle("bg-blue-600", role === "alumno");
+        roleBtnAlumno.classList.toggle("text-white", role === "alumno");
+        roleBtnAlumno.classList.toggle("text-slate-600", role !== "alumno");
+    }
+
+    if (roleBtnRunner) {
+        roleBtnRunner.classList.toggle("bg-blue-600", role === "runner");
+        roleBtnRunner.classList.toggle("text-white", role === "runner");
+        roleBtnRunner.classList.toggle("text-slate-600", role !== "runner");
+    }
+
+    // 3. Gestionar botones de la barra inferior según el rol activo
+    if (navBtnInicio) navBtnInicio.classList.toggle("hidden", role !== "alumno");
+    if (navBtnRunner) navBtnRunner.classList.toggle("hidden", role !== "runner");
+
+    // 4. Cambiar el botón central (Pedidos <-> Historial)
+    actualizarNavSegunRol(role);
+
+    // 5. Cambiar a la vista correspondiente
+    showTab(role === "alumno" ? "inicio" : "runner");
+}
 
   function setActiveRole(role) {
     if (role === "runner" && !isRunner) return;
