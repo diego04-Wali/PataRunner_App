@@ -1080,16 +1080,17 @@ if (logoutBtn) {
         b.classList.toggle("text-slate-400", !active);
     });
 
-    // Cargar misiones y pedidos dinámicos al cambiar de vista
+    // Cargar misiones, pedidos e historial dinámicamente al cambiar de vista
     if (tab === "runner") {
         if (typeof cargarPedidosPendientes === 'function') cargarPedidosPendientes();
         if (typeof cargarEntregasActivas === 'function') cargarEntregasActivas();
+    } else if (tab === "historial-runner") {
+        if (typeof cargarHistorialRunner === 'function') cargarHistorialRunner();
     } else if (tab === "inicio") {
         if (typeof cargarMisPedidos === 'function') cargarMisPedidos();
     } else if (tab === "perfil") {
         if (typeof cargarDatosPerfil === 'function') cargarDatosPerfil();
     }
-
     // Ocultar el conmutador superior de rol únicamente en la vista de Perfil
     const topSelector = document.getElementById('role-switcher-bar'); 
     if (topSelector) {
