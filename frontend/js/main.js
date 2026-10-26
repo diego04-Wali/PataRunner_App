@@ -3185,8 +3185,14 @@ if (runnerCheckbox && activateRunnerBtn) {
     });
 }
 
+// CÓDIGO CORREGIDO:
 async function cargarHistorialRunner() {
     try {
+        // 1. Extraer la información real del usuario desde sessionStorage
+        const userStr = sessionStorage.getItem('usuario');
+        if (!userStr) return;
+        const userData = JSON.parse(userStr);
+
         if (!userData || !userData.id_usuario) return;
 
         const res = await fetch(`/api/pedidos/historial-runner/${userData.id_usuario}`);
@@ -3200,9 +3206,8 @@ async function cargarHistorialRunner() {
 
         if (!historial || historial.length === 0) {
             contenedorList.innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-history"></i>
-                    <p>Aún no tienes entregas en tu historial.</p>
+                <div class="empty-state text-center py-8 text-slate-400 text-xs">
+                    <p>Aún no tienes entregas registradas en tu historial.</p>
                 </div>`;
             if (totalGananciasEl) totalGananciasEl.textContent = 'S/ 0.00';
             return;
@@ -3221,19 +3226,19 @@ async function cargarHistorialRunner() {
             }
 
             const card = document.createElement('div');
-            card.className = `card-historial ${esCancelado ? 'cancelado' : ''}`;
+            card.className = `rounded-2xl border ${esCancelado ? 'border-red-200 bg-red-50/40' : 'border-slate-100 bg-white'} p-4 mb-3 shadow-sm`;
             card.innerHTML = `
-                <div class="card-historial-header">
-                    <span class="pedido-id">Pedido #${pedido.id_pedido}</span>
-                    <span class="badge-estado ${esCancelado ? 'badge-danger' : 'badge-success'}">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-[11px] font-mono font-semibold text-slate-400">Pedido #${pedido.id_pedido}</span>
+                    <span class="px-2 py-0.5 rounded-full text-[10.5px] font-semibold ${esCancelado ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'}">
                         ${pedido.estado}
                     </span>
                 </div>
-                <div class="card-historial-body">
-                    <p><i class="fas fa-user"></i> <strong>Cliente:</strong> ${pedido.nombre_cliente}</p>
-                    <p><i class="fas fa-shopping-bag"></i> <strong>Pedido:</strong> ${pedido.productos_resumen}</p>
-                    <p><i class="fas fa-map-marker-alt"></i> <strong>Destino:</strong> ${pedido.ubicacion_entrega || 'Por acordar'}</p>
-                    <p class="ganancia"><strong>Ganancia:</strong> S/ ${tarifa.toFixed(2)}</p>
+                <div class="text-[12px] text-slate-700 space-y-1">
+                    <p><strong>Cliente:</strong> ${pedido.nombre_cliente || 'Alumno'}</p>
+                    <p><strong>Detalle:</strong> ${pedido.productos_resumen || 'Sin detalle'}</p>
+                    <p><strong>Destino:</strong> ${pedido.ubicacion_entrega || 'Por acordar'}</p>
+                    <p class="text-blue-600 font-mono-stat font-bold mt-2">Ganancia: S/ ${tarifa.toFixed(2)}</p>
                 </div>
             `;
             contenedorList.appendChild(card);
