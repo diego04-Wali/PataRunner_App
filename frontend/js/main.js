@@ -5717,7 +5717,7 @@ window.recuperarContrasenaModal = async function() {
             didOpen: () => { Swal.showLoading(); }
         });
 
-        const respuesta = await fetch('/api/auth/recuperar-password', {
+        const respuesta = await fetch('https://patarunner-app.onrender.com/api/auth/recuperar-password', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ correo: correo.trim() })
@@ -5781,7 +5781,7 @@ window.recuperarContrasenaModal = async function() {
             didOpen: () => { Swal.showLoading(); }
         });
 
-        const respuesta = await fetch('/api/auth/recuperar-password', {
+        const respuesta = await fetch('https://patarunner-app.onrender.com/api/auth/recuperar-password', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ correo: correo.trim() })
@@ -5852,11 +5852,11 @@ window.addEventListener('DOMContentLoaded', async () => {
                     didOpen: () => { Swal.showLoading(); }
                 });
 
-                const respuesta = await fetch('/api/auth/actualizar-password-token', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ token: tokenReset, nuevaPassword })
-                });
+                const respuesta = await fetch('https://patarunner-app.onrender.com/api/auth/actualizar-password-token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token: tokenReset, nuevaPassword })
+});
 
                 const data = await respuesta.json();
 
