@@ -1117,6 +1117,31 @@ if (logoutBtn) {
   const navBtnPedidos = document.querySelector('.nav-btn[data-nav="pedidos"]');
   const navBtnRunner = document.querySelector('.nav-btn[data-nav="runner"]');
   const navBtnHistorial = document.getElementById('nav-btn-historial');
+// --- FUNCIÓN PARA CAMBIAR DINÁMICAMENTE LA BARRA INFERIOR SEGÚN EL ROL ---
+function actualizarNavSegunRol(rol) {
+    const navBtnPedidos = document.querySelector('.nav-btn[data-nav="pedidos"]');
+    if (!navBtnPedidos) return;
+
+    if (rol === 'runner') {
+        // Cambiar texto e ícono a Historial cuando está en modo Runner
+        navBtnPedidos.innerHTML = `
+            <i data-lucide="history" class="w-5 h-5"></i>
+            <span class="text-[9.5px] font-medium">Historial</span>
+        `;
+        navBtnPedidos.setAttribute('onclick', "showTab('historial-runner'); if(typeof cargarHistorialRunner === 'function') cargarHistorialRunner();");
+    } else {
+        // Restaurar a Pedidos cuando está en modo Alumno
+        navBtnPedidos.innerHTML = `
+            <i data-lucide="package" class="w-5 h-5"></i>
+            <span class="text-[9.5px] font-medium">Pedidos</span>
+        `;
+        navBtnPedidos.setAttribute('onclick', "showTab('pedidos'); if(typeof cargarMisPedidos === 'function') cargarMisPedidos();");
+    }
+
+    if (window.lucide && typeof lucide.createIcons === 'function') {
+        lucide.createIcons();
+    }
+}
 
   function setActiveRole(role) {
     if (role === "runner" && !isRunner) return;
@@ -1130,17 +1155,19 @@ if (logoutBtn) {
     roleBtnRunner.classList.toggle("text-white", role === "runner");
     if (isRunner) roleBtnRunner.classList.toggle("text-slate-600", role !== "runner");
 
+    // 🟢 AGREGAR ESTA LÍNEA AQUÍ:
+    actualizarNavSegunRol(role);
+
     // La navegación inferior cambia según el rol activo
     navBtnInicio.classList.toggle("hidden", role !== "alumno");
-    navBtnPedidos.classList.toggle("hidden", role !== "alumno");
+    navBtnPedidos.classList.toggle("hidden", false); // Siempre visible, solo cambia su texto
     navBtnRunner.classList.toggle("hidden", role !== "runner");
-    if (navBtnHistorial) navBtnHistorial.classList.toggle("hidden", role !== "runner");
+    if (navBtnHistorial) navBtnHistorial.classList.toggle("hidden", true);
 
-  showTab(role === "alumno" ? "inicio" : "runner");
+    showTab(role === "alumno" ? "inicio" : "runner");
     
-    // NUEVO: Si cambia a la pestaña Runner y ya está verificado, pintamos el botón de verde
     if (role === "runner" && isRunner) {
-document.querySelectorAll("#btn-postular-runner").forEach(applyBtn => {
+        document.querySelectorAll("#btn-postular-runner").forEach(applyBtn => {
             applyBtn.disabled = true;
             applyBtn.classList.remove("bg-blue-600");
             applyBtn.classList.add("bg-emerald-600");
