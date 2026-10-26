@@ -5686,3 +5686,67 @@ async function cargarHistorialPedidos() {
         console.error("Error al cargar historial del alumno:", error);
     }
 }
+// ==========================================
+// RECUPERACIÓN DE CONTRASEÑA
+// ==========================================
+window.recuperarContrasenaModal = async function() {
+    const { value: correo, isConfirmed } = await Swal.fire({
+        title: 'Recuperar Contraseña',
+        text: 'Ingresa tu correo o código para enviarte las instrucciones de recuperación:',
+        input: 'text',
+        inputPlaceholder: 'Ej: mi_correo@gmail.com o U21227585',
+        showCancelButton: true,
+        confirmButtonColor: '#2563eb',
+        cancelButtonColor: '#64748b',
+        confirmButtonText: 'Enviar enlace',
+        cancelButtonText: 'Cancelar',
+        inputValidator: (value) => {
+            if (!value || !value.trim()) {
+                return 'Debes ingresar un correo o código válido.';
+            }
+        }
+    });
+
+    if (!isConfirmed || !correo) return;
+
+    try {
+        Swal.fire({
+            title: 'Enviando solicitud...',
+            text: 'Por favor espera un momento.',
+            allowOutsideClick: false,
+            didOpen: () => { Swal.showLoading(); }
+        });
+
+        const respuesta = await fetch('/api/auth/recuperar-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ correo: correo.trim() })
+        });
+
+        const data = await respuesta.json();
+
+        if (respuesta.ok) {
+            Swal.fire({
+                title: '¡Correo enviado!',
+                text: data.mensaje || 'Se han enviado las instrucciones a tu correo.',
+                icon: 'success',
+                confirmButtonColor: '#2563eb'
+            });
+        } else {
+            Swal.fire({
+                title: 'Atención',
+                text: data.error || 'No se encontró una cuenta vinculada a este usuario.',
+                icon: 'warning',
+                confirmButtonColor: '#2563eb'
+            });
+        }
+    } catch (error) {
+        console.error("Error al solicitar recuperación:", error);
+        Swal.fire({
+            title: 'Error de conexión',
+            text: 'Ocurrió un problema de red al procesar tu solicitud.',
+            icon: 'error',
+            confirmButtonColor: '#2563eb'
+        });
+    }
+};
