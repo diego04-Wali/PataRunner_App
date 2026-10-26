@@ -1101,21 +1101,20 @@ if (logoutBtn) {
   const navBtnPedidos = document.querySelector('.nav-btn[data-nav="pedidos"]');
   const navBtnRunner = document.querySelector('.nav-btn[data-nav="runner"]');
   const navBtnHistorial = document.getElementById('nav-btn-historial');
-// --- FUNCIÓN PARA CAMBIAR TEXTO E ÍCONO DE LA NAV BAR SEGÚN ROL ---
-// --- FUNCIÓN PARA CAMBIAR TEXTO E ÍCONO DE LA NAV BAR SEGÚN ROL ---
+// --- FUNCIÓN PARA CAMBIAR EL BOTÓN CENTRAL DE LA BARRA INFERIOR ---
 function actualizarNavSegunRol(rol) {
     const navBtnPedidos = document.querySelector('.nav-btn[data-nav="pedidos"]');
     if (!navBtnPedidos) return;
 
     if (rol === 'runner') {
-        // Cambiar texto e ícono a Historial cuando estás en Runner
+        // En Runner, el botón central es Historial del Runner
         navBtnPedidos.innerHTML = `
             <i data-lucide="history" class="w-5 h-5"></i>
             <span class="text-[9.5px] font-medium">Historial</span>
         `;
         navBtnPedidos.setAttribute('onclick', "showTab('historial-runner'); if(typeof cargarHistorialRunner === 'function') cargarHistorialRunner();");
     } else {
-        // Restaurar a Pedidos cuando estás en Alumno
+        // En Alumno, el botón central es Mis Pedidos
         navBtnPedidos.innerHTML = `
             <i data-lucide="package" class="w-5 h-5"></i>
             <span class="text-[9.5px] font-medium">Pedidos</span>
@@ -1131,7 +1130,7 @@ function actualizarNavSegunRol(rol) {
 function setActiveRole(role) {
     activeRole = role;
 
-    // 1. Pintar en azul el conmutador superior según el rol
+    // 1. Pintar en azul el conmutador superior según el rol activo
     if (roleBtnAlumno) {
         roleBtnAlumno.classList.toggle("bg-blue-600", role === "alumno");
         roleBtnAlumno.classList.toggle("text-white", role === "alumno");
@@ -1144,14 +1143,16 @@ function setActiveRole(role) {
         roleBtnRunner.classList.toggle("text-slate-600", role !== "runner");
     }
 
-    // 2. Mostrar/Ocultar botones inferiores según el rol activo
-    if (navBtnInicio) navBtnInicio.classList.toggle("hidden", role !== "alumno");
-    if (navBtnRunner) navBtnRunner.classList.toggle("hidden", role !== "runner");
+    // 2. Mantener SIEMPRE visible el botón 'Inicio' en la barra inferior
+    if (navBtnInicio) navBtnInicio.classList.remove("hidden");
 
-    // 3. Cambiar el botón central (Pedidos <-> Historial)
+    // 3. Ocultar SIEMPRE el botón 'Runner' inferior (el rol se cambia arriba)
+    if (navBtnRunner) navBtnRunner.classList.add("hidden");
+
+    // 4. Cambiar la función del botón central (Pedidos en Alumno <-> Historial en Runner)
     actualizarNavSegunRol(role);
 
-    // 4. Cambiar a la vista correspondiente
+    // 5. Cargar la vista principal correspondiente arriba
     showTab(role === "alumno" ? "inicio" : "runner");
 }
 
