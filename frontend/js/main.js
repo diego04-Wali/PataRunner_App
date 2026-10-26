@@ -3188,7 +3188,7 @@ async function cargarHistorialRunner() {
     const contenedor = document.getElementById('contenedor-historial-runner');
     if (!contenedor) return;
 
-    // 1. Obtener el id de usuario activo
+    // 1. Obtener los datos del usuario de la sesión de forma flexible
     const usuarioStr = sessionStorage.getItem('usuario') || localStorage.getItem('usuario');
     if (!usuarioStr) {
         contenedor.innerHTML = '<p class="text-slate-400 text-[12.5px] text-center py-8">Inicia sesión para ver tu historial.</p>';
@@ -3196,36 +3196,37 @@ async function cargarHistorialRunner() {
     }
 
     const usuario = JSON.parse(usuarioStr);
-    const idUsuarioReal = usuario.id_usuario || usuario.id;
+    const idRunner = usuario.id_usuario || usuario.id_runner || usuario.id;
+
+    if (!idRunner) {
+        contenedor.innerHTML = '<p class="text-slate-400 text-[12.5px] text-center py-8">No se pudo identificar al usuario actual.</p>';
+        return;
+    }
 
     contenedor.innerHTML = '<p class="text-slate-400 text-[12.5px] text-center py-8">Cargando historial...</p>';
 
     try {
-        // 2. Consulta a la API usando la ruta del runner
-        const response = await fetch(`/api/pedidos/runner/${idUsuarioReal}`);
+        const response = await fetch(`/api/pedidos/historial-runner/${idRunner}`);
         
         if (!response.ok) {
-            contenedor.innerHTML = '<p class="text-slate-400 text-[12.5px] text-center py-8">Aún no tienes entregas completadas o canceladas.</p>';
+            contenedor.innerHTML = '<p class="text-slate-400 text-[12.5px] text-center py-8">Aún no tienes entregas registradas en el historial.</p>';
             return;
         }
 
         const pedidos = await response.json();
 
-        // 3. Filtrar únicamente entregas finalizadas o canceladas
-        const entregasFinalizadas = pedidos.filter(p => p.estado === 'Entregado' || p.estado === 'Cancelado' || p.estado === 'Finalizado');
-
-        if (!Array.isArray(entregasFinalizadas) || entregasFinalizadas.length === 0) {
+        if (!Array.isArray(pedidos) || pedidos.length === 0) {
             contenedor.innerHTML = '<p class="text-slate-400 text-[12.5px] text-center py-8">Aún no tienes entregas completadas o canceladas.</p>';
             return;
         }
 
-        // 4. Renderizar tarjetas desde PostgreSQL
         contenedor.innerHTML = '';
-        entregasFinalizadas.forEach(pedido => {
-            const esCancelado = pedido.estado === 'Cancelado';
+        pedidos.forEach(pedido => {
+            const estadoLimpio = (pedido.estado || '').trim();
+            const esCancelado = estadoLimpio.toLowerCase() === 'cancelado';
             const colorBadge = esCancelado ? 'text-red-600 bg-red-100' : 'text-emerald-700 bg-emerald-50';
             const idFormateado = '#' + (pedido.id_pedido || '0').toString().padStart(4, '0');
-            const listaProductos = pedido.descripcion_pedido || pedido.productos_resumen || 'Entrega realizada';
+            const listaProductos = pedido.productos_resumen || pedido.descripcion_pedido || 'Entrega realizada';
             const ganancia = Number(pedido.tarifa_entrega || 0).toFixed(2);
 
             const tarjetaHTML = `
@@ -3236,30 +3237,24 @@ async function cargarHistorialRunner() {
                         </span>
                         <span class="text-[11px] font-mono font-semibold text-slate-400">${idFormateado}</span>
                     </div>
-                    
-                    <p class="text-[14px] font-semibold text-slate-900 truncate">
-                        ${listaProductos} • ${pedido.ubicacion_entrega || 'Sede UTP'}
-                    </p>
-                    <p class="text-[12px] text-slate-500 mt-0.5 mb-3">
-                        Cliente: ${pedido.nombre_cliente || 'Alumno'}
-                    </p>
-                    
+                    <p class="text-[14px] font-semibold text-slate-900 truncate">${listaProductos} • ${pedido.ubicacion_entrega || 'Sede UTP'}</p>
+                    <p class="text-[12px] text-slate-500 mt-0.5 mb-3">Cliente: ${pedido.nombre_cliente || 'Alumno'}</p>
                     <div class="flex justify-between items-center border-t border-slate-50 pt-2.5">
-                        <span class="text-[12px] font-medium text-slate-500">Ganancia (Propina)</span>
+                        <span class="text-[12px] font-medium text-slate-500">Ganancia (Tarifa)</span>
                         <span class="text-[13px] font-bold text-emerald-600">+ S/ ${ganancia}</span>
                     </div>
                 </div>
             `;
             contenedor.innerHTML += tarjetaHTML;
         });
-
+        
         if (window.lucide && typeof lucide.createIcons === 'function') {
             lucide.createIcons();
         }
 
     } catch (error) {
-        console.error("Error al cargar historial del runner:", error);
-        contenedor.innerHTML = '<p class="text-slate-400 text-[12.5px] text-center py-8">Aún no tienes entregas completadas o canceladas.</p>';
+        console.error("Error al cargar historial runner:", error);
+        contenedor.innerHTML = '<p class="text-slate-400 text-[12.5px] text-center py-8">Error de conexión al cargar el historial.</p>';
     }
 }
 
