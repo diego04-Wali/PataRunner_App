@@ -206,8 +206,7 @@ app.post('/api/usuarios/verificar-otp', async (req, res) => {
 
         const pendiente = otpResult.rows[0];
 
-        // 2. Mover registro a la tabla usuarios (usando solo las columnas existentes)
-       // 2. Mover registro a la tabla usuarios (asegurando correo personal y teléfono)
+        // 2. Mover registro a la tabla usuarios (incluyendo el password_hash)
         await pool.query(
             `INSERT INTO usuarios (
                 codigo_alumno, 
@@ -217,21 +216,24 @@ app.post('/api/usuarios/verificar-otp', async (req, res) => {
                 telefono, 
                 firebase_uid, 
                 id_rol, 
-                verificado
-            ) VALUES ($1, $2, $3, $4, $5, $6, 1, true)
+                verificado,
+                password_hash
+            ) VALUES ($1, $2, $3, $4, $5, $6, 1, true, $7)
             ON CONFLICT (codigo_alumno) DO UPDATE 
             SET verificado = true,
                 correo_personal = EXCLUDED.correo_personal,
                 telefono = EXCLUDED.telefono,
                 nombre_completo = EXCLUDED.nombre_completo,
-                carrera = EXCLUDED.carrera`,
+                carrera = EXCLUDED.carrera,
+                password_hash = EXCLUDED.password_hash`,
             [
                 pendiente.codigo_alumno, 
                 pendiente.correo_personal, 
                 pendiente.nombre_completo, 
                 pendiente.carrera, 
                 pendiente.telefono, 
-                pendiente.token_verificacion || null
+                pendiente.token_verificacion || null,
+                pendiente.password_hash // <--- Aquí pasamos la contraseña pendiente
             ]
         );
 
@@ -330,9 +332,9 @@ app.post('/api/login', async (req, res) => {
 
         const idLimpio = identificador.trim().toLowerCase();
 
-        // 1. Buscar al usuario en la base de datos
+        // 1. Buscar al usuario en la base de datos (seleccionando password_hash)
         const result = await pool.query(
-            `SELECT id_usuario, codigo_alumno, correo_personal, nombre_completo, carrera, telefono, id_rol, is_blocked, verificado, foto_perfil 
+            `SELECT id_usuario, codigo_alumno, correo_personal, nombre_completo, carrera, telefono, id_rol, is_blocked, verificado, foto_perfil, password_hash 
              FROM usuarios 
              WHERE LOWER(codigo_alumno) = $1 
                 OR LOWER(correo_personal) = $1 
@@ -353,20 +355,35 @@ app.post('/api/login', async (req, res) => {
             });
         }
 
-        // 2. Validación de contraseña para Administrador
+        // 2. Validación de contraseña
         if (usuario.id_rol === 3 || idLimpio === 'admin01') {
             const ADMIN_PASSWORD_CORRECTA = '@dm1nPataRunner2026';
 
             if (!password || password !== ADMIN_PASSWORD_CORRECTA) {
                 return res.status(401).json({ error: 'Contraseña de administrador incorrecta.' });
             }
+        } else {
+            // Validación estricta para alumnos y runners
+            if (!password || usuario.password_hash !== password) {
+                return res.status(401).json({ error: 'Contraseña incorrecta.' });
+            }
         }
 
-        // 3. Respuesta exitosa si no está bloqueado
+        // 3. Respuesta exitosa si todo es correcto
         res.json({
             message: 'Acceso concedido',
             token: `token_patarunner_${usuario.id_usuario}`,
-            usuario: usuario
+            usuario: {
+                id_usuario: usuario.id_usuario,
+                codigo_alumno: usuario.codigo_alumno,
+                correo_personal: usuario.correo_personal,
+                nombre_completo: usuario.nombre_completo,
+                carrera: usuario.carrera,
+                telefono: usuario.telefono,
+                id_rol: usuario.id_rol,
+                verificado: usuario.verificado,
+                foto_perfil: usuario.foto_perfil
+            }
         });
 
     } catch (error) {
@@ -374,7 +391,6 @@ app.post('/api/login', async (req, res) => {
         res.status(500).json({ error: 'Error interno del servidor al iniciar sesión.' });
     }
 });
-
 // ==========================================
 // RUTA DE RECUPERACIÓN DE CONTRASEÑA CON ENLACE
 // ==========================================
