@@ -148,7 +148,7 @@ app.post(['/usuarios/registro', '/api/usuarios/registro'], async (req, res) => {
                 'content-type': 'application/json'
             },
             body: JSON.stringify({
-                sender: { name: "PataRunner UTP", email: "terronesdiego04@gmail.com" },
+               sender: { name: "PataRunner UTP", email: process.env.EMAIL_USER || "u23244283@utp.edu.pe" },
                 to: [{ email: finalEmail, name: finalNombre }],
                 subject: "Tu código de verificación de PataRunner 🏃‍♂️",
                 htmlContent: `
@@ -442,7 +442,7 @@ const enlaceReset = `https://patarunnerapp-frontend.vercel.app/?token=${tokenRec
                 'content-type': 'application/json'
             },
             body: JSON.stringify({
-                sender: { name: "PataRunner UTP", email: "terronesdiego04@gmail.com" },
+                sender: { name: "PataRunner UTP", email: process.env.EMAIL_USER || "u23244283@utp.edu.pe" },
                 to: [{ email: usuario.correo_personal, name: usuario.nombre_completo }],
                 subject: "Restablece tu contraseña — PataRunner 🔒",
                 htmlContent: `
