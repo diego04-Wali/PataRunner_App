@@ -1173,7 +1173,7 @@ async function validarImagenProducto(imagenEntrada) {
         }
 
         // Sightengine analiza moderación general: nudité, armas, drogas, gore y clases de objetos
-        const models = 'nudity-2.0,drugs,gore,general';
+        const models = 'nudity-2.0,general';
         let response;
 
         if (imagenEntrada.startsWith('http://') || imagenEntrada.startsWith('https://')) {
