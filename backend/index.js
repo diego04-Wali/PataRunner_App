@@ -1402,13 +1402,13 @@ app.put('/api/usuarios/perfil', async (req, res) => {
 });
 
 // ==========================================
-// REGISTRAR RESEÑA DE LA APLICACIÓN (CORREGIDO)
+// REGISTRAR RESEÑA DE LA APLICACIÓN (CON CONTROL ANTI-DUPLICADOS)
 // ==========================================
 app.post('/api/resenas-app', async (req, res) => {
     try {
         let id_usuario = null;
 
-        // 1. Extraer token si está presente en el header Authorization
+        // 1. Extraer ID del token o body
         const authHeader = req.headers.authorization;
         if (authHeader && authHeader.startsWith('Bearer ')) {
             const token = authHeader.split(' ')[1];
@@ -1429,7 +1429,6 @@ app.post('/api/resenas-app', async (req, res) => {
             }
         }
 
-        // 2. Fallback: Si no se obtuvo del token, tomarlo del body
         if (!id_usuario && req.body.id_usuario) {
             id_usuario = req.body.id_usuario;
         }
@@ -1444,7 +1443,23 @@ app.post('/api/resenas-app', async (req, res) => {
             return res.status(400).json({ error: 'Por favor selecciona una calificación en estrellas.' });
         }
 
-        // 3. Insertar en la base de datos
+        // 🛑 CONTROL ANTI-DUPLICADOS: Verificar si el usuario ya envió una reseña en los últimos 15 segundos
+        const duplicadoCheck = await pool.query(
+            `SELECT id_resena FROM resenas_app 
+             WHERE id_usuario = $1 
+               AND (comentario = $2 OR fecha_creacion > NOW() - INTERVAL '15 seconds')`,
+            [id_usuario, comentario || '']
+        );
+
+        if (duplicadoCheck.rows.length > 0) {
+            // Respondemos exitoso al cliente para no mostrar alerta de error por la petición duplicada del navegador
+            return res.status(200).json({
+                success: true,
+                mensaje: 'Reseña registrada previamente.'
+            });
+        }
+
+        // 2. Insertar si no es duplicado
         const result = await pool.query(
             `INSERT INTO resenas_app (id_usuario, calificacion, comentario) 
              VALUES ($1, $2, $3) 
