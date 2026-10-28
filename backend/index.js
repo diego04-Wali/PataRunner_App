@@ -1172,8 +1172,8 @@ async function validarImagenProducto(imagenEntrada) {
             return { esValida: true };
         }
 
-        // Modelos soportados por la API gratuita de Sightengine para moderación y clasificación
-        const models = 'nudity-2.0,classes,type';
+        // Modelos soportados y habilitados en el plan gratuito
+        const models = 'nudity-2.0,type';
         let response;
 
         if (imagenEntrada.startsWith('http://') || imagenEntrada.startsWith('https://')) {
@@ -1210,15 +1210,15 @@ async function validarImagenProducto(imagenEntrada) {
             };
         }
 
-        // 2. Validar animales o mascotas (revisando en type, classes y clases generales)
-        const esAnimalEnType = result.type && (result.type.animal > 0.4 || result.type.pet > 0.4);
-        const esAnimalEnClasses = result.classes && (result.classes.animal > 0.4 || result.classes.pet > 0.4 || result.classes.dog > 0.4 || result.classes.cat > 0.4);
-        
-        if (esAnimalEnType || esAnimalEnClasses) {
-            return {
-                esValida: false,
-                motivo: 'No se permiten imágenes de animales o mascotas en el catálogo.'
-            };
+        // 2. Validar animales o mascotas a través del modelo 'type'
+        if (result.type) {
+            const esAnimal = (result.type.animal || 0) > 0.4 || (result.type.pet || 0) > 0.4;
+            if (esAnimal) {
+                return {
+                    esValida: false,
+                    motivo: 'No se permiten imágenes de animales o mascotas en el catálogo.'
+                };
+            }
         }
 
         return { esValida: true };
