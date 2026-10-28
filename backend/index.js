@@ -1257,12 +1257,12 @@ app.post('/api/admin/productos', async (req, res) => {
     try {
         const { id_tienda, nombre, precio, categoria, subcategoria, descripcion, imagen, stock } = req.body;
 
-        // 🛡️ VALIDACIÓN DE IMAGEN CON IA
+       // 🛡️ VALIDACIÓN DE IMAGEN CON IA
         if (imagen) {
             const validacionIA = await validarImagenProducto(imagen);
             if (!validacionIA.esValida) {
                 return res.status(400).json({ 
-                    error: `Rechazado por IA: ${validacionIA.motivo}` 
+                    error: validacionIA.motivo 
                 });
             }
         }
