@@ -1172,16 +1172,14 @@ async function validarImagenProducto(imagenEntrada) {
             return { esValida: true };
         }
 
-        // Sightengine analiza moderación general: nudité, armas, drogas, gore y clases de objetos
-        const models = 'nudity-2.0,general';
+        // Modelos soportados por la API gratuita de Sightengine para moderación y clasificación
+        const models = 'nudity-2.0,classes,type';
         let response;
 
         if (imagenEntrada.startsWith('http://') || imagenEntrada.startsWith('https://')) {
-            // Caso 1: Enlace URL directo de internet
             const apiUrl = `https://api.sightengine.com/1.0/check.json?url=${encodeURIComponent(imagenEntrada)}&models=${models}&api_user=${API_USER}&api_secret=${API_SECRET}`;
             response = await fetch(apiUrl);
         } else if (imagenEntrada.startsWith('data:image')) {
-            // Caso 2: Archivo local convertido a Base64
             const formData = new FormData();
             formData.append('media', imagenEntrada);
             formData.append('models', models);
@@ -1193,40 +1191,40 @@ async function validarImagenProducto(imagenEntrada) {
                 body: formData
             });
         } else {
-            // Placeholder o ruta relativa local
             return { esValida: true };
         }
 
         const result = await response.json();
+        console.log("🔍 Respuesta de Sightengine:", JSON.stringify(result));
 
         if (result.status === 'failure') {
-            console.error('Error de Sightengine:', result.error?.message);
+            console.error('❌ Error de Sightengine:', result.error?.message);
             return { esValida: true };
         }
 
-        // 1. Validar contenido no apto (Armas, Drogas, Gore, Desnudez)
-        if (result.drugs > 0.5 || result.weapons > 0.5 || result.gore?.prob > 0.5 || result.nudity?.sexual_activity > 0.5) {
+        // 1. Validar contenido inapropiado (Desnudez / Contenido explícito)
+        if (result.nudity?.sexual_activity > 0.5 || result.nudity?.sexual_display > 0.5) {
             return {
                 esValida: false,
-                motivo: 'Contenido sensible o no permitido detectado (sustancias, armas o violencia).'
+                motivo: 'Contenido no permitido o inapropiado detectado.'
             };
         }
 
-        // 2. Validar presencia de animales y mascotas
-        if (result.type) {
-            const animalDetected = result.type.animal > 0.6 || result.type.pet > 0.6;
-            if (animalDetected) {
-                return {
-                    esValida: false,
-                    motivo: 'No se permiten imágenes de animales o mascotas en el catálogo de productos.'
-                };
-            }
+        // 2. Validar animales o mascotas (revisando en type, classes y clases generales)
+        const esAnimalEnType = result.type && (result.type.animal > 0.4 || result.type.pet > 0.4);
+        const esAnimalEnClasses = result.classes && (result.classes.animal > 0.4 || result.classes.pet > 0.4 || result.classes.dog > 0.4 || result.classes.cat > 0.4);
+        
+        if (esAnimalEnType || esAnimalEnClasses) {
+            return {
+                esValida: false,
+                motivo: 'No se permiten imágenes de animales o mascotas en el catálogo.'
+            };
         }
 
         return { esValida: true };
 
     } catch (error) {
-        console.error("Error al validar imagen con IA:", error.message);
+        console.error("❌ Error al validar imagen con IA:", error.message);
         return { esValida: true };
     }
 }
