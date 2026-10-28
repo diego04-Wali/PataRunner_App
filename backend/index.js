@@ -1160,6 +1160,78 @@ app.get('/api/admin/kpis', async (req, res) => {
 });
 
 // ==========================================
+// FUNCIÓN DE VALIDACIÓN DE IMÁGENES CON IA (Sightengine)
+// ==========================================
+async function validarImagenProducto(imagenEntrada) {
+    try {
+        const API_USER = process.env.SIGHTENGINE_USER;
+        const API_SECRET = process.env.SIGHTENGINE_SECRET;
+
+        if (!API_USER || !API_SECRET) {
+            console.warn("⚠️ Credenciales de Sightengine no encontradas. Se omite la validación de IA.");
+            return { esValida: true };
+        }
+
+        // Sightengine analiza moderación general: nudité, armas, drogas, gore y clases de objetos
+        const models = 'nudity-2.0,weapons,drugs,gore,general';
+        let response;
+
+        if (imagenEntrada.startsWith('http://') || imagenEntrada.startsWith('https://')) {
+            // Caso 1: Enlace URL directo de internet
+            const apiUrl = `https://api.sightengine.com/1.0/check.json?url=${encodeURIComponent(imagenEntrada)}&models=${models}&api_user=${API_USER}&api_secret=${API_SECRET}`;
+            response = await fetch(apiUrl);
+        } else if (imagenEntrada.startsWith('data:image')) {
+            // Caso 2: Archivo local convertido a Base64
+            const formData = new FormData();
+            formData.append('media', imagenEntrada);
+            formData.append('models', models);
+            formData.append('api_user', API_USER);
+            formData.append('api_secret', API_SECRET);
+
+            response = await fetch('https://api.sightengine.com/1.0/check.json', {
+                method: 'POST',
+                body: formData
+            });
+        } else {
+            // Placeholder o ruta relativa local
+            return { esValida: true };
+        }
+
+        const result = await response.json();
+
+        if (result.status === 'failure') {
+            console.error('Error de Sightengine:', result.error?.message);
+            return { esValida: true };
+        }
+
+        // 1. Validar contenido no apto (Armas, Drogas, Gore, Desnudez)
+        if (result.drugs > 0.5 || result.weapons > 0.5 || result.gore?.prob > 0.5 || result.nudity?.sexual_activity > 0.5) {
+            return {
+                esValida: false,
+                motivo: 'Contenido sensible o no permitido detectado (sustancias, armas o violencia).'
+            };
+        }
+
+        // 2. Validar presencia de animales y mascotas
+        if (result.type) {
+            const animalDetected = result.type.animal > 0.6 || result.type.pet > 0.6;
+            if (animalDetected) {
+                return {
+                    esValida: false,
+                    motivo: 'No se permiten imágenes de animales o mascotas en el catálogo de productos.'
+                };
+            }
+        }
+
+        return { esValida: true };
+
+    } catch (error) {
+        console.error("Error al validar imagen con IA:", error.message);
+        return { esValida: true };
+    }
+}
+
+// ==========================================
 // MÓDULO ADMIN: TIENDAS Y CATÁLOGO
 // ==========================================
 app.get('/api/admin/tiendas', async (req, res) => {
@@ -1186,12 +1258,25 @@ app.post('/api/admin/tiendas', async (req, res) => {
 app.post('/api/admin/productos', async (req, res) => {
     try {
         const { id_tienda, nombre, precio, categoria, subcategoria, descripcion, imagen, stock } = req.body;
+
+        // 🛡️ VALIDACIÓN DE IMAGEN CON IA
+        if (imagen) {
+            const validacionIA = await validarImagenProducto(imagen);
+            if (!validacionIA.esValida) {
+                return res.status(400).json({ 
+                    error: `Rechazado por IA: ${validacionIA.motivo}` 
+                });
+            }
+        }
+
+        // Si supera la validación, inserta en Neon DB
         await pool.query(
             `INSERT INTO productos (id_tienda, nombre, precio, categoria, subcategoria, descripcion, imagen, stock, disponible) 
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, true)`,
             [id_tienda, nombre, precio, categoria || 'Snacks', subcategoria || 'General', descripcion || '', imagen || 'placeholder.jpg', stock || 10]
         );
-        res.status(201).json({ success: true, message: 'Producto agregado al catálogo.' });
+
+        res.status(201).json({ success: true, message: 'Producto agregado al catálogo exitosamente.' });
     } catch (error) {
         console.error("Error en POST /api/admin/productos:", error.message);
         res.status(500).json({ error: 'Error al guardar el producto.' });
