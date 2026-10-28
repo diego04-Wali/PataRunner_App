@@ -1402,32 +1402,34 @@ app.put('/api/usuarios/perfil', async (req, res) => {
 });
 
 // ==========================================
-// REGISTRAR RESEÑA DE LA APLICACIÓN
+// REGISTRAR RESEÑA DE LA APLICACIÓN (CORREGIDO)
 // ==========================================
 app.post('/api/resenas-app', async (req, res) => {
     try {
         let id_usuario = null;
 
-        // Extract ID from Authorization header
+        // 1. Extraer token si está presente en el header Authorization
         const authHeader = req.headers.authorization;
         if (authHeader && authHeader.startsWith('Bearer ')) {
             const token = authHeader.split(' ')[1];
             if (token && token !== 'undefined' && token !== 'null') {
-                try {
-                    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret_key_patarunner');
-                    id_usuario = decoded.id_usuario || decoded.id || decoded.idUsuario;
-                } catch (e) {
+                if (token.startsWith('token_patarunner_')) {
+                    id_usuario = token.replace('token_patarunner_', '');
+                } else {
                     try {
+                        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret_key_patarunner');
+                        id_usuario = decoded.id_usuario || decoded.id || decoded.idUsuario;
+                    } catch (e) {
                         const decodedPayload = jwt.decode(token);
                         if (decodedPayload) {
                             id_usuario = decodedPayload.id_usuario || decodedPayload.id || decodedPayload.idUsuario;
                         }
-                    } catch (err) {}
+                    }
                 }
             }
         }
 
-        // Fallback to body
+        // 2. Fallback: Si no se obtuvo del token, tomarlo del body
         if (!id_usuario && req.body.id_usuario) {
             id_usuario = req.body.id_usuario;
         }
@@ -1442,6 +1444,7 @@ app.post('/api/resenas-app', async (req, res) => {
             return res.status(400).json({ error: 'Por favor selecciona una calificación en estrellas.' });
         }
 
+        // 3. Insertar en la base de datos
         const result = await pool.query(
             `INSERT INTO resenas_app (id_usuario, calificacion, comentario) 
              VALUES ($1, $2, $3) 
@@ -1449,13 +1452,15 @@ app.post('/api/resenas-app', async (req, res) => {
             [id_usuario, parseInt(calificacion), comentario || '']
         );
 
-        res.status(201).json({
+        return res.status(201).json({
+            success: true,
             mensaje: '¡Gracias por calificar PataRunner!',
             resena: result.rows[0]
         });
+
     } catch (error) {
-        console.error("Error en POST /api/resenas-app:", error);
-        res.status(500).json({ error: 'Error interno al guardar la reseña.' });
+        console.error("Error en POST /api/resenas-app:", error.message);
+        return res.status(500).json({ error: 'Error interno al guardar la reseña.' });
     }
 });
 // ==========================================
