@@ -1172,7 +1172,7 @@ async function validarImagenProducto(imagenEntrada) {
             return { esValida: true };
         }
 
-        // Modelos soportados y habilitados en el plan gratuito
+        // Usamos el modelo nudity-2.0 y type para analisis basico
         const models = 'nudity-2.0,type';
         let response;
 
@@ -1202,23 +1202,23 @@ async function validarImagenProducto(imagenEntrada) {
             return { esValida: true };
         }
 
-        // 1. Validar contenido inapropiado (Desnudez / Contenido explícito)
-        if (result.nudity?.sexual_activity > 0.5 || result.nudity?.sexual_display > 0.5) {
+        // 1. Validar contenido desnudez / inapropiado
+        if (result.nudity?.sexual_activity > 0.3 || result.nudity?.sexual_display > 0.3 || result.nudity?.erotica > 0.3) {
             return {
                 esValida: false,
                 motivo: 'Contenido no permitido o inapropiado detectado.'
             };
         }
 
-        // 2. Validar animales o mascotas a través del modelo 'type'
-        if (result.type) {
-            const esAnimal = (result.type.animal || 0) > 0.4 || (result.type.pet || 0) > 0.4;
-            if (esAnimal) {
-                return {
-                    esValida: false,
-                    motivo: 'No se permiten imágenes de animales o mascotas en el catálogo.'
-                };
-            }
+        // 2. Si detecta ilustración o tipo no fotográfico de producto o si la URL contiene palabras clave
+        const urlMinuscula = imagenEntrada.toLowerCase();
+        const contienePalabraProhibida = ['perro', 'dog', 'gato', 'cat', 'mascota', 'pet', 'animal'].some(p => urlMinuscula.includes(p));
+
+        if (contienePalabraProhibida || (result.type && result.type.illustration > 0.6)) {
+            return {
+                esValida: false,
+                motivo: 'No se permiten imágenes de animales, ilustraciones no comerciales o contenido no apto para el catálogo.'
+            };
         }
 
         return { esValida: true };
