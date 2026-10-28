@@ -6,7 +6,11 @@ import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import fs from 'fs';
 import jwt from 'jsonwebtoken';
-
+import resenaRoutes from './routes/resenaRoutes.js';
+import productoRoutes from './routes/productoRoutes.js';
+import authRoutes from './routes/authRoutes.js';
+import pedidoRoutes from './routes/pedidoRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -14,7 +18,14 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
-
+// ==========================================
+// RUTAS REFACTORIZADAS MVC
+// ==========================================
+app.use('/api', resenaRoutes);
+app.use('/api', productoRoutes);
+app.use('/api', authRoutes);
+app.use('/api', pedidoRoutes);
+app.use('/api', adminRoutes);
 // ==========================================
 // CONFIGURACIÓN FIREBASE ADMIN SDK
 // ==========================================
@@ -88,166 +99,6 @@ app.get('/', (req, res) => {
 });
 
 // ==========================================
-// RUTA DE REGISTRO CON ENVÍO OTP
-// ==========================================
-app.post(['/usuarios/registro', '/api/usuarios/registro'], async (req, res) => {
-    try {
-        console.log('BODY RECIBIDO:', req.body);
-
-        const { 
-            codigoEstudiantil, codigo_estudiantil, codigoAlumno, codigo_alumno, codigo,
-            nombres, apellidos, nombreCompleto, nombre_completo,
-            carrera, 
-            email, correo, correo_personal, 
-            telefono, celular,
-            password, contrasena, password_hash
-        } = req.body;
-
-        const finalCodigo = codigoEstudiantil || codigo_estudiantil || codigoAlumno || codigo_alumno || codigo;
-        const finalEmail = correo_personal || correo || email;
-        const finalTelefono = telefono || celular;
-        const finalPassword = password || contrasena || password_hash;
-        const finalNombre = nombre_completo || nombreCompleto || `${nombres || ''} ${apellidos || ''}`.trim();
-
-        if (!finalCodigo || !finalEmail || !finalPassword) {
-            return res.status(400).json({ 
-                success: false, 
-                error: 'Faltan datos obligatorios (código, correo personal o contraseña).' 
-            });
-        }
-
-        // 1. Generar OTP de 6 dígitos
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
-        // 2. Guardar OTP y registro pendiente en Neon DB
-        await pool.query(
-            `INSERT INTO codigos_otp (telefono, codigo, expira_en) 
-             VALUES ($1, $2, NOW() + INTERVAL '10 minutes')`,
-            [finalTelefono || '000000000', otp]
-        );
-
-        await pool.query(
-            `INSERT INTO registros_pendientes 
-            (codigo_alumno, correo_personal, nombre_completo, password_hash, carrera, token_verificacion, telefono, codigo_otp, expira_en) 
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW() + INTERVAL '10 minutes')`,
-            [finalCodigo, finalEmail, finalNombre, finalPassword, carrera || '', otp, finalTelefono || '', otp]
-        );
-
-        // 3. Responder de inmediato al cliente
-        res.status(200).json({ 
-            success: true, 
-            message: 'Código de verificación enviado a tu correo personal.' 
-        });
-
-        // 4. Enviar correo OTP vía API HTTP con Brevo (fetch nativo en puerto 443)
-        fetch('https://api.brevo.com/v3/smtp/email', {
-            method: 'POST',
-            headers: {
-                'accept': 'application/json',
-                'api-key': process.env.BREVO_API_KEY || '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',
-                'content-type': 'application/json'
-            },
-            body: JSON.stringify({
-               sender: { name: "PataRunner UTP", email: process.env.EMAIL_USER || "u23244283@utp.edu.pe" },
-                to: [{ email: finalEmail, name: finalNombre }],
-                subject: "Tu código de verificación de PataRunner 🏃‍♂️",
-                htmlContent: `
-                    <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px; max-width: 500px; margin: auto;">
-                        <h2 style="color: #4f46e5; text-align: center;">PataRunner</h2>
-                        <p>Hola <strong>${finalNombre}</strong>,</p>
-                        <p>Ingresa el siguiente código de 6 dígitos para verificar tu cuenta:</p>
-                        <div style="font-size: 32px; font-weight: bold; color: #4f46e5; letter-spacing: 6px; padding: 15px 0; text-align: center; background-color: #f3f4f6; border-radius: 6px; margin: 15px 0;">
-                            ${otp}
-                        </div>
-                        <p style="color: #666; font-size: 12px; text-align: center;">Este código expira en 10 minutos.</p>
-                    </div>
-                `
-            })
-        })
-        .then(async response => {
-            const result = await response.json();
-            if (response.ok) {
-                console.log(`✅ OTP enviado exitosamente por Brevo a ${finalEmail}:`, result);
-            } else {
-                console.error('❌ Error devuelto por la API de Brevo:', result);
-            }
-        })
-        .catch(err => console.error('❌ Error enviando correo por Brevo:', err.message));
-
-    } catch (error) {
-        console.error('❌ Error general en /usuarios/registro:', error);
-        return res.status(500).json({ success: false, error: error.message });
-    }
-});
-
-// ==========================================
-// RUTA DE VERIFICACIÓN DE OTP POR CORREO
-// ==========================================
-app.post('/api/usuarios/verificar-otp', async (req, res) => {
-    try {
-        const { correo_personal, telefono, codigo } = req.body;
-
-        if (!codigo) {
-            return res.status(400).json({ error: 'Ingresa el código OTP.' });
-        }
-
-        // 1. Buscar OTP activo en registros_pendientes
-        const otpResult = await pool.query(
-            `SELECT * FROM registros_pendientes 
-             WHERE (correo_personal = $1 OR telefono = $2) 
-               AND codigo_otp = $3 
-               AND expira_en > NOW()`,
-            [correo_personal, telefono, codigo]
-        );
-
-        if (otpResult.rows.length === 0) {
-            return res.status(400).json({ error: 'Código incorrecto o expirado.' });
-        }
-
-        const pendiente = otpResult.rows[0];
-
-        // 2. Mover registro a la tabla usuarios (incluyendo el password_hash)
-        await pool.query(
-            `INSERT INTO usuarios (
-                codigo_alumno, 
-                correo_personal, 
-                nombre_completo, 
-                carrera, 
-                telefono, 
-                firebase_uid, 
-                id_rol, 
-                verificado,
-                password_hash
-            ) VALUES ($1, $2, $3, $4, $5, $6, 1, true, $7)
-            ON CONFLICT (codigo_alumno) DO UPDATE 
-            SET verificado = true,
-                correo_personal = EXCLUDED.correo_personal,
-                telefono = EXCLUDED.telefono,
-                nombre_completo = EXCLUDED.nombre_completo,
-                carrera = EXCLUDED.carrera,
-                password_hash = EXCLUDED.password_hash`,
-            [
-                pendiente.codigo_alumno, 
-                pendiente.correo_personal, 
-                pendiente.nombre_completo, 
-                pendiente.carrera, 
-                pendiente.telefono, 
-                pendiente.token_verificacion || null,
-                pendiente.password_hash // <--- Aquí pasamos la contraseña pendiente
-            ]
-        );
-
-        // 3. Limpiar el registro pendiente usando "id_pendiente"
-        await pool.query('DELETE FROM registros_pendientes WHERE id_pendiente = $1', [pendiente.id_pendiente]);
-
-        return res.status(200).json({ success: true, message: 'Cuenta verificada correctamente.' });
-
-    } catch (error) {
-        console.error('Error al verificar OTP:', error);
-        return res.status(500).json({ error: 'Error interno al validar el código.' });
-    }
-});
-// ==========================================
 // RUTA: ACTIVAR MODO RUNNER
 // ==========================================
 app.put('/api/usuarios/activar-runner', async (req, res) => {
@@ -319,78 +170,6 @@ app.get('/api/usuarios/estado/:id', async (req, res) => {
     }
 });
 
-// ==========================================
-// RUTA DE INICIO DE SESIÓN
-// ==========================================
-app.post('/api/login', async (req, res) => {
-    try {
-        const { identificador, password } = req.body;
-
-        if (!identificador) {
-            return res.status(400).json({ error: 'Ingresa tu código, correo personal o teléfono.' });
-        }
-
-        const idLimpio = identificador.trim().toLowerCase();
-
-        // 1. Buscar al usuario en la base de datos (seleccionando password_hash)
-        const result = await pool.query(
-            `SELECT id_usuario, codigo_alumno, correo_personal, nombre_completo, carrera, telefono, id_rol, is_blocked, verificado, foto_perfil, password_hash 
-             FROM usuarios 
-             WHERE LOWER(codigo_alumno) = $1 
-                OR LOWER(correo_personal) = $1 
-                OR telefono = $1`,
-            [idLimpio]
-        );
-
-        if (result.rows.length === 0) {
-            return res.status(404).json({ error: 'Usuario no registrado en PataRunner.' });
-        }
-
-        const usuario = result.rows[0];
-
-        // 🛑 VALIDACIÓN DE BLOQUEO DE CUENTA
-        if (usuario.is_blocked) {
-            return res.status(403).json({ 
-                error: 'Tu cuenta ha sido suspendida por un administrador.' 
-            });
-        }
-
-        // 2. Validación de contraseña
-        if (usuario.id_rol === 3 || idLimpio === 'admin01') {
-            const ADMIN_PASSWORD_CORRECTA = '@dm1nPataRunner2026';
-
-            if (!password || password !== ADMIN_PASSWORD_CORRECTA) {
-                return res.status(401).json({ error: 'Contraseña de administrador incorrecta.' });
-            }
-        } else {
-            // Validación estricta para alumnos y runners
-            if (!password || usuario.password_hash !== password) {
-                return res.status(401).json({ error: 'Contraseña incorrecta.' });
-            }
-        }
-
-        // 3. Respuesta exitosa si todo es correcto
-        res.json({
-            message: 'Acceso concedido',
-            token: `token_patarunner_${usuario.id_usuario}`,
-            usuario: {
-                id_usuario: usuario.id_usuario,
-                codigo_alumno: usuario.codigo_alumno,
-                correo_personal: usuario.correo_personal,
-                nombre_completo: usuario.nombre_completo,
-                carrera: usuario.carrera,
-                telefono: usuario.telefono,
-                id_rol: usuario.id_rol,
-                verificado: usuario.verificado,
-                foto_perfil: usuario.foto_perfil
-            }
-        });
-
-    } catch (error) {
-        console.error("Error en POST /api/login:", error.message);
-        res.status(500).json({ error: 'Error interno del servidor al iniciar sesión.' });
-    }
-});
 // ==========================================
 // RUTA DE RECUPERACIÓN DE CONTRASEÑA CON ENLACE
 // ==========================================
@@ -505,23 +284,6 @@ app.post('/api/auth/actualizar-password-token', async (req, res) => {
     }
 });
 
-
-// --- RUTA: Obtener productos del catálogo ---
-app.get('/api/productos', async (req, res) => {
-    try {
-        const todosLosProductos = await pool.query(`
-            SELECT p.*, t.nombre AS nombre_tienda, t.ubicacion AS ubicacion_tienda
-            FROM productos p
-            LEFT JOIN tiendas t ON p.id_tienda = t.id_tienda
-            WHERE p.disponible = true 
-            ORDER BY p.id_producto ASC
-        `);
-        res.status(200).json(todosLosProductos.rows);
-    } catch (error) {
-        console.error(error.message);
-        res.status(500).json({ error: 'Error al obtener los productos.' });
-    }
-});
 
 // --- RUTA: Historial de pedidos cliente ---
 app.get('/api/pedidos/historial/:id_usuario', async (req, res) => {
@@ -1232,82 +994,6 @@ app.post('/api/admin/tiendas', async (req, res) => {
     }
 });
 
-app.post('/api/admin/productos', async (req, res) => {
-    try {
-        const { id_tienda, nombre, precio, categoria, subcategoria, descripcion, imagen, stock } = req.body;
-
-       // 🛡️ VALIDACIÓN DE IMAGEN CON IA
-        if (imagen) {
-            const validacionIA = await validarImagenProducto(imagen);
-            if (!validacionIA.esValida) {
-                return res.status(400).json({ 
-                    error: validacionIA.motivo 
-                });
-            }
-        }
-
-        // Si supera la validación, inserta en Neon DB
-        await pool.query(
-            `INSERT INTO productos (id_tienda, nombre, precio, categoria, subcategoria, descripcion, imagen, stock, disponible) 
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, true)`,
-            [id_tienda, nombre, precio, categoria || 'Snacks', subcategoria || 'General', descripcion || '', imagen || 'placeholder.jpg', stock || 10]
-        );
-
-        res.status(201).json({ success: true, message: 'Producto agregado al catálogo exitosamente.' });
-    } catch (error) {
-        console.error("Error en POST /api/admin/productos:", error.message);
-        res.status(500).json({ error: 'Error al guardar el producto.' });
-    }
-});
-
-app.patch('/api/admin/productos/:id/stock', async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { stock } = req.body;
-        await pool.query('UPDATE productos SET stock = $1 WHERE id_producto = $2', [stock, id]);
-        res.status(200).json({ success: true, message: 'Stock actualizado correctamente.' });
-    } catch (error) {
-        console.error("Error al actualizar stock:", error.message);
-        res.status(500).json({ error: 'Error al actualizar el stock.' });
-    }
-});
-
-app.delete('/api/admin/productos/:id', async (req, res) => {
-    try {
-        const { id } = req.params;
-        await pool.query('DELETE FROM productos WHERE id_producto = $1', [id]);
-        res.status(200).json({ success: true, message: 'Producto eliminado.' });
-    } catch (error) {
-        console.error("Error al eliminar producto:", error.message);
-        res.status(500).json({ error: 'Error al eliminar el producto.' });
-    }
-});
-
-// ==========================================
-// MÓDULO ADMIN: RESEÑAS DE LA APLICACIÓN
-// ==========================================
-app.get('/api/admin/resenas-app', async (req, res) => {
-    try {
-        const result = await pool.query(`
-            SELECT 
-                r.id_resena,
-                r.calificacion,
-                r.comentario,
-                r.fecha_creacion,
-                u.nombre_completo,
-                u.codigo_alumno AS codigo,
-                u.carrera
-            FROM resenas_app r
-            JOIN usuarios u ON r.id_usuario = u.id_usuario
-            ORDER BY r.id_resena DESC
-        `);
-        res.status(200).json(result.rows);
-    } catch (error) {
-        console.error("Error en GET /api/admin/resenas-app:", error.message);
-        res.status(500).json({ error: 'Error al obtener las reseñas.' });
-    }
-});
-
 // ==========================================
 // ACTUALIZAR PERFIL DE USUARIO (FALLBACK DE ID)
 // ==========================================
@@ -1369,78 +1055,6 @@ app.put('/api/usuarios/perfil', async (req, res) => {
     } catch (error) {
         console.error("Error en PUT /api/usuarios/perfil:", error);
         res.status(500).json({ error: 'Error interno al actualizar el perfil.' });
-    }
-});
-
-// ==========================================
-// REGISTRAR RESEÑA DE LA APLICACIÓN (PROTEGIDO CONTRA DUPLICADOS)
-// ==========================================
-app.post('/api/resenas-app', async (req, res) => {
-    try {
-        let id_usuario = null;
-
-        // Extract ID de token o body
-        const authHeader = req.headers.authorization;
-        if (authHeader && authHeader.startsWith('Bearer ')) {
-            const token = authHeader.split(' ')[1];
-            if (token && token !== 'undefined' && token !== 'null') {
-                if (token.startsWith('token_patarunner_')) {
-                    id_usuario = token.replace('token_patarunner_', '');
-                } else {
-                    try {
-                        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret_key_patarunner');
-                        id_usuario = decoded.id_usuario || decoded.id || decoded.idUsuario;
-                    } catch (e) {
-                        const decodedPayload = jwt.decode(token);
-                        if (decodedPayload) {
-                            id_usuario = decodedPayload.id_usuario || decodedPayload.id || decodedPayload.idUsuario;
-                        }
-                    }
-                }
-            }
-        }
-
-        if (!id_usuario && req.body.id_usuario) {
-            id_usuario = req.body.id_usuario;
-        }
-
-        if (!id_usuario) {
-            return res.status(401).json({ error: 'Debes iniciar sesión para enviar una reseña.' });
-        }
-
-        const { calificacion, comentario } = req.body;
-        const textoComentario = (comentario || '').trim();
-
-        if (!calificacion) {
-            return res.status(400).json({ error: 'Por favor selecciona una calificación en estrellas.' });
-        }
-
-        // Insertar en resenas_app
-        const result = await pool.query(
-            `INSERT INTO resenas_app (id_usuario, calificacion, comentario) 
-             VALUES ($1, $2, $3) 
-             RETURNING id_resena, id_usuario, calificacion, comentario, fecha_creacion`,
-            [id_usuario, parseInt(calificacion), textoComentario]
-        );
-
-        return res.status(201).json({
-            success: true,
-            mensaje: '¡Gracias por calificar PataRunner!',
-            resena: result.rows[0]
-        });
-
-    } catch (error) {
-        // Capturar error 23505 (violación de restricción única en PostgreSQL)
-        if (error.code === '23505') {
-            console.warn(`⚠️ Intento de reseña duplicada bloqueado en PostgreSQL para el usuario ${req.body.id_usuario || 'desconocido'}`);
-            return res.status(200).json({
-                success: true,
-                mensaje: 'Reseña registrada con éxito.'
-            });
-        }
-
-        console.error("Error en POST /api/resenas-app:", error.message);
-        return res.status(500).json({ error: 'Error interno al guardar la reseña.' });
     }
 });
 
