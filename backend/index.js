@@ -1160,10 +1160,21 @@ app.get('/api/admin/kpis', async (req, res) => {
 });
 
 // ==========================================
-// FUNCIÓN DE VALIDACIÓN DE IMÁGENES CON IA (Sightengine)
+// FUNCIÓN DE VALIDACIÓN DE IMÁGENES CON IA (Sightengine Resiliente)
 // ==========================================
 async function validarImagenProducto(imagenEntrada) {
     try {
+        // 1. Verificación previa por palabras prohibidas en el enlace o nombre del archivo
+        const entradaLimpia = imagenEntrada.toLowerCase();
+        const palabrasProhibidas = ['perro', 'dog', 'gato', 'cat', 'mascota', 'pet', 'animal'];
+        
+        if (palabrasProhibidas.some(p => entradaLimpia.includes(p))) {
+            return {
+                esValida: false,
+                motivo: 'No se permiten imágenes de animales o mascotas en el catálogo.'
+            };
+        }
+
         const API_USER = process.env.SIGHTENGINE_USER;
         const API_SECRET = process.env.SIGHTENGINE_SECRET;
 
@@ -1172,7 +1183,6 @@ async function validarImagenProducto(imagenEntrada) {
             return { esValida: true };
         }
 
-        // Usamos el modelo nudity-2.0 y type para analisis basico
         const models = 'nudity-2.0,type';
         let response;
 
@@ -1198,23 +1208,21 @@ async function validarImagenProducto(imagenEntrada) {
         console.log("🔍 Respuesta de Sightengine:", JSON.stringify(result));
 
         if (result.status === 'failure') {
-            console.error('❌ Error de Sightengine:', result.error?.message);
+            console.error('❌ Falla técnica de Sightengine (red o timeout):', result.error?.message);
+            // Si la descarga falla por timeout, permitimos el guardado para no bloquear el sistema
             return { esValida: true };
         }
 
-        // 1. Validar contenido desnudez / inapropiado
-        if (result.nudity?.sexual_activity > 0.3 || result.nudity?.sexual_display > 0.3 || result.nudity?.erotica > 0.3) {
+        // 2. Validación de contenido inapropiado
+        if (result.nudity?.sexual_activity > 0.3 || result.nudity?.sexual_display > 0.3) {
             return {
                 esValida: false,
                 motivo: 'Contenido no permitido o inapropiado detectado.'
             };
         }
 
-        // 2. Si detecta ilustración o tipo no fotográfico de producto o si la URL contiene palabras clave
-        const urlMinuscula = imagenEntrada.toLowerCase();
-        const contienePalabraProhibida = ['perro', 'dog', 'gato', 'cat', 'mascota', 'pet', 'animal'].some(p => urlMinuscula.includes(p));
-
-        if (contienePalabraProhibida || (result.type && result.type.illustration > 0.6)) {
+        // 3. Validación de ilustraciones o fotos no aptas
+        if (result.type && result.type.illustration > 0.6) {
             return {
                 esValida: false,
                 motivo: 'No se permiten imágenes de animales, ilustraciones no comerciales o contenido no apto para el catálogo.'
@@ -1224,7 +1232,7 @@ async function validarImagenProducto(imagenEntrada) {
         return { esValida: true };
 
     } catch (error) {
-        console.error("❌ Error al validar imagen con IA:", error.message);
+        console.error("❌ Error en función de validación:", error.message);
         return { esValida: true };
     }
 }
