@@ -1373,13 +1373,13 @@ app.put('/api/usuarios/perfil', async (req, res) => {
 });
 
 // ==========================================
-// REGISTRAR RESEÑA DE LA APLICACIÓN (CONTROL DEFINITIVO ANTI-DUPLICADOS)
+// REGISTRAR RESEÑA DE LA APLICACIÓN (PROTEGIDO CONTRA DUPLICADOS)
 // ==========================================
 app.post('/api/resenas-app', async (req, res) => {
     try {
         let id_usuario = null;
 
-        // 1. Extraer ID del token o body
+        // Extract ID de token o body
         const authHeader = req.headers.authorization;
         if (authHeader && authHeader.startsWith('Bearer ')) {
             const token = authHeader.split(' ')[1];
@@ -1415,28 +1415,7 @@ app.post('/api/resenas-app', async (req, res) => {
             return res.status(400).json({ error: 'Por favor selecciona una calificación en estrellas.' });
         }
 
-        // 🛑 CANDADO ANTI-DUPLICADOS:
-        // 1. Bloquea si el usuario ya guardó exactamente el mismo comentario.
-        // 2. O si intenta guardar cualquier reseña dentro de 1 minuto.
-        const duplicadoCheck = await pool.query(
-            `SELECT id_resena FROM resenas_app 
-             WHERE id_usuario = $1 
-               AND (
-                 LOWER(TRIM(comentario)) = LOWER($2) 
-                 OR fecha_creacion > (CURRENT_TIMESTAMP - INTERVAL '1 minute')
-               )`,
-            [id_usuario, textoComentario]
-        );
-
-        if (duplicadoCheck.rows.length > 0) {
-            console.warn(`⚠️ Petición duplicada bloqueada silenciosamente para el usuario ${id_usuario}`);
-            return res.status(200).json({
-                success: true,
-                mensaje: 'Reseña procesada correctamente.'
-            });
-        }
-
-        // 2. Insertar si pasa las validaciones
+        // Insertar en resenas_app
         const result = await pool.query(
             `INSERT INTO resenas_app (id_usuario, calificacion, comentario) 
              VALUES ($1, $2, $3) 
@@ -1451,10 +1430,20 @@ app.post('/api/resenas-app', async (req, res) => {
         });
 
     } catch (error) {
+        // Capturar error 23505 (violación de restricción única en PostgreSQL)
+        if (error.code === '23505') {
+            console.warn(`⚠️ Intento de reseña duplicada bloqueado en PostgreSQL para el usuario ${req.body.id_usuario || 'desconocido'}`);
+            return res.status(200).json({
+                success: true,
+                mensaje: 'Reseña registrada con éxito.'
+            });
+        }
+
         console.error("Error en POST /api/resenas-app:", error.message);
         return res.status(500).json({ error: 'Error interno al guardar la reseña.' });
     }
 });
+
 // ==========================================
 // ACTUALIZAR FOTO DE PERFIL (BASE64)
 // ==========================================
