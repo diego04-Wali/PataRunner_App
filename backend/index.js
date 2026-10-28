@@ -505,35 +505,6 @@ app.post('/api/auth/actualizar-password-token', async (req, res) => {
     }
 });
 
-// backend/index_2.js
-app.post('/api/auth/recuperar-password', async (req, res) => {
-    try {
-        const { correo } = req.body;
-
-        if (!correo) {
-            return res.status(400).json({ error: 'Debes proporcionar un correo o código.' });
-        }
-
-        // Consultar si existe el usuario por correo o código
-        const usuarioExiste = await pool.query(
-            'SELECT * FROM usuarios WHERE LOWER(correo_institucional) = LOWER($1) OR LOWER(codigo) = LOWER($1)',
-            [correo]
-        );
-
-        if (usuarioExiste.rows.length === 0) {
-            return res.status(404).json({ error: 'No se encontró una cuenta asociada a esos datos.' });
-        }
-
-        res.status(200).json({
-            success: true,
-            mensaje: 'Se han enviado las instrucciones de recuperación a tu correo registrado.'
-        });
-
-    } catch (error) {
-        console.error("Error en recuperar-password:", error.message);
-        res.status(500).json({ error: 'Error interno del servidor al procesar la solicitud.' });
-    }
-});
 
 // --- RUTA: Obtener productos del catálogo ---
 app.get('/api/productos', async (req, res) => {
@@ -1402,7 +1373,7 @@ app.put('/api/usuarios/perfil', async (req, res) => {
 });
 
 // ==========================================
-// REGISTRAR RESEÑA DE LA APLICACIÓN (CON CONTROL ANTI-DUPLICADOS)
+// REGISTRAR RESEÑA DE LA APLICACIÓN (CONTROL DEFINITIVO ANTI-DUPLICADOS)
 // ==========================================
 app.post('/api/resenas-app', async (req, res) => {
     try {
@@ -1438,33 +1409,39 @@ app.post('/api/resenas-app', async (req, res) => {
         }
 
         const { calificacion, comentario } = req.body;
+        const textoComentario = (comentario || '').trim();
 
         if (!calificacion) {
             return res.status(400).json({ error: 'Por favor selecciona una calificación en estrellas.' });
         }
 
-        // 🛑 CONTROL ANTI-DUPLICADOS: Verificar si el usuario ya envió una reseña en los últimos 15 segundos
+        // 🛑 CANDADO ANTI-DUPLICADOS:
+        // 1. Bloquea si el usuario ya guardó exactamente el mismo comentario.
+        // 2. O si intenta guardar cualquier reseña dentro de 1 minuto.
         const duplicadoCheck = await pool.query(
             `SELECT id_resena FROM resenas_app 
              WHERE id_usuario = $1 
-               AND (comentario = $2 OR fecha_creacion > NOW() - INTERVAL '15 seconds')`,
-            [id_usuario, comentario || '']
+               AND (
+                 LOWER(TRIM(comentario)) = LOWER($2) 
+                 OR fecha_creacion > (CURRENT_TIMESTAMP - INTERVAL '1 minute')
+               )`,
+            [id_usuario, textoComentario]
         );
 
         if (duplicadoCheck.rows.length > 0) {
-            // Respondemos exitoso al cliente para no mostrar alerta de error por la petición duplicada del navegador
+            console.warn(`⚠️ Petición duplicada bloqueada silenciosamente para el usuario ${id_usuario}`);
             return res.status(200).json({
                 success: true,
-                mensaje: 'Reseña registrada previamente.'
+                mensaje: 'Reseña procesada correctamente.'
             });
         }
 
-        // 2. Insertar si no es duplicado
+        // 2. Insertar si pasa las validaciones
         const result = await pool.query(
             `INSERT INTO resenas_app (id_usuario, calificacion, comentario) 
              VALUES ($1, $2, $3) 
              RETURNING id_resena, id_usuario, calificacion, comentario, fecha_creacion`,
-            [id_usuario, parseInt(calificacion), comentario || '']
+            [id_usuario, parseInt(calificacion), textoComentario]
         );
 
         return res.status(201).json({
