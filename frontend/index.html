@@ -390,22 +390,25 @@
             </div>
           </div>
 
-         <div class="space-y-2.5 mt-3">
-    <!-- 1. Insignia / Botón de Runner -->
-    <button id="btn-abrir-postulacion" onclick="abrirModalPostulacion()" class="w-full py-3 rounded-2xl bg-slate-900 text-white text-xs font-extrabold shadow-sm hover:bg-slate-800 transition-all">
-        ⚡ Quiero ser Runner
-    </button>
+          <!-- CONTENEDOR AGRUPADO: INSIGNIA RUNNER + SEGURIDAD -->
+          <div class="px-5 space-y-2.5">
+            <!-- 1. Insignia / Botón de Runner (!mb-0 anula cualquier margen externo) -->
+            <button id="btn-abrir-postulacion" onclick="abrirModalPostulacion()" class="!mb-0 w-full py-3 rounded-2xl bg-slate-900 text-white text-xs font-extrabold shadow-sm hover:bg-slate-800 transition-all">
+              ⚡ Quiero ser Runner
+            </button>
 
-    <!-- 2. Tarjeta informativa de seguridad (sin mt-auto ni mt-6) -->
-    <div class="flex items-center gap-3 p-3.5 rounded-2xl bg-white border border-slate-100 shadow-2xs">
-        <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
-            <i data-lucide="shield-check" class="w-4 h-4"></i>
-        </div>
-        <p class="text-[11px] text-slate-500 font-medium leading-snug">
-            Todos los Runners verifican su identidad antes de repartir.
-        </p>
-    </div>
-</div>
+            <!-- 2. Tarjeta informativa de seguridad -->
+            <div class="!mt-2.5 flex items-center gap-3 p-3.5 rounded-2xl bg-white border border-slate-100 shadow-2xs">
+              <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                <i data-lucide="shield-check" class="w-4 h-4"></i>
+              </div>
+              <p class="text-[11px] text-slate-500 font-medium leading-snug">
+                Todos los Runners verifican su identidad antes de repartir.
+              </p>
+            </div>
+          </div>
+
+        </div> 
 
         <!-- TAB: MIS PEDIDOS -->
         <div id="tab-pedidos" class="hidden">

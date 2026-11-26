@@ -3017,7 +3017,7 @@ function aplicarEstadoRunner() {
             botonAbrirPostulacion.disabled = true;
             botonAbrirPostulacion.removeAttribute('onclick');
             botonAbrirPostulacion.innerHTML = '<i data-lucide="lock" class="w-5 h-5"></i> Acceso restringido por Admin';
-            botonAbrirPostulacion.className = 'w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-red-100 text-red-600 font-semibold cursor-not-allowed';
+            botonAbrirPostulacion.className = 'w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-2xl bg-emerald-50/90 border border-emerald-200/80 cursor-default !mb-0';
         }
         if (tabRunner) {
             tabRunner.disabled = true;
