@@ -273,19 +273,100 @@
             <button id="reset-btn" class="mt-1.5 text-[11px] font-semibold underline text-blue-100">Publicar otro pedido</button>
           </div>
 
-          <!-- Radar de Runners -->
-          <div class="mx-5 mb-3 rounded-2xl bg-slate-900 relative overflow-hidden h-24 shadow-sm border border-slate-800">
-            <svg viewBox="0 0 340 130" class="absolute inset-0 w-full h-full opacity-40">
-              <rect x="20" y="30" width="70" height="70" fill="none" stroke="#38bdf8" stroke-width="1.5" />
-              <rect x="130" y="15" width="90" height="50" fill="none" stroke="#38bdf8" stroke-width="1.5" />
-              <rect x="250" y="40" width="70" height="80" fill="none" stroke="#38bdf8" stroke-width="1.5" />
-              <path d="M20 100 H320" stroke="#0284c7" stroke-width="1" stroke-dasharray="4 4" />
-            </svg>
-            <div class="absolute top-2.5 right-3 flex items-center gap-1.5 bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 px-2 py-0.5 rounded-full text-[9.5px] font-bold">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> EN VIVO
+          <!-- CARRUSEL CON TU DISEÑO PERSONALIZADO -->
+          <div class="mb-4">
+            <div class="px-5 flex items-center justify-between mb-2">
+              <p class="text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                <i data-lucide="sparkles" class="w-3.5 h-3.5 text-blue-600"></i> Destacados UTP
+              </p>
+              <span class="text-[10px] font-semibold text-slate-400">Desliza →</span>
             </div>
-            <div class="absolute bottom-2.5 left-3.5 flex items-center gap-1.5 text-white text-[11px] font-semibold font-mono-stat">
-              <i data-lucide="users" class="w-3.5 h-3.5 text-cyan-300"></i> 12 Runners activos cerca de ti
+
+            <div class="flex overflow-x-auto gap-3 px-5 pb-2 snap-x">
+              
+              <!-- CARTILLA 1 -->
+              <div class="snap-start shrink-0 w-44 bg-white border border-slate-200/90 rounded-2xl p-2.5 shadow-sm relative flex flex-col justify-between">
+                <!-- Etiqueta superior izquierda (Lugar donde se compra) -->
+                <span class="absolute top-2.5 left-2.5 z-10 bg-slate-900/85 backdrop-blur-sm text-white text-[9px] font-bold px-2 py-0.5 rounded-md shadow-sm">
+                  📍 Frago • Torre A
+                </span>
+
+                <!-- Imagen / Visual Central -->
+                <div class="w-full h-24 rounded-xl bg-amber-50 flex flex-col items-center justify-center pt-3 relative overflow-hidden">
+                  <span class="text-4xl">🍱</span>
+                  <span class="mt-1 text-[10.5px] font-extrabold text-blue-700 bg-white/90 px-2 py-0.5 rounded-full shadow-xs">S/ 11.00</span>
+                </div>
+
+                <!-- Nombre y Botón Añadir al Carrito -->
+                <div class="mt-2 text-center">
+                  <p class="text-[11.5px] font-bold text-slate-800 truncate mb-1.5">Menú Estudiante</p>
+                  <button onclick="agregarAlCarrito(1, 'Menú Estudiante', 11.00); Swal.fire({toast:true, position:'top', icon:'success', title:'Añadido al carrito', showConfirmButton:false, timer:1200})" 
+                    class="w-full py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-[10.5px] font-bold flex items-center justify-center gap-1 transition-all shadow-xs">
+                    <i data-lucide="shopping-cart" class="w-3 h-3"></i> Añadir al carrito
+                  </button>
+                </div>
+              </div>
+
+              <!-- CARTILLA 2 -->
+              <div class="snap-start shrink-0 w-44 bg-white border border-slate-200/90 rounded-2xl p-2.5 shadow-sm relative flex flex-col justify-between">
+                <span class="absolute top-2.5 left-2.5 z-10 bg-slate-900/85 backdrop-blur-sm text-white text-[9px] font-bold px-2 py-0.5 rounded-md shadow-sm">
+                  📍 Frago • Torre A
+                </span>
+
+                <div class="w-full h-24 rounded-xl bg-rose-50 flex flex-col items-center justify-center pt-3 relative overflow-hidden">
+                  <span class="text-4xl">🍔</span>
+                  <span class="mt-1 text-[10.5px] font-extrabold text-blue-700 bg-white/90 px-2 py-0.5 rounded-full shadow-xs">S/ 5.90</span>
+                </div>
+
+                <div class="mt-2 text-center">
+                  <p class="text-[11.5px] font-bold text-slate-800 truncate mb-1.5">Hamburguesita</p>
+                  <button onclick="agregarAlCarrito(2, 'Hamburguesita', 5.90); Swal.fire({toast:true, position:'top', icon:'success', title:'Añadido al carrito', showConfirmButton:false, timer:1200})" 
+                    class="w-full py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-[10.5px] font-bold flex items-center justify-center gap-1 transition-all shadow-xs">
+                    <i data-lucide="shopping-cart" class="w-3 h-3"></i> Añadir al carrito
+                  </button>
+                </div>
+              </div>
+
+              <!-- CARTILLA 3 -->
+              <div class="snap-start shrink-0 w-44 bg-white border border-slate-200/90 rounded-2xl p-2.5 shadow-sm relative flex flex-col justify-between">
+                <span class="absolute top-2.5 left-2.5 z-10 bg-slate-900/85 backdrop-blur-sm text-white text-[9px] font-bold px-2 py-0.5 rounded-md shadow-sm">
+                  📍 LISTO! • Torre A
+                </span>
+
+                <div class="w-full h-24 rounded-xl bg-emerald-50 flex flex-col items-center justify-center pt-3 relative overflow-hidden">
+                  <span class="text-4xl">🥤</span>
+                  <span class="mt-1 text-[10.5px] font-extrabold text-blue-700 bg-white/90 px-2 py-0.5 rounded-full shadow-xs">S/ 4.00</span>
+                </div>
+
+                <div class="mt-2 text-center">
+                  <p class="text-[11.5px] font-bold text-slate-800 truncate mb-1.5">Gatorade 500ml</p>
+                  <button onclick="agregarAlCarrito(3, 'Gatorade 500ml', 4.00); Swal.fire({toast:true, position:'top', icon:'success', title:'Añadido al carrito', showConfirmButton:false, timer:1200})" 
+                    class="w-full py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-[10.5px] font-bold flex items-center justify-center gap-1 transition-all shadow-xs">
+                    <i data-lucide="shopping-cart" class="w-3 h-3"></i> Añadir al carrito
+                  </button>
+                </div>
+              </div>
+
+              <!-- CARTILLA 4 -->
+              <div class="snap-start shrink-0 w-44 bg-white border border-slate-200/90 rounded-2xl p-2.5 shadow-sm relative flex flex-col justify-between">
+                <span class="absolute top-2.5 left-2.5 z-10 bg-slate-900/85 backdrop-blur-sm text-white text-[9px] font-bold px-2 py-0.5 rounded-md shadow-sm">
+                  📍 Papelería UTP
+                </span>
+
+                <div class="w-full h-24 rounded-xl bg-indigo-50 flex flex-col items-center justify-center pt-3 relative overflow-hidden">
+                  <span class="text-4xl">📁</span>
+                  <span class="mt-1 text-[10.5px] font-extrabold text-blue-700 bg-white/90 px-2 py-0.5 rounded-full shadow-xs">S/ 3.00</span>
+                </div>
+
+                <div class="mt-2 text-center">
+                  <p class="text-[11.5px] font-bold text-slate-800 truncate mb-1.5">Folder Manila x10</p>
+                  <button onclick="agregarAlCarrito(4, 'Folder Manila x10', 3.00); Swal.fire({toast:true, position:'top', icon:'success', title:'Añadido al carrito', showConfirmButton:false, timer:1200})" 
+                    class="w-full py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-[10.5px] font-bold flex items-center justify-center gap-1 transition-all shadow-xs">
+                    <i data-lucide="shopping-cart" class="w-3 h-3"></i> Añadir al carrito
+                  </button>
+                </div>
+              </div>
+
             </div>
           </div>
 
