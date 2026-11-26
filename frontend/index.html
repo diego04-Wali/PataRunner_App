@@ -389,7 +389,15 @@
               </div>
             </div>
           </div>
-          
+
+            <!-- Botón Postularme como Runner -->
+          <div class="px-5">
+            <button id="btn-abrir-postulacion" onclick="document.getElementById('postular-runner').classList.remove('hidden'); document.getElementById('postular-runner').style.display = 'flex';" class="w-full flex items-center justify-center gap-2 py-3 bg-white border border-blue-200 text-blue-600 font-bold text-[13px] rounded-xl shadow-sm hover:bg-blue-50 transition-colors">
+              <i data-lucide="zap" class="w-4 h-4"></i> Gana dinero extra siendo Runner
+            </button>
+          </div>
+        </div>
+
           <!-- Aviso de Seguridad -->
           <div class="mx-5 mb-3 bg-white border border-slate-200/80 rounded-xl p-2.5 flex items-center gap-2.5 text-[11px] text-slate-600 shadow-sm">
             <div class="w-6 h-6 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
@@ -397,14 +405,6 @@
             </div>
             <span>Todos los Runners verifican su identidad antes de repartir.</span>
           </div>
-
-          <!-- Botón Postularme como Runner -->
-          <div class="px-5">
-            <button id="btn-abrir-postulacion" onclick="document.getElementById('postular-runner').classList.remove('hidden'); document.getElementById('postular-runner').style.display = 'flex';" class="w-full flex items-center justify-center gap-2 py-3 bg-white border border-blue-200 text-blue-600 font-bold text-[13px] rounded-xl shadow-sm hover:bg-blue-50 transition-colors">
-              <i data-lucide="zap" class="w-4 h-4"></i> Gana dinero extra siendo Runner
-            </button>
-          </div>
-        </div>
 
         <!-- TAB: MIS PEDIDOS -->
         <div id="tab-pedidos" class="hidden">
