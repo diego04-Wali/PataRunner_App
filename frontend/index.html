@@ -195,10 +195,10 @@
 
         <!-- TAB: INICIO -->
         <div id="tab-inicio" class="bg-slate-50 min-h-full pb-4">
-          <!-- HERO SUPERIOR COMPACTO Y LIMPIO -->
-          <div class="bg-gradient-to-br from-blue-800 via-blue-600 to-cyan-500 text-white rounded-b-3xl shadow-md pt-3.5 pb-5 px-5 mb-4">
+          <!-- HERO SUPERIOR CON ILUSTRACIÓN ANIMADA -->
+          <div class="bg-gradient-to-br from-blue-800 via-blue-600 to-cyan-500 text-white rounded-b-3xl shadow-md pt-3.5 pb-0 px-5 mb-4 overflow-hidden">
             <!-- Cabecera Logo + UTP + Carrito -->
-            <div class="flex items-center justify-between gap-2 mb-4">
+            <div class="flex items-center justify-between gap-2 mb-3.5">
               <div>
                 <p class="font-display text-lg font-extrabold text-white leading-none tracking-tight">Pata<span class="text-cyan-200">Runner</span></p>
                 <p class="text-[10.5px] text-blue-100 mt-0.5 font-medium">De estudiante a estudiante</p>
@@ -215,47 +215,94 @@
             </div>
 
             <!-- Título Principal -->
-            <div class="mb-4">
-              <h1 class="font-display text-[22px] leading-[1.15] font-extrabold text-white">¿Sin tiempo entre clases?</h1>
-              <p class="text-[12.5px] text-blue-100 mt-1 leading-snug">Pide de la tienda UTP y un compañero verificado te lo lleva hasta tu aula.</p>
+            <div class="mb-1">
+              <h1 class="font-display text-[21px] leading-[1.15] font-extrabold text-white">¿Sin tiempo entre clases?</h1>
+              <p class="text-[12px] text-blue-100 mt-1 leading-snug">Pide y un compañero verificado te lo lleva a tu aula.</p>
             </div>
 
-            <!-- Grid de Categorías -->
-            <div>
-              <p class="text-[10px] font-bold text-blue-100 uppercase tracking-wider mb-2">¿Qué necesitas hoy?</p>
-              <div class="grid grid-cols-4 gap-2.5" id="category-group">
-                <button data-cat="snack" class="cat-btn flex flex-col items-center gap-1 group">
-                  <div class="w-full aspect-square max-w-[58px] rounded-2xl bg-white text-blue-600 shadow-sm flex items-center justify-center group-active:scale-95 transition-transform">
-                    <i data-lucide="coffee" class="w-5 h-5"></i>
-                  </div>
-                  <span class="text-[10.5px] font-semibold text-white">Snack</span>
-                </button>
+            <!-- ILUSTRACIÓN VECTORIAL ANIMADA (ESTUDIANTE ENTREGANDO BOLSA) -->
+            <div class="w-full flex justify-center items-end pt-1">
+              <svg viewBox="0 0 340 135" class="w-full max-w-[320px] h-auto overflow-visible" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Destellos y líneas de movimiento -->
+                <g class="anim-destello-1">
+                  <path d="M285 22 L288 29 L295 32 L288 35 L285 42 L282 35 L275 32 L282 29 Z" fill="#A5F3FC"/>
+                  <circle cx="48" cy="36" r="2.5" fill="#FFFFFF" fill-opacity="0.7"/>
+                  <line x1="20" y1="68" x2="36" y2="68" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-opacity="0.5"/>
+                </g>
+                <g class="anim-destello-2">
+                  <path d="M38 92 L40 96 L44 98 L40 100 L38 104 L36 100 L32 98 L36 96 Z" fill="#FFFFFF" fill-opacity="0.85"/>
+                  <circle cx="305" cy="64" r="2" fill="#A5F3FC"/>
+                  <line x1="298" y1="95" x2="318" y2="95" stroke="#A5F3FC" stroke-width="2" stroke-linecap="round" stroke-opacity="0.6"/>
+                </g>
 
-                <button data-cat="almuerzo" class="cat-btn flex flex-col items-center gap-1 group">
-                  <div class="w-full aspect-square max-w-[58px] rounded-2xl bg-white text-blue-600 shadow-sm flex items-center justify-center group-active:scale-95 transition-transform">
-                    <i data-lucide="utensils-crossed" class="w-5 h-5"></i>
-                  </div>
-                  <span class="text-[10.5px] font-semibold text-white">Almuerzo</span>
-                </button>
+                <!-- ESTUDIANTE 1: RUNNER (IZQUIERDA CON MOCHILA) -->
+                <g class="anim-runner">
+                  <!-- Mochila -->
+                  <path d="M62 66 C48 68, 45 92, 54 106 L68 104 Z" fill="#38BDF8" stroke="#0F172A" stroke-width="2.5" stroke-linejoin="round"/>
+                  <path d="M51 82 Q58 84 64 81" stroke="#0F172A" stroke-width="2" stroke-linecap="round"/>
+                  <!-- Torso / Polo blanco -->
+                  <path d="M66 64 C66 56, 98 56, 102 66 L108 114 L64 114 Z" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.5" stroke-linejoin="round"/>
+                  <!-- Pantalón -->
+                  <path d="M66 114 L64 135 M98 114 L102 135 M82 118 L82 135" stroke="#0F172A" stroke-width="2.5" stroke-linecap="round"/>
+                  <path d="M66 114 L102 114 L102 135 L64 135 Z" fill="#E0F2FE"/>
+                  <path d="M66 114 L102 114 M66 114 L64 135 M102 114 L102 135 M83 120 L83 135" stroke="#0F172A" stroke-width="2.5" stroke-linecap="round"/>
+                  <!-- Cuello y Cabeza -->
+                  <rect x="79" y="50" width="9" height="9" rx="3" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.3"/>
+                  <circle cx="85" cy="36" r="15" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.5"/>
+                  <!-- Cabello -->
+                  <path d="M70 34 C68 20, 84 14, 96 19 C103 22, 103 30, 99 33 C94 27, 82 26, 74 32 Z" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.5" stroke-linejoin="round"/>
+                  <!-- Ojos felices y sonrisa -->
+                  <path d="M84 34 Q86.5 31.5 89 34" stroke="#0F172A" stroke-width="2" stroke-linecap="round"/>
+                  <path d="M93 34 Q95.5 31.5 98 34" stroke="#0F172A" stroke-width="2" stroke-linecap="round"/>
+                  <path d="M88 41 Q92 45 96 41" stroke="#0F172A" stroke-width="2" stroke-linecap="round"/>
+                  <!-- Brazo extendido entregando -->
+                  <path d="M96 66 L124 72 L144 63" stroke="#FFFFFF" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M96 66 L124 72 L144 63 M93 76 L124 81 L145 71" stroke="#0F172A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  <!-- Mano agarrando asa -->
+                  <circle cx="147" cy="66" r="5" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.3"/>
+                </g>
 
-                <button data-cat="utiles" class="cat-btn flex flex-col items-center gap-1 group">
-                  <div class="w-full aspect-square max-w-[58px] rounded-2xl bg-white text-blue-600 shadow-sm flex items-center justify-center group-active:scale-95 transition-transform">
-                    <i data-lucide="book-open" class="w-5 h-5"></i>
-                  </div>
-                  <span class="text-[10.5px] font-semibold text-white">Útiles</span>
-                </button>
+                <!-- BOLSA DE ENTREGA EN EL CENTRO -->
+                <g class="anim-bolsa">
+                  <!-- Asa -->
+                  <path d="M145 64 C145 53, 159 53, 159 64" stroke="#0F172A" stroke-width="2.5" stroke-linecap="round"/>
+                  <!-- Cuerpo de bolsa -->
+                  <polygon points="139,64 166,64 171,96 135,96" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.5" stroke-linejoin="round"/>
+                  <!-- Detalle marca celeste en la bolsa -->
+                  <circle cx="153" cy="80" r="7" fill="#38BDF8" fill-opacity="0.85"/>
+                  <!-- Líneas de movimiento alrededor de la bolsa -->
+                  <path d="M167 55 Q172 57 173 62" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round"/>
+                  <path d="M128 86 Q125 91 128 96" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round"/>
+                </g>
 
-                <button data-cat="otro" id="cat-otro-btn" class="cat-btn flex flex-col items-center gap-1 group">
-                  <div class="w-full aspect-square max-w-[58px] rounded-2xl bg-white text-blue-600 shadow-sm flex items-center justify-center group-active:scale-95 transition-transform">
-                    <i data-lucide="package" class="w-5 h-5"></i>
-                  </div>
-                  <span class="text-[10.5px] font-semibold text-white">Otro</span>
-                </button>
-              </div>
+                <!-- ESTUDIANTE 2: ALUMNO RECIBIENDO (DERECHA) -->
+                <g class="anim-alumno">
+                  <!-- Torso / Polera -->
+                  <path d="M222 64 C226 55, 258 55, 262 66 L266 116 L220 116 Z" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.5" stroke-linejoin="round"/>
+                  <!-- Cuello camisa -->
+                  <path d="M233 58 L241 67 L249 58" fill="#38BDF8" stroke="#0F172A" stroke-width="2.2" stroke-linejoin="round"/>
+                  <!-- Pantalón -->
+                  <path d="M222 116 L264 116 L266 135 L222 135 Z" fill="#E0F2FE"/>
+                  <path d="M222 116 L264 116 M222 116 L222 135 M264 116 L266 135 M242 122 L242 135" stroke="#0F172A" stroke-width="2.5" stroke-linecap="round"/>
+                  <!-- Cuello y Cabeza -->
+                  <rect x="237" y="49" width="9" height="9" rx="3" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.3"/>
+                  <circle cx="240" cy="35" r="15" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.5"/>
+                  <!-- Cabello -->
+                  <path d="M226 32 C226 19, 245 15, 255 22 C259 26, 258 34, 254 37 C251 29, 238 27, 229 33 Z" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.5" stroke-linejoin="round"/>
+                  <!-- Ojos felices y sonrisa -->
+                  <path d="M229 33 Q231.5 30.5 234 33" stroke="#0F172A" stroke-width="2" stroke-linecap="round"/>
+                  <path d="M238 33 Q240.5 30.5 243 33" stroke="#0F172A" stroke-width="2" stroke-linecap="round"/>
+                  <path d="M231 40 Q235 44 239 40" stroke="#0F172A" stroke-width="2" stroke-linecap="round"/>
+                  <!-- Brazos recibiendo -->
+                  <path d="M224 68 L198 78 L176 74" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M224 68 L198 78 L176 74 M224 78 L198 87 L177 83" stroke="#0F172A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  <!-- Mano recibiendo -->
+                  <path d="M177 73 L169 73 M177 77 L168 77 M177 81 L170 81" stroke="#0F172A" stroke-width="2.2" stroke-linecap="round"/>
+                </g>
+              </svg>
             </div>
           </div>
 
-          <!-- CUERPO INFERIOR -->
           <!-- Buscando Runner -->
           <div id="searching-box" class="hidden mx-5 mb-3 py-3 rounded-2xl bg-blue-100/80 border border-blue-200 text-blue-800 font-display font-bold text-[13.5px] items-center justify-center gap-2 shadow-sm">
             <span class="w-2.5 h-2.5 rounded-full bg-blue-600 animate-ping"></span> Buscando Runner cercano…
@@ -273,13 +320,12 @@
             <button id="reset-btn" class="mt-1.5 text-[11px] font-semibold underline text-blue-100">Publicar otro pedido</button>
           </div>
 
-          <!-- BANNER CARRUSEL AUTOMÁTICO DE ANCHO COMPLETO -->
+          <!-- 1. BANNER CARRUSEL AUTOMÁTICO DE ANCHO COMPLETO -->
           <div class="px-5 mb-4">
             <div class="flex items-center justify-between mb-2">
               <p class="text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
                 <i data-lucide="flame" class="w-3.5 h-3.5 text-blue-600"></i> Destacados UTP
               </p>
-              <!-- Controles manuales funcionales -->
               <div class="flex items-center gap-1">
                 <button onclick="moverCarruselDestacados(-1)" class="w-6 h-6 rounded-full bg-white border border-slate-200 text-slate-600 hover:bg-blue-50 hover:text-blue-600 flex items-center justify-center transition-colors shadow-2xs">
                   <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i>
@@ -290,10 +336,8 @@
               </div>
             </div>
 
-            <!-- Contenedor Principal Único (Ancho Completo) -->
             <div class="relative overflow-hidden rounded-2xl bg-white border border-slate-200/90 shadow-sm">
               <div id="carrusel-track" class="flex transition-transform duration-500 ease-out">
-
                 <!-- SLIDE 1 -->
                 <div class="w-full shrink-0 p-3.5 flex items-center justify-between gap-3 bg-gradient-to-r from-slate-50 via-white to-blue-50/60">
                   <div class="flex-1 min-w-0">
@@ -377,7 +421,6 @@
                     📁
                   </div>
                 </div>
-
               </div>
 
               <!-- Puntitos indicadores (Dots) -->
@@ -390,15 +433,47 @@
             </div>
           </div>
 
-          <!-- CONTENEDOR AGRUPADO: INSIGNIA RUNNER + SEGURIDAD -->
+          <!-- 2. CATEGORÍAS MOVIDAS DEBAJO DEL CARRUSEL -->
+          <div class="px-5 mb-4">
+            <p class="text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-2.5">¿Qué necesitas hoy?</p>
+            <div class="grid grid-cols-4 gap-2.5" id="category-group">
+              <button data-cat="snack" class="cat-btn flex flex-col items-center gap-1.5 group">
+                <div class="w-full aspect-square max-w-[62px] rounded-2xl bg-white border border-slate-200/80 text-blue-600 shadow-2xs group-hover:border-blue-300 group-hover:bg-blue-50/50 flex items-center justify-center group-active:scale-95 transition-all">
+                  <i data-lucide="coffee" class="w-5 h-5"></i>
+                </div>
+                <span class="text-[11px] font-semibold text-slate-700">Snack</span>
+              </button>
+
+              <button data-cat="almuerzo" class="cat-btn flex flex-col items-center gap-1.5 group">
+                <div class="w-full aspect-square max-w-[62px] rounded-2xl bg-white border border-slate-200/80 text-blue-600 shadow-2xs group-hover:border-blue-300 group-hover:bg-blue-50/50 flex items-center justify-center group-active:scale-95 transition-all">
+                  <i data-lucide="utensils-crossed" class="w-5 h-5"></i>
+                </div>
+                <span class="text-[11px] font-semibold text-slate-700">Almuerzo</span>
+              </button>
+
+              <button data-cat="utiles" class="cat-btn flex flex-col items-center gap-1.5 group">
+                <div class="w-full aspect-square max-w-[62px] rounded-2xl bg-white border border-slate-200/80 text-blue-600 shadow-2xs group-hover:border-blue-300 group-hover:bg-blue-50/50 flex items-center justify-center group-active:scale-95 transition-all">
+                  <i data-lucide="book-open" class="w-5 h-5"></i>
+                </div>
+                <span class="text-[11px] font-semibold text-slate-700">Útiles</span>
+              </button>
+
+              <button data-cat="otro" id="cat-otro-btn" class="cat-btn flex flex-col items-center gap-1.5 group">
+                <div class="w-full aspect-square max-w-[62px] rounded-2xl bg-white border border-slate-200/80 text-blue-600 shadow-2xs group-hover:border-blue-300 group-hover:bg-blue-50/50 flex items-center justify-center group-active:scale-95 transition-all">
+                  <i data-lucide="package" class="w-5 h-5"></i>
+                </div>
+                <span class="text-[11px] font-semibold text-slate-700">Otro</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- 3. INSIGNIA RUNNER + SEGURIDAD -->
           <div class="px-5 space-y-2.5">
-            <!-- 1. Insignia / Botón de Runner (!mb-0 anula cualquier margen externo) -->
             <button id="btn-abrir-postulacion" onclick="abrirModalPostulacion()" class="!mb-0 w-full py-3 rounded-2xl bg-slate-900 text-white text-xs font-extrabold shadow-sm hover:bg-slate-800 transition-all">
               ⚡ Quiero ser Runner
             </button>
 
-            <!-- 2. Tarjeta informativa de seguridad -->
-            <div class="!mt-2.5 flex items-center gap-3 p-3.5 rounded-2xl bg-white border border-slate-100 shadow-2xs">
+            <div class="flex items-center gap-3 p-3.5 rounded-2xl bg-white border border-slate-100 shadow-2xs">
               <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
                 <i data-lucide="shield-check" class="w-4 h-4"></i>
               </div>
@@ -408,7 +483,7 @@
             </div>
           </div>
 
-        </div> 
+        </div> <!-- Cierre de #tab-inicio -->
 
         <!-- TAB: MIS PEDIDOS -->
         <div id="tab-pedidos" class="hidden">
