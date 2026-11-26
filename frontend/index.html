@@ -194,20 +194,20 @@
       <div class="flex-1 overflow-y-auto pb-20">
 
         <!-- TAB: INICIO -->
-        <div id="tab-inicio" class="bg-slate-50 min-h-full pb-6">
-          <!-- HERO SUPERIOR CON DEGRADADO TIPO BILLETERA -->
-          <div class="bg-gradient-to-br from-blue-800 via-blue-600 to-cyan-500 text-white rounded-b-[32px] shadow-lg shadow-blue-900/15 pt-4 pb-7 px-5 mb-5">
+        <div id="tab-inicio" class="bg-slate-50 min-h-full pb-4">
+          <!-- HERO SUPERIOR COMPACTO Y LIMPIO -->
+          <div class="bg-gradient-to-br from-blue-800 via-blue-600 to-cyan-500 text-white rounded-b-3xl shadow-md pt-3.5 pb-5 px-5 mb-4">
             <!-- Cabecera Logo + UTP + Carrito -->
-            <div class="flex items-center justify-between gap-2 mb-5">
+            <div class="flex items-center justify-between gap-2 mb-4">
               <div>
-                <p class="font-display text-xl font-extrabold text-white leading-none tracking-tight">Pata<span class="text-cyan-200">Runner</span></p>
-                <p class="text-[11px] text-blue-100 mt-1 font-medium">De estudiante a estudiante</p>
+                <p class="font-display text-lg font-extrabold text-white leading-none tracking-tight">Pata<span class="text-cyan-200">Runner</span></p>
+                <p class="text-[10.5px] text-blue-100 mt-0.5 font-medium">De estudiante a estudiante</p>
               </div>
-              <div class="flex items-center gap-2 shrink-0">
-                <div class="flex items-center gap-1 bg-white/15 backdrop-blur-sm border border-white/20 text-white text-[11px] font-bold px-2.5 py-1.5 rounded-full">
+              <div class="flex items-center gap-1.5 shrink-0">
+                <div class="flex items-center gap-1 bg-white/15 backdrop-blur-sm border border-white/20 text-white text-[10.5px] font-bold px-2.5 py-1 rounded-full">
                   <i data-lucide="shield-check" class="w-3.5 h-3.5 text-cyan-200"></i> UTP
                 </div>
-                <button id="cart-btn" class="flex items-center gap-1.5 bg-slate-900/90 hover:bg-slate-900 text-white text-[11px] font-bold px-3 py-1.5 rounded-full shadow-md transition-all">
+                <button id="cart-btn" class="flex items-center gap-1.5 bg-slate-900/90 hover:bg-slate-900 text-white text-[10.5px] font-bold px-2.5 py-1 rounded-full shadow-sm transition-all">
                   <i data-lucide="shopping-bag" class="w-3.5 h-3.5 text-cyan-300"></i>
                   <span id="cart-summary-text">Carrito</span>
                 </button>
@@ -215,41 +215,41 @@
             </div>
 
             <!-- Título Principal -->
-            <div class="mb-5">
-              <h1 class="font-display text-[25px] leading-[1.15] font-extrabold text-white">¿Sin tiempo entre clases?</h1>
-              <p class="text-[13px] text-blue-100 mt-1.5 leading-snug">Pide de la tienda UTP y un compañero verificado te lo lleva hasta tu aula.</p>
+            <div class="mb-4">
+              <h1 class="font-display text-[22px] leading-[1.15] font-extrabold text-white">¿Sin tiempo entre clases?</h1>
+              <p class="text-[12.5px] text-blue-100 mt-1 leading-snug">Pide de la tienda UTP y un compañero verificado te lo lleva hasta tu aula.</p>
             </div>
 
-            <!-- Grid de Categorías con tarjetas blancas flotantes (Estilo Billetera) -->
+            <!-- Grid de Categorías -->
             <div>
-              <p class="text-[10.5px] font-bold text-blue-100 uppercase tracking-wider mb-2.5">¿Qué necesitas hoy?</p>
+              <p class="text-[10px] font-bold text-blue-100 uppercase tracking-wider mb-2">¿Qué necesitas hoy?</p>
               <div class="grid grid-cols-4 gap-2.5" id="category-group">
-                <button data-cat="snack" class="cat-btn flex flex-col items-center gap-1.5 group">
-                  <div class="w-full aspect-square max-w-[64px] rounded-2xl bg-white text-blue-600 shadow-md shadow-blue-900/15 flex items-center justify-center group-active:scale-95 transition-transform">
-                    <i data-lucide="coffee" class="w-6 h-6"></i>
+                <button data-cat="snack" class="cat-btn flex flex-col items-center gap-1 group">
+                  <div class="w-full aspect-square max-w-[58px] rounded-2xl bg-white text-blue-600 shadow-sm flex items-center justify-center group-active:scale-95 transition-transform">
+                    <i data-lucide="coffee" class="w-5 h-5"></i>
                   </div>
-                  <span class="text-[11px] font-semibold text-white">Snack</span>
+                  <span class="text-[10.5px] font-semibold text-white">Snack</span>
                 </button>
 
-                <button data-cat="almuerzo" class="cat-btn flex flex-col items-center gap-1.5 group">
-                  <div class="w-full aspect-square max-w-[64px] rounded-2xl bg-white text-blue-600 shadow-md shadow-blue-900/15 flex items-center justify-center group-active:scale-95 transition-transform">
-                    <i data-lucide="utensils-crossed" class="w-6 h-6"></i>
+                <button data-cat="almuerzo" class="cat-btn flex flex-col items-center gap-1 group">
+                  <div class="w-full aspect-square max-w-[58px] rounded-2xl bg-white text-blue-600 shadow-sm flex items-center justify-center group-active:scale-95 transition-transform">
+                    <i data-lucide="utensils-crossed" class="w-5 h-5"></i>
                   </div>
-                  <span class="text-[11px] font-semibold text-white">Almuerzo</span>
+                  <span class="text-[10.5px] font-semibold text-white">Almuerzo</span>
                 </button>
 
-                <button data-cat="utiles" class="cat-btn flex flex-col items-center gap-1.5 group">
-                  <div class="w-full aspect-square max-w-[64px] rounded-2xl bg-white text-blue-600 shadow-md shadow-blue-900/15 flex items-center justify-center group-active:scale-95 transition-transform">
-                    <i data-lucide="book-open" class="w-6 h-6"></i>
+                <button data-cat="utiles" class="cat-btn flex flex-col items-center gap-1 group">
+                  <div class="w-full aspect-square max-w-[58px] rounded-2xl bg-white text-blue-600 shadow-sm flex items-center justify-center group-active:scale-95 transition-transform">
+                    <i data-lucide="book-open" class="w-5 h-5"></i>
                   </div>
-                  <span class="text-[11px] font-semibold text-white">Útiles</span>
+                  <span class="text-[10.5px] font-semibold text-white">Útiles</span>
                 </button>
 
-                <button data-cat="otro" id="cat-otro-btn" class="cat-btn flex flex-col items-center gap-1.5 group">
-                  <div class="w-full aspect-square max-w-[64px] rounded-2xl bg-white text-blue-600 shadow-md shadow-blue-900/15 flex items-center justify-center group-active:scale-95 transition-transform">
-                    <i data-lucide="package" class="w-6 h-6"></i>
+                <button data-cat="otro" id="cat-otro-btn" class="cat-btn flex flex-col items-center gap-1 group">
+                  <div class="w-full aspect-square max-w-[58px] rounded-2xl bg-white text-blue-600 shadow-sm flex items-center justify-center group-active:scale-95 transition-transform">
+                    <i data-lucide="package" class="w-5 h-5"></i>
                   </div>
-                  <span class="text-[11px] font-semibold text-white">Otro</span>
+                  <span class="text-[10.5px] font-semibold text-white">Otro</span>
                 </button>
               </div>
             </div>
@@ -257,49 +257,49 @@
 
           <!-- CUERPO INFERIOR -->
           <!-- Buscando Runner -->
-          <div id="searching-box" class="hidden mx-5 mb-4 py-3.5 rounded-2xl bg-blue-100/80 border border-blue-200 text-blue-800 font-display font-bold text-[14px] items-center justify-center gap-2 shadow-sm">
+          <div id="searching-box" class="hidden mx-5 mb-3 py-3 rounded-2xl bg-blue-100/80 border border-blue-200 text-blue-800 font-display font-bold text-[13.5px] items-center justify-center gap-2 shadow-sm">
             <span class="w-2.5 h-2.5 rounded-full bg-blue-600 animate-ping"></span> Buscando Runner cercano…
           </div>
 
           <!-- Pedido Asignado -->
-          <div id="inicio-order-status" class="hidden mx-5 mb-4 rounded-2xl bg-gradient-to-r from-blue-700 to-blue-600 text-white p-4 shadow-md">
-            <div class="flex items-center gap-2 text-[14px] font-display font-bold">
+          <div id="inicio-order-status" class="hidden mx-5 mb-3 rounded-2xl bg-gradient-to-r from-blue-700 to-blue-600 text-white p-3.5 shadow-md">
+            <div class="flex items-center gap-2 text-[13.5px] font-display font-bold">
               <i data-lucide="check-circle-2" class="w-4 h-4 text-cyan-300"></i> Pedido asignado
             </div>
-            <p id="inicio-order-status-text" class="text-[12px] text-blue-100 mt-1">Runner asignado · llega en ~9 min</p>
-            <button onclick="showTab('pedidos')" class="w-full mt-3 py-2.5 rounded-xl bg-white text-blue-700 text-[12.5px] font-bold flex items-center justify-center gap-1.5 shadow-sm">
+            <p id="inicio-order-status-text" class="text-[11.5px] text-blue-100 mt-1">Runner asignado · llega en ~9 min</p>
+            <button onclick="showTab('pedidos')" class="w-full mt-2.5 py-2 rounded-xl bg-white text-blue-700 text-[12px] font-bold flex items-center justify-center gap-1.5 shadow-sm">
               Ver detalles en Mis pedidos <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
             </button>
-            <button id="reset-btn" class="mt-2 text-[11.5px] font-semibold underline text-blue-100">Publicar otro pedido</button>
+            <button id="reset-btn" class="mt-1.5 text-[11px] font-semibold underline text-blue-100">Publicar otro pedido</button>
           </div>
 
           <!-- Radar de Runners -->
-          <div class="mx-5 mb-4 rounded-2xl bg-slate-900 relative overflow-hidden h-28 shadow-sm border border-slate-800">
+          <div class="mx-5 mb-3 rounded-2xl bg-slate-900 relative overflow-hidden h-24 shadow-sm border border-slate-800">
             <svg viewBox="0 0 340 130" class="absolute inset-0 w-full h-full opacity-40">
               <rect x="20" y="30" width="70" height="70" fill="none" stroke="#38bdf8" stroke-width="1.5" />
               <rect x="130" y="15" width="90" height="50" fill="none" stroke="#38bdf8" stroke-width="1.5" />
               <rect x="250" y="40" width="70" height="80" fill="none" stroke="#38bdf8" stroke-width="1.5" />
               <path d="M20 100 H320" stroke="#0284c7" stroke-width="1" stroke-dasharray="4 4" />
             </svg>
-            <div class="absolute top-3 right-3 flex items-center gap-1.5 bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 px-2 py-0.5 rounded-full text-[10px] font-bold">
+            <div class="absolute top-2.5 right-3 flex items-center gap-1.5 bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 px-2 py-0.5 rounded-full text-[9.5px] font-bold">
               <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> EN VIVO
             </div>
-            <div class="absolute bottom-3 left-3.5 flex items-center gap-1.5 text-white text-[11.5px] font-semibold font-mono-stat">
-              <i data-lucide="users" class="w-4 h-4 text-cyan-300"></i> 12 Runners activos cerca de ti
+            <div class="absolute bottom-2.5 left-3.5 flex items-center gap-1.5 text-white text-[11px] font-semibold font-mono-stat">
+              <i data-lucide="users" class="w-3.5 h-3.5 text-cyan-300"></i> 12 Runners activos cerca de ti
             </div>
           </div>
 
           <!-- Aviso de Seguridad -->
-          <div class="mx-5 mb-4 bg-white border border-slate-200/80 rounded-xl p-3 flex items-center gap-2.5 text-[11.5px] text-slate-600 shadow-sm">
-            <div class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
-              <i data-lucide="shield-check" class="w-4 h-4"></i>
+          <div class="mx-5 mb-3 bg-white border border-slate-200/80 rounded-xl p-2.5 flex items-center gap-2.5 text-[11px] text-slate-600 shadow-sm">
+            <div class="w-6 h-6 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+              <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
             </div>
             <span>Todos los Runners verifican su identidad antes de repartir.</span>
           </div>
 
           <!-- Botón Postularme como Runner -->
           <div class="px-5">
-            <button id="btn-abrir-postulacion" onclick="document.getElementById('postular-runner').classList.remove('hidden'); document.getElementById('postular-runner').style.display = 'flex';" class="w-full flex items-center justify-center gap-2 py-3.5 bg-white border border-blue-200 text-blue-600 font-bold text-[13.5px] rounded-2xl shadow-sm hover:bg-blue-50 transition-colors">
+            <button id="btn-abrir-postulacion" onclick="document.getElementById('postular-runner').classList.remove('hidden'); document.getElementById('postular-runner').style.display = 'flex';" class="w-full flex items-center justify-center gap-2 py-3 bg-white border border-blue-200 text-blue-600 font-bold text-[13px] rounded-xl shadow-sm hover:bg-blue-50 transition-colors">
               <i data-lucide="zap" class="w-4 h-4"></i> Gana dinero extra siendo Runner
             </button>
           </div>

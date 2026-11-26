@@ -6,11 +6,16 @@
     background-color: #2563eb; color: #fff;
   }
 
-  /* ==========================================
-   ESTILOS DEL PANEL DE ADMINISTRACIÓN
-   ========================================== */
+/* Ocultar barra de scroll en contenedores de la app manteniendo el desplazamiento */
+* {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;  /* IE y Edge */
+}
 
-/* Ocultar barra de scroll en el menú horizontal */
+*::-webkit-scrollbar {
+    display: none; /* Chrome, Safari y Opera */
+}
+
 .no-scrollbar::-webkit-scrollbar { 
     display: none; 
 }
