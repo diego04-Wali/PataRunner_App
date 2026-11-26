@@ -1144,12 +1144,11 @@ function setActiveRole(role) {
         roleBtnAlumno.classList.toggle("text-slate-600", role !== "alumno");
     }
 
-    if (roleBtnRunner) {
-        roleBtnRunner.classList.toggle("bg-blue-600", role === "runner");
+ if (roleBtnRunner) {
+        roleBtnRunner.classList.toggle("bg-emerald-600", role === "runner");
         roleBtnRunner.classList.toggle("text-white", role === "runner");
         roleBtnRunner.classList.toggle("text-slate-600", role !== "runner");
     }
-
     // 2. Mantener SIEMPRE visible el botón 'Inicio' en la barra inferior
     if (navBtnInicio) navBtnInicio.classList.remove("hidden");
 
