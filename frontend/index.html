@@ -225,24 +225,14 @@
             <div class="w-full -mx-1 pt-2 flex justify-center items-end">
              <svg viewBox="0 0 380 165" class="w-full h-auto overflow-visible" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Un estudiante entrega una bolsa a un compañero">
   <defs>
-    <!-- Mano abierta apuntando a la izquierda. El origen (0,0) es la muñeca. 4 dedos + pulgar -->
-    <g id="pr-mano-abierta" stroke-linecap="round" stroke-linejoin="round">
-      <g stroke="#0F172A" stroke-width="6.6" fill="none">
-        <path d="M-9 -4.5 L-20 -9"/>
-        <path d="M-10 -0.5 L-23 -2.5"/>
-        <path d="M-10 3.5 L-22 5"/>
-        <path d="M-8 7 L-17 11.5"/>
-      </g>
-      <g stroke="#FFFFFF" stroke-width="3.2" fill="none">
-        <path d="M-9 -4.5 L-20 -9"/>
-        <path d="M-10 -0.5 L-23 -2.5"/>
-        <path d="M-10 3.5 L-22 5"/>
-        <path d="M-8 7 L-17 11.5"/>
-      </g>
-      <path d="M-2 -6 L-9 -14" stroke="#0F172A" stroke-width="7" fill="none"/>
-      <path d="M-2 -6 L-9 -14" stroke="#FFFFFF" stroke-width="3.6" fill="none"/>
-      <path d="M2 -7 C-4 -9 -11 -7 -11 0 C-11 6 -6 9 -1 8 C3 7 4 3 4 0 C4 -3 4 -5 2 -7 Z" fill="#FFFFFF" stroke="#0F172A" stroke-width="2"/>
-      <path d="M-6 -1 Q-3 3 0 2" stroke="#0F172A" stroke-width="1.3" fill="none"/>
+    <!-- Mano receptora relajada en perspectiva (palma semiabierta con dedos juntos y pulgar natural) -->
+    <g id="pr-mano-recibe" stroke-linecap="round" stroke-linejoin="round">
+      <!-- Pulgar superior -->
+      <path d="M-1 -4.5 C-4 -9.5, -10 -10.5, -11.5 -7.5 C-12.5 -5.5, -9 -3, -5 -2.5" fill="#FFFFFF" stroke="#0F172A" stroke-width="2"/>
+      <!-- Palma y bloque de dedos estilizados -->
+      <path d="M2 -5 C-3 -6, -9 -5, -15 -3.5 C-18 -2.8, -18.5 0, -15.5 0.5 C-18.5 1, -18.5 3.8, -15 4 C-17.5 4.6, -17 7.2, -13.5 7.2 C-11 7.3, -6 7.5, -1 6.5 C2.5 5.8, 3.5 2.5, 3.5 -0.5 C3.5 -3, 3 -4.5, 2 -5 Z" fill="#FFFFFF" stroke="#0F172A" stroke-width="2"/>
+      <!-- Líneas sutiles de separación entre dedos -->
+      <path d="M-15.5 0.5 L-10 0.5 M-15 4 L-9.5 3.8" stroke="#0F172A" stroke-width="1.5"/>
     </g>
   </defs>
 
@@ -304,12 +294,9 @@
     <path d="M90 118 L97 122 M108 112 L116 110" stroke="#0F172A" stroke-width="1.8"/>
     <path d="M82 66 C86 80 87 100 84 120" stroke="#0F172A" stroke-width="2.2"/>
 
-    <!-- brazo trasero con puño -->
-    <path d="M88 76 L76 98 L90 108" stroke="#0F172A" stroke-width="15"/>
-    <path d="M88 76 L76 98 L90 108" stroke="#FFFFFF" stroke-width="11"/>
-    <path d="M74 88 L82 92" stroke="#0F172A" stroke-width="2"/>
-    <path d="M87 104 C87 100 93 99 96 101 C99 103 99 108 96 110 C92 113 87 111 87 104 Z" fill="#FFFFFF" stroke="#0F172A" stroke-width="2"/>
-    <path d="M92 101 L93 107 M96 102 L95.5 108" stroke="#0F172A" stroke-width="1.4"/>
+    <!-- Puño trasero del Runner (más compacto y natural) -->
+    <path d="M87 104 C87 100.5, 92 99.5, 95.5 101.5 C98 103, 98 107.5, 95 109.5 C91.5 111.5, 87 109.5, 87 104 Z" fill="#FFFFFF" stroke="#0F172A" stroke-width="2"/>
+    <path d="M91.5 101.5 L92 106.5 M94.5 102.5 L94.5 107.5" stroke="#0F172A" stroke-width="1.4"/>
 
     <!-- cuello, oreja, cabeza, pelo -->
     <path d="M92 48 L92 60 C96 65 104 65 107 60 L107 48" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.2"/>
@@ -326,10 +313,10 @@
     <path d="M100 46 L112 46 C112 52 101 53 100 46 Z" fill="#FFFFFF" stroke="#0F172A" stroke-width="1.8"/>
     <path d="M101 48 L111 48" stroke="#0F172A" stroke-width="1" stroke-opacity="0.5"/>
 
-    <!-- puño agarrando el asa -->
-    <path d="M171 61 C171 56 177 54 183 55 C189 56 191 61 190 66 C189 71 185 73 180 73 C174 73 171 68 171 61 Z" fill="#FFFFFF" stroke="#0F172A" stroke-width="2"/>
-    <path d="M178 56 L177.5 64 M183 56.5 L182.5 65 M187.5 58.5 L186.5 66" stroke="#0F172A" stroke-width="1.5"/>
-    <path d="M172 62 C174 57 180 57 181 61" fill="#FFFFFF" stroke="#0F172A" stroke-width="1.8"/>
+    <!-- Puño agarrando el asa de la bolsa (4 nudillos limpios y pulgar cruzado) -->
+    <path d="M171 61.5 C171 57, 176.5 55.5, 182.5 56 C188 56.5, 190 60.5, 189 65.5 C188 70, 184.5 71.5, 179.5 71.5 C174 71.5, 171 67.5, 171 61.5 Z" fill="#FFFFFF" stroke="#0F172A" stroke-width="2"/>
+    <path d="M177.5 56.5 L177 63.5 M182 57 L181.5 64 M186 58.5 L185 65" stroke="#0F172A" stroke-width="1.45"/>
+    <path d="M172 63 C174 59.5, 179.5 59.5, 181 63" fill="#FFFFFF" stroke="#0F172A" stroke-width="1.8"/>
   </g>
 
   <!-- ALUMNO QUE RECIBE (DERECHA) -->
@@ -338,7 +325,8 @@
     <path d="M272 74 L248 90 L232 96" stroke="#0F172A" stroke-width="14"/>
     <path d="M272 74 L248 90 L232 96" stroke="#FFFFFF" stroke-width="10"/>
     <path d="M240 87 L243 95" stroke="#0F172A" stroke-width="2"/>
-    <use href="#pr-mano-abierta" transform="translate(228 96.5) rotate(-12)"/>
+    <!-- Mano trasera (apuntando hacia la bolsa) -->
+    <use href="#pr-mano-recibe" transform="translate(230 96.5) rotate(-14)"/>
 
     <!-- piernas -->
     <path d="M272 126 L270 182" stroke="#0F172A" stroke-width="23"/>
@@ -371,7 +359,8 @@
     <path d="M295 84 L298 108 L262 117" stroke="#FFFFFF" stroke-width="11"/>
     <path d="M298 96 L290 97" stroke="#0F172A" stroke-width="1.6" stroke-opacity="0.6"/>
     <path d="M271 110 L274 122" stroke="#0F172A" stroke-width="2"/>
-    <use href="#pr-mano-abierta" transform="translate(257 118.5) rotate(8)"/>
+    <!-- Mano delantera (un poco más abajo, palma hacia arriba recibiendo) -->
+    <use href="#pr-mano-recibe" transform="translate(260 117.5) rotate(12) scale(1, -1)"/>
   </g>
 </svg>
             </div>
