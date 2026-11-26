@@ -875,31 +875,6 @@ window.abrirModalCalificacion = function(id_pedido, id_runner, nombre_runner) {
     });
   });
 
-  // ===================== POSTULARSE COMO RUNNER: INSIGNIA =====================
-  // ======================== POSTULARSE COMO RUNNER: INSIGNIA ========================
-// POSTULARSE COMO RUNNER (Botón verde)
-const btnPostular = document.getElementById('btn-abrir-postulacion');
-if (btnPostular) {
-  btnPostular.disabled = true;
-  btnPostular.onclick = null;
-  btnPostular.className = 'w-full flex items-center justify-between gap-3 p-3.5 rounded-2xl bg-white border border-slate-100 shadow-2xs cursor-default';
-  btnPostular.innerHTML = `
-    <div class="flex items-center gap-3 min-w-0">
-      <div class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-        <i data-lucide="zap" class="w-4 h-4 fill-emerald-600"></i>
-      </div>
-      <div class="text-left min-w-0">
-        <p class="text-[12.5px] font-bold text-slate-900 leading-tight">Runner Verificado</p>
-        <p class="text-[11px] text-slate-500 font-medium truncate mt-0.5">Habilitado para aceptar pedidos en campus</p>
-      </div>
-    </div>
-    <span class="inline-flex items-center gap-1.5 bg-emerald-50 border border-emerald-200/70 text-emerald-700 text-[10px] font-bold px-2.5 py-1 rounded-full shrink-0 tracking-wide">
-      <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-      ACTIVO
-    </span>
-  `;
-  if (typeof lucide !== 'undefined') lucide.createIcons();
-}
 
   // ===================== CHAT + PAGO =====================
   const chatModal = document.getElementById("chat-modal");
@@ -3005,15 +2980,21 @@ function aplicarEstadoRunner() {
         if (botonAbrirPostulacion) {
             botonAbrirPostulacion.disabled = true;
             botonAbrirPostulacion.removeAttribute('onclick');
-            botonAbrirPostulacion.className = 'w-full flex items-center justify-between p-3 rounded-2xl bg-emerald-50/90 border border-emerald-200/90 shadow-2xs cursor-default !mb-0';
+            botonAbrirPostulacion.className = 'w-full flex items-center justify-between gap-3 p-3.5 rounded-2xl bg-white border border-slate-100 shadow-2xs cursor-default';
             botonAbrirPostulacion.innerHTML = `
-                <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-2xs">
-                        <i data-lucide="zap" class="w-4 h-4 fill-white"></i>
+                <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                        <i data-lucide="zap" class="w-4 h-4 fill-emerald-600"></i>
                     </div>
-                    <span class="text-xs font-extrabold text-emerald-950 tracking-tight">Runner Verificado</span>
+                    <div class="text-left min-w-0">
+                        <p class="text-[12.5px] font-bold text-slate-900 leading-tight">Runner Verificado</p>
+                        <p class="text-[11px] text-slate-500 font-medium truncate mt-0.5">Habilitado para aceptar pedidos en campus</p>
+                    </div>
                 </div>
-                <span class="text-[9.5px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full bg-emerald-600 text-white">Activo</span>
+                <span class="inline-flex items-center gap-1.5 bg-emerald-50 border border-emerald-200/70 text-emerald-700 text-[10px] font-bold px-2.5 py-1 rounded-full shrink-0 tracking-wide">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                    ACTIVO
+                </span>
             `;
         }
         
