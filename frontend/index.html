@@ -536,8 +536,17 @@
 
           <!-- 3. INSIGNIA RUNNER + SEGURIDAD -->
           <div class="px-5 space-y-2.5">
-            <button id="btn-abrir-postulacion" onclick="abrirModalPostulacion()" class="!mb-0 w-full py-3 rounded-2xl bg-slate-900 text-white text-xs font-extrabold shadow-sm hover:bg-slate-800 transition-all">
-              ⚡ Quiero ser Runner
+            <button id="btn-abrir-postulacion" onclick="abrirModalPostulacion()" class="w-full flex items-center justify-between gap-3 p-3.5 rounded-2xl bg-white border border-slate-100 shadow-2xs hover:border-blue-200 hover:bg-blue-50/30 active:scale-[0.99] transition-all text-left group">
+              <div class="flex items-center gap-3 min-w-0">
+                <div class="w-8 h-8 rounded-xl bg-slate-900 text-amber-300 flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
+                  <i data-lucide="zap" class="w-4 h-4 fill-amber-300"></i>
+                </div>
+                <div class="min-w-0">
+                  <p class="text-[12.5px] font-bold text-slate-900 leading-tight">Quiero ser Runner</p>
+                  <p class="text-[11px] text-slate-500 font-medium truncate mt-0.5">Gana dinero extra entregando entre clases</p>
+                </div>
+              </div>
+              <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400 group-hover:text-blue-600 shrink-0 transition-colors"></i>
             </button>
 
             <div class="flex items-center gap-3 p-3.5 rounded-2xl bg-white border border-slate-100 shadow-2xs">
