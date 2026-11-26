@@ -3032,11 +3032,14 @@ function aplicarEstadoRunner() {
         if (botonAbrirPostulacion) {
             botonAbrirPostulacion.disabled = true;
             botonAbrirPostulacion.removeAttribute('onclick');
-            botonAbrirPostulacion.className = 'w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-2xl bg-emerald-50/90 border border-emerald-200/80 cursor-default';
+            botonAbrirPostulacion.className = 'w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-50 via-teal-50/90 to-emerald-50 border border-emerald-300/80 shadow-xs cursor-default !mb-0';
             botonAbrirPostulacion.innerHTML = `
-                <i data-lucide="zap" class="w-4 h-4 text-emerald-600 fill-emerald-600 shrink-0"></i>
+                <span class="relative flex h-2 w-2 shrink-0">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
                 <span class="text-xs font-extrabold text-emerald-950 tracking-tight">Runner Verificado</span>
-                <span class="text-[9px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-emerald-600 text-white">Activo</span>
+                <span class="text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-600 text-white shadow-2xs">Activo</span>
             `;
         }
         
@@ -3045,7 +3048,6 @@ function aplicarEstadoRunner() {
             tabRunner.innerHTML = '⚡ Runner';
             tabRunner.classList.remove('opacity-50', 'cursor-not-allowed');
         }
-        if (window.lucide) lucide.createIcons();
         return;
     }
 
