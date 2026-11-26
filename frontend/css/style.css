@@ -1,3 +1,56 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap');
+  body { font-family: 'Inter', sans-serif; }
+  .font-display { font-family: 'Space Grotesk', sans-serif; }
+  .font-mono-stat { font-family: 'JetBrains Mono', monospace; }
+  .filter-btn.active {
+    background-color: #2563eb; color: #fff;
+  }
+
+/* Ocultar barra de scroll en contenedores de la app manteniendo el desplazamiento */
+* {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;  /* IE y Edge */
+}
+
+*::-webkit-scrollbar {
+    display: none; /* Chrome, Safari y Opera */
+}
+
+.no-scrollbar::-webkit-scrollbar { 
+    display: none; 
+}
+.no-scrollbar { 
+    -ms-overflow-style: none; 
+    scrollbar-width: none; 
+}
+
+/* Cursor para arrastrar el menú en PC */
+.cursor-grab { 
+    cursor: grab; 
+}
+.cursor-grabbing { 
+    cursor: grabbing !important; 
+}
+
+/* ===== AJUSTE DE SWEETALERT2 PARA MOCKUP MÓVIL ===== */
+.swal2-popup {
+  max-width: 310px !important; /* Limita el ancho para que quepa en el celular */
+  padding: 1.25rem 1rem !important;
+  border-radius: 1.5rem !important; /* Bordes redondeados estilo app moderna */
+}
+
+.swal2-title {
+  font-size: 1.1rem !important;
+  font-weight: 700 !important;
+  color: #0f172a !important; /* Slate 900 */
+}
+
+.swal2-html-container {
+  font-size: 0.8rem !important;
+  color: #64748b !important; /* Slate 500 */
+  margin: 0.5rem 0 1rem 0 !important;
+}
+
   @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap');
   body { font-family: 'Inter', sans-serif; }
   .font-display { font-family: 'Space Grotesk', sans-serif; }
@@ -68,43 +121,62 @@
    ========================================== */
 @keyframes runner-entrega {
     0%, 100% { transform: translate(0px, 0px); }
-    50% { transform: translate(4px, -2px); }
+    50%      { transform: translate(4px, -2px); }
+}
+
+/* La bolsa hace EXACTAMENTE el mismo recorrido que la mano del runner
+   y además se balancea un poco colgando del asa */
+@keyframes bolsa-entrega {
+    0%, 100% { transform: translate(0px, 0px) rotate(0deg); }
+    50%      { transform: translate(4px, -2px) rotate(4deg); }
 }
 
 @keyframes alumno-recibe {
     0%, 100% { transform: translate(0px, 0px); }
-    50% { transform: translate(-3px, -1.5px); }
-}
-
-@keyframes bolsa-flotante {
-    0%, 100% { transform: translateY(0px) rotate(0deg); }
-    50% { transform: translateY(-4px) rotate(-2deg); }
+    50%      { transform: translate(-3px, -1.5px); }
 }
 
 @keyframes destello-suave {
-    0%, 100% { opacity: 0.25; transform: scale(0.9); }
-    50% { opacity: 1; transform: scale(1.1); }
+    0%, 100% { opacity: 0.25; transform: scale(0.8); }
+    50%      { opacity: 1;    transform: scale(1.15); }
+}
+
+/* Clave en SVG: que cada transformación use la caja del propio elemento */
+.anim-runner,
+.anim-alumno,
+.anim-bolsa,
+.anim-destello-1 > *,
+.anim-destello-2 > * {
+    transform-box: fill-box;
 }
 
 .anim-runner {
+    transform-origin: center bottom;
     animation: runner-entrega 2.8s ease-in-out infinite;
 }
 
+.anim-bolsa {
+    transform-origin: 50% 0%;   /* antes era 40% 0% */
+    animation: bolsa-entrega 2.8s ease-in-out infinite;
+}
+
 .anim-alumno {
+    transform-origin: center bottom;
     animation: alumno-recibe 2.8s ease-in-out infinite 0.3s;
 }
 
-.anim-bolsa {
-    transform-origin: center;
-    animation: bolsa-flotante 2.8s ease-in-out infinite 0.15s;
-}
-
-.anim-destello-1 {
+/* Cada estrella/línea brilla en su sitio, no el grupo completo */
+.anim-destello-1 > * {
     transform-origin: center;
     animation: destello-suave 2.2s ease-in-out infinite;
 }
 
-.anim-destello-2 {
+.anim-destello-2 > * {
     transform-origin: center;
     animation: destello-suave 2.2s ease-in-out infinite 1.1s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .anim-runner, .anim-alumno, .anim-bolsa,
+    .anim-destello-1 > *, .anim-destello-2 > * { animation: none; }
 }
