@@ -5887,4 +5887,36 @@ window.addEventListener('DOMContentLoaded', async () => {
             }
         }
     }
+
 });
+
+// ==========================================
+// CARRUSEL AUTOMÁTICO DE DESTACADOS (INICIO)
+// ==========================================
+let indiceCarrusel = 0;
+const totalSlidesCarrusel = 4;
+
+window.moverCarruselDestacados = function(direccion) {
+    const track = document.getElementById('carrusel-track');
+    if (!track) return;
+
+    indiceCarrusel = (indiceCarrusel + direccion + totalSlidesCarrusel) % totalSlidesCarrusel;
+    track.style.transform = `translateX(-${indiceCarrusel * 100}%)`;
+
+    document.querySelectorAll('.carrusel-dot').forEach((dot, idx) => {
+        if (idx === indiceCarrusel) {
+            dot.classList.remove('w-1.5', 'bg-slate-300');
+            dot.classList.add('w-4', 'bg-blue-600');
+        } else {
+            dot.classList.remove('w-4', 'bg-blue-600');
+            dot.classList.add('w-1.5', 'bg-slate-300');
+        }
+    });
+};
+
+setInterval(() => {
+    const tabInicio = document.getElementById('tab-inicio');
+    if (tabInicio && !tabInicio.classList.contains('hidden')) {
+        window.moverCarruselDestacados(1);
+    }
+}, 3500);
