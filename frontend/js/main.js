@@ -3030,23 +3030,13 @@ function aplicarEstadoRunner() {
     // CASO B: Si el usuario ya es Runner oficial (id_rol === 2)
     if (userData.id_rol === 2) { 
         if (botonAbrirPostulacion) {
-            botonAbrirPostulacion.disabled = false;
-            botonAbrirPostulacion.setAttribute('onclick', "setActiveRole('runner')");
-            botonAbrirPostulacion.className = 'w-full flex items-center justify-between p-3 rounded-2xl bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200/90 shadow-xs hover:shadow-sm active:scale-[0.99] transition-all text-left group';
+            botonAbrirPostulacion.disabled = true;
+            botonAbrirPostulacion.removeAttribute('onclick');
+            botonAbrirPostulacion.className = 'w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-2xl bg-emerald-50/90 border border-emerald-200/80 cursor-default';
             botonAbrirPostulacion.innerHTML = `
-                <div class="flex items-center gap-3">
-                    <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-500 text-white flex items-center justify-center shadow-xs shrink-0">
-                        <i data-lucide="zap" class="w-4 h-4 fill-white"></i>
-                    </div>
-                    <div>
-                        <div class="flex items-center gap-1.5">
-                            <span class="text-[12.5px] font-extrabold text-emerald-950">Runner Verificado</span>
-                            <span class="text-[9px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-emerald-600 text-white">Activo</span>
-                        </div>
-                        <p class="text-[10.5px] text-emerald-700 font-medium">Toca para ver pedidos disponibles</p>
-                    </div>
-                </div>
-                <i data-lucide="chevron-right" class="w-4 h-4 text-emerald-600 group-hover:translate-x-0.5 transition-transform shrink-0"></i>
+                <i data-lucide="zap" class="w-4 h-4 text-emerald-600 fill-emerald-600 shrink-0"></i>
+                <span class="text-xs font-extrabold text-emerald-950 tracking-tight">Runner Verificado</span>
+                <span class="text-[9px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-emerald-600 text-white">Activo</span>
             `;
         }
         
