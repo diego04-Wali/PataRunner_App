@@ -224,145 +224,149 @@
             <!-- ILUSTRACIÓN VECTORIAL EDITORIAL ANIMADA (ESTILO TRAZO LIMPIO CENTRADO) -->
             <div class="w-full -mx-1 pt-2 flex justify-center items-end">
              <svg viewBox="0 0 380 165" class="w-full h-auto overflow-visible" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Un estudiante entrega una bolsa a un compañero">
-  <defs>
-    <!-- Mano receptora relajada en perspectiva (palma semiabierta con dedos juntos y pulgar natural) -->
-    <g id="pr-mano-recibe" stroke-linecap="round" stroke-linejoin="round">
-      <!-- Pulgar superior -->
-      <path d="M-1 -4.5 C-4 -9.5, -10 -10.5, -11.5 -7.5 C-12.5 -5.5, -9 -3, -5 -2.5" fill="#FFFFFF" stroke="#0F172A" stroke-width="2"/>
-      <!-- Palma y bloque de dedos estilizados -->
-      <path d="M2 -5 C-3 -6, -9 -5, -15 -3.5 C-18 -2.8, -18.5 0, -15.5 0.5 C-18.5 1, -18.5 3.8, -15 4 C-17.5 4.6, -17 7.2, -13.5 7.2 C-11 7.3, -6 7.5, -1 6.5 C2.5 5.8, 3.5 2.5, 3.5 -0.5 C3.5 -3, 3 -4.5, 2 -5 Z" fill="#FFFFFF" stroke="#0F172A" stroke-width="2"/>
-      <!-- Líneas sutiles de separación entre dedos -->
-      <path d="M-15.5 0.5 L-10 0.5 M-15 4 L-9.5 3.8" stroke="#0F172A" stroke-width="1.5"/>
-    </g>
-  </defs>
+              <defs>
+                <!-- Mano derecha/izquierda relajada vista de perfil apuntando a la izquierda (pulgar SIEMPRE arriba) -->
+                <g id="pr-mano-izquierda" stroke-linecap="round" stroke-linejoin="round">
+                  <!-- Palma + pulgar arriba + dedo índice superior -->
+                  <path d="M2 -5 C-1 -5 -4 -9 -7 -10.5 C-9 -11.5 -11 -10 -10 -8 C-9 -6.5 -7 -5.5 -6 -4.5 L-16 -4 C-18 -4 -18.5 -1.5 -16 -1 L-17.5 -0.5 C-19.5 0 -19.5 2.5 -17 2.8 L-15.5 3.2 C-17.5 3.8 -17 6 -14.5 6 L-11 6.2 C-12.5 6.8 -12 8.8 -9.5 8.8 L-2 8 C2 7.5 3.5 4.5 3.5 1 C3.5 -2 3 -4.5 2 -5 Z" fill="#FFFFFF" stroke="#0F172A" stroke-width="2"/>
+                  <!-- Líneas internas sutiles de dedos -->
+                  <path d="M-16 -1 L-9 -1 M-17 2.8 L-9 2.6 M-14.5 6 L-8.5 5.6" stroke="#0F172A" stroke-width="1.4"/>
+                </g>
 
-  <!-- DESTELLOS Y LÍNEAS DE VELOCIDAD -->
-  <g class="anim-destello-1">
-    <path d="M326 16 Q327 24 335 25 Q327 26 326 34 Q325 26 317 25 Q325 24 326 16 Z" fill="#FFFFFF"/>
-    <path d="M30 108 Q31 112 35 113 Q31 114 30 118 Q29 114 25 113 Q29 112 30 108 Z" fill="#FFFFFF" fill-opacity="0.9"/>
-    <circle cx="150" cy="24" r="2" fill="#FFFFFF" fill-opacity="0.8"/>
-    <line x1="176" y1="22" x2="194" y2="22" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-opacity="0.7"/>
-    <line x1="14" y1="66" x2="26" y2="66" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-opacity="0.6"/>
-    <line x1="340" y1="56" x2="354" y2="56" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-opacity="0.6"/>
-  </g>
-  <g class="anim-destello-2">
-    <path d="M214 40 Q215 44 219 45 Q215 46 214 50 Q213 46 209 45 Q213 44 214 40 Z" fill="#A5F3FC"/>
-    <path d="M346 90 Q347 94 351 95 Q347 96 346 100 Q345 96 341 95 Q345 94 346 90 Z" fill="#A5F3FC"/>
-    <line x1="14" y1="132" x2="40" y2="132" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-opacity="0.85"/>
-    <circle cx="50" cy="132" r="1.6" fill="#FFFFFF"/>
-    <line x1="326" y1="126" x2="346" y2="126" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-opacity="0.7"/>
-    <line x1="338" y1="136" x2="362" y2="136" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-opacity="0.7"/>
-    <line x1="64" y1="12" x2="72" y2="21" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-opacity="0.85"/>
-    <line x1="57" y1="22" x2="67" y2="27" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-opacity="0.85"/>
-  </g>
+                <!-- Mano extendida del Runner apuntando a la derecha (pulgar arriba, gesto abierto natural) -->
+                <g id="pr-mano-derecha" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M-2 -5 C1 -5 4 -9 7 -10.5 C9 -11.5 11 -10 10 -8 C9 -6.5 7 -5.5 6 -4.5 L16 -4 C18 -4 18.5 -1.5 16 -1 L17.5 -0.5 C19.5 0 19.5 2.5 17 2.8 L15.5 3.2 C17.5 3.8 17 6 14.5 6 L11 6.2 C12.5 6.8 12 8.8 9.5 8.8 L2 8 C-2 7.5 -3.5 4.5 -3.5 1 C-3.5 -2 -3 -4.5 -2 -5 Z" fill="#FFFFFF" stroke="#0F172A" stroke-width="2"/>
+                  <path d="M16 -1 L9 -1 M17 2.8 L9 2.6 M14.5 6 L8.5 5.6" stroke="#0F172A" stroke-width="1.4"/>
+                </g>
+              </defs>
 
-  <!-- BOLSA (detrás del puño para que los dedos la sujeten) -->
-  <g class="anim-bolsa" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M172 86 C171 70 175 63 182 63 C189 63 193 70 192 86" stroke="#0F172A" stroke-width="2.4"/>
-    <path d="M160 88 L170 85 L169 130 L158 125 Z" fill="#7DD3FC" stroke="#0F172A" stroke-width="2.2"/>
-    <path d="M170 85 L198 85 L204 130 L169 130 Z" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.2"/>
-    <path d="M171 91 L199 91" stroke="#0F172A" stroke-width="1.6" stroke-opacity="0.55"/>
-    <circle cx="186" cy="110" r="8.5" fill="#BAE6FD" stroke="#0F172A" stroke-width="1.8"/>
-    <path d="M183 110 L185.5 112.6 L190 107.6" stroke="#0F172A" stroke-width="1.8"/>
-    <path d="M150 104 Q147 112 152 118" stroke="#FFFFFF" stroke-width="1.8"/>
-    <path d="M145 106 Q142 115 148 122" stroke="#FFFFFF" stroke-width="1.5" stroke-opacity="0.7"/>
-    <path d="M204 74 Q211 77 212 84" stroke="#FFFFFF" stroke-width="1.8"/>
-    <path d="M209 69 Q217 73 218 81" stroke="#FFFFFF" stroke-width="1.5" stroke-opacity="0.7"/>
-  </g>
+              <!-- DESTELLOS Y LÍNEAS DE VELOCIDAD -->
+              <g class="anim-destello-1">
+                <path d="M326 16 Q327 24 335 25 Q327 26 326 34 Q325 26 317 25 Q325 24 326 16 Z" fill="#FFFFFF"/>
+                <path d="M30 108 Q31 112 35 113 Q31 114 30 118 Q29 114 25 113 Q29 112 30 108 Z" fill="#FFFFFF" fill-opacity="0.9"/>
+                <circle cx="150" cy="24" r="2" fill="#FFFFFF" fill-opacity="0.8"/>
+                <line x1="176" y1="22" x2="194" y2="22" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-opacity="0.7"/>
+                <line x1="14" y1="66" x2="26" y2="66" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-opacity="0.6"/>
+                <line x1="340" y1="56" x2="354" y2="56" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-opacity="0.6"/>
+              </g>
+              <g class="anim-destello-2">
+                <path d="M214 40 Q215 44 219 45 Q215 46 214 50 Q213 46 209 45 Q213 44 214 40 Z" fill="#A5F3FC"/>
+                <path d="M346 90 Q347 94 351 95 Q347 96 346 100 Q345 96 341 95 Q345 94 346 90 Z" fill="#A5F3FC"/>
+                <line x1="14" y1="132" x2="40" y2="132" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-opacity="0.85"/>
+                <circle cx="50" cy="132" r="1.6" fill="#FFFFFF"/>
+                <line x1="326" y1="126" x2="346" y2="126" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-opacity="0.7"/>
+                <line x1="338" y1="136" x2="362" y2="136" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-opacity="0.7"/>
+                <line x1="64" y1="12" x2="72" y2="21" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-opacity="0.85"/>
+                <line x1="57" y1="22" x2="67" y2="27" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-opacity="0.85"/>
+              </g>
 
-  <!-- RUNNER (IZQUIERDA) -->
-  <g class="anim-runner" stroke-linecap="round" stroke-linejoin="round">
-    <!-- mochila -->
-    <path d="M80 66 C62 64 50 76 50 96 C50 110 56 120 66 123 L82 121 Z" fill="#7DD3FC" stroke="#0F172A" stroke-width="2.2"/>
-    <path d="M52 92 Q66 96 80 91" stroke="#0F172A" stroke-width="2"/>
-    <path d="M56 104 L70 106" stroke="#0F172A" stroke-width="1.8" stroke-opacity="0.6"/>
+              <!-- BOLSA -->
+              <g class="anim-bolsa" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M172 86 C171 70 175 63 182 63 C189 63 193 70 192 86" stroke="#0F172A" stroke-width="2.4"/>
+                <path d="M160 88 L170 85 L169 130 L158 125 Z" fill="#7DD3FC" stroke="#0F172A" stroke-width="2.2"/>
+                <path d="M170 85 L198 85 L204 130 L169 130 Z" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.2"/>
+                <path d="M171 91 L199 91" stroke="#0F172A" stroke-width="1.6" stroke-opacity="0.55"/>
+                <circle cx="186" cy="110" r="8.5" fill="#BAE6FD" stroke="#0F172A" stroke-width="1.8"/>
+                <path d="M183 110 L185.5 112.6 L190 107.6" stroke="#0F172A" stroke-width="1.8"/>
+                <path d="M150 104 Q147 112 152 118" stroke="#FFFFFF" stroke-width="1.8"/>
+                <path d="M145 106 Q142 115 148 122" stroke="#FFFFFF" stroke-width="1.5" stroke-opacity="0.7"/>
+                <path d="M204 74 Q211 77 212 84" stroke="#FFFFFF" stroke-width="1.8"/>
+                <path d="M209 69 Q217 73 218 81" stroke="#FFFFFF" stroke-width="1.5" stroke-opacity="0.7"/>
+              </g>
 
-    <!-- brazo extendido sujetando la bolsa -->
-    <path d="M108 74 L139 82 L166 67" stroke="#0F172A" stroke-width="15"/>
-    <path d="M108 74 L139 82 L166 67" stroke="#FFFFFF" stroke-width="11"/>
-    <path d="M129 73 L133 86" stroke="#0F172A" stroke-width="2"/>
-    <path d="M147 77.5 L152 69" stroke="#0F172A" stroke-width="1.6" stroke-opacity="0.6"/>
+              <!-- RUNNER (IZQUIERDA) -->
+              <g class="anim-runner" stroke-linecap="round" stroke-linejoin="round">
+                <!-- mochila -->
+                <path d="M80 66 C62 64 50 76 50 96 C50 110 56 120 66 123 L82 121 Z" fill="#7DD3FC" stroke="#0F172A" stroke-width="2.2"/>
+                <path d="M52 92 Q66 96 80 91" stroke="#0F172A" stroke-width="2"/>
+                <path d="M56 104 L70 106" stroke="#0F172A" stroke-width="1.8" stroke-opacity="0.6"/>
 
-    <!-- piernas -->
-    <path d="M90 122 L82 150 L70 182" stroke="#0F172A" stroke-width="23"/>
-    <path d="M90 122 L82 150 L70 182" stroke="#E0F2FE" stroke-width="19"/>
-    <path d="M106 122 L122 150 L118 182" stroke="#0F172A" stroke-width="23"/>
-    <path d="M106 122 L122 150 L118 182" stroke="#E0F2FE" stroke-width="19"/>
+                <!-- brazo extendido sujetando la bolsa -->
+                <path d="M108 74 L139 82 L166 67" stroke="#0F172A" stroke-width="15"/>
+                <path d="M108 74 L139 82 L166 67" stroke="#FFFFFF" stroke-width="11"/>
+                <path d="M129 73 L133 86" stroke="#0F172A" stroke-width="2"/>
+                <path d="M147 77.5 L152 69" stroke="#0F172A" stroke-width="1.6" stroke-opacity="0.6"/>
 
-    <!-- torso -->
-    <path d="M80 72 C82 61 91 58 99 58 C109 58 117 61 120 70 L123 129 C108 134 92 134 78 129 Z" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.2"/>
-    <path d="M90 118 L97 122 M108 112 L116 110" stroke="#0F172A" stroke-width="1.8"/>
-    <path d="M82 66 C86 80 87 100 84 120" stroke="#0F172A" stroke-width="2.2"/>
+                <!-- piernas -->
+                <path d="M90 122 L82 150 L70 182" stroke="#0F172A" stroke-width="23"/>
+                <path d="M90 122 L82 150 L70 182" stroke="#E0F2FE" stroke-width="19"/>
+                <path d="M106 122 L122 150 L118 182" stroke="#0F172A" stroke-width="23"/>
+                <path d="M106 122 L122 150 L118 182" stroke="#E0F2FE" stroke-width="19"/>
 
-    <!-- Puño trasero del Runner (más compacto y natural) -->
-    <path d="M87 104 C87 100.5, 92 99.5, 95.5 101.5 C98 103, 98 107.5, 95 109.5 C91.5 111.5, 87 109.5, 87 104 Z" fill="#FFFFFF" stroke="#0F172A" stroke-width="2"/>
-    <path d="M91.5 101.5 L92 106.5 M94.5 102.5 L94.5 107.5" stroke="#0F172A" stroke-width="1.4"/>
+                <!-- torso -->
+                <path d="M80 72 C82 61 91 58 99 58 C109 58 117 61 120 70 L123 129 C108 134 92 134 78 129 Z" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.2"/>
+                <path d="M90 118 L97 122 M108 112 L116 110" stroke="#0F172A" stroke-width="1.8"/>
+                <path d="M82 66 C86 80 87 100 84 120" stroke="#0F172A" stroke-width="2.2"/>
 
-    <!-- cuello, oreja, cabeza, pelo -->
-    <path d="M92 48 L92 60 C96 65 104 65 107 60 L107 48" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.2"/>
-    <path d="M83 36 C76 35 76 46 84 46" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.2"/>
-    <path d="M80.5 39 Q82.5 40 82.5 43" stroke="#0F172A" stroke-width="1.5"/>
-    <path d="M83 36 C83 20 115 20 116 36 C117 48 108 55 99 55 C89 55 83 47 83 36 Z" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.2"/>
-    <path d="M82 37 C78 23 88 13 102 14 C111 14 119 20 118 30 C115 27 111 26 108 28 C105 23 99 23 96 27 C92 25 86 28 82 37 Z" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.2"/>
-    <!-- cara -->
-    <path d="M97 30 Q100 28 103 30" stroke="#0F172A" stroke-width="1.7"/>
-    <path d="M108 30 Q111 28 114 30" stroke="#0F172A" stroke-width="1.7"/>
-    <path d="M98 36 Q100.5 33.5 103 36" stroke="#0F172A" stroke-width="2"/>
-    <path d="M108 36 Q110.5 33.5 113 36" stroke="#0F172A" stroke-width="2"/>
-    <path d="M107 38 L109.5 42 L106 43" stroke="#0F172A" stroke-width="1.7"/>
-    <path d="M100 46 L112 46 C112 52 101 53 100 46 Z" fill="#FFFFFF" stroke="#0F172A" stroke-width="1.8"/>
-    <path d="M101 48 L111 48" stroke="#0F172A" stroke-width="1" stroke-opacity="0.5"/>
+                <!-- brazo izquierdo flexionado hacia adelante con MANO ABIERTA NATURAL -->
+                <path d="M86 76 L72 97 L91 106" stroke="#0F172A" stroke-width="14.5"/>
+                <path d="M86 76 L72 97 L91 106" stroke="#FFFFFF" stroke-width="10.5"/>
+                <path d="M72 87 L80 91" stroke="#0F172A" stroke-width="2"/>
+                <use href="#pr-mano-derecha" transform="translate(94 106.5) rotate(8)"/>
 
-    <!-- Puño agarrando el asa de la bolsa (4 nudillos limpios y pulgar cruzado) -->
-    <path d="M171 61.5 C171 57, 176.5 55.5, 182.5 56 C188 56.5, 190 60.5, 189 65.5 C188 70, 184.5 71.5, 179.5 71.5 C174 71.5, 171 67.5, 171 61.5 Z" fill="#FFFFFF" stroke="#0F172A" stroke-width="2"/>
-    <path d="M177.5 56.5 L177 63.5 M182 57 L181.5 64 M186 58.5 L185 65" stroke="#0F172A" stroke-width="1.45"/>
-    <path d="M172 63 C174 59.5, 179.5 59.5, 181 63" fill="#FFFFFF" stroke="#0F172A" stroke-width="1.8"/>
-  </g>
+                <!-- cuello, oreja, cabeza, pelo -->
+                <path d="M92 48 L92 60 C96 65 104 65 107 60 L107 48" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.2"/>
+                <path d="M83 36 C76 35 76 46 84 46" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.2"/>
+                <path d="M80.5 39 Q82.5 40 82.5 43" stroke="#0F172A" stroke-width="1.5"/>
+                <path d="M83 36 C83 20 115 20 116 36 C117 48 108 55 99 55 C89 55 83 47 83 36 Z" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.2"/>
+                <path d="M82 37 C78 23 88 13 102 14 C111 14 119 20 118 30 C115 27 111 26 108 28 C105 23 99 23 96 27 C92 25 86 28 82 37 Z" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.2"/>
+                <!-- cara -->
+                <path d="M97 30 Q100 28 103 30" stroke="#0F172A" stroke-width="1.7"/>
+                <path d="M108 30 Q111 28 114 30" stroke="#0F172A" stroke-width="1.7"/>
+                <path d="M98 36 Q100.5 33.5 103 36" stroke="#0F172A" stroke-width="2"/>
+                <path d="M108 36 Q110.5 33.5 113 36" stroke="#0F172A" stroke-width="2"/>
+                <path d="M107 38 L109.5 42 L106 43" stroke="#0F172A" stroke-width="1.7"/>
+                <path d="M100 46 L112 46 C112 52 101 53 100 46 Z" fill="#FFFFFF" stroke="#0F172A" stroke-width="1.8"/>
+                <path d="M101 48 L111 48" stroke="#0F172A" stroke-width="1" stroke-opacity="0.5"/>
 
-  <!-- ALUMNO QUE RECIBE (DERECHA) -->
-  <g class="anim-alumno" stroke-linecap="round" stroke-linejoin="round">
-    <!-- brazo trasero extendido hacia la bolsa -->
-    <path d="M272 74 L248 90 L232 96" stroke="#0F172A" stroke-width="14"/>
-    <path d="M272 74 L248 90 L232 96" stroke="#FFFFFF" stroke-width="10"/>
-    <path d="M240 87 L243 95" stroke="#0F172A" stroke-width="2"/>
-    <!-- Mano trasera (apuntando hacia la bolsa) -->
-    <use href="#pr-mano-recibe" transform="translate(230 96.5) rotate(-14)"/>
+                <!-- puño derecho agarrando el asa -->
+                <path d="M170 61 C170 56 176 54.5 182.5 55 C188.5 55.5 190.5 60 189.5 65.5 C188.5 70.5 184.5 72.5 179.5 72.5 C173.5 72.5 170 68 170 61 Z" fill="#FFFFFF" stroke="#0F172A" stroke-width="2"/>
+                <path d="M177.5 56 L177 64 M182 56.5 L181.5 64.5 M186.5 58.5 L185.5 65.5" stroke="#0F172A" stroke-width="1.5"/>
+                <path d="M171.5 63 C174 59 180 59 181.5 63" fill="#FFFFFF" stroke="#0F172A" stroke-width="1.8"/>
+              </g>
 
-    <!-- piernas -->
-    <path d="M272 126 L270 182" stroke="#0F172A" stroke-width="23"/>
-    <path d="M272 126 L270 182" stroke="#E0F2FE" stroke-width="19"/>
-    <path d="M298 126 L304 182" stroke="#0F172A" stroke-width="23"/>
-    <path d="M298 126 L304 182" stroke="#E0F2FE" stroke-width="19"/>
+              <!-- ALUMNO QUE RECIBE (DERECHA) -->
+              <g class="anim-alumno" stroke-linecap="round" stroke-linejoin="round">
+                <!-- brazo trasero extendido hacia la bolsa -->
+                <path d="M272 74 L249 90 L234 96" stroke="#0F172A" stroke-width="14"/>
+                <path d="M272 74 L249 90 L234 96" stroke="#FFFFFF" stroke-width="10"/>
+                <path d="M242 87 L245 95" stroke="#0F172A" stroke-width="2"/>
+                <use href="#pr-mano-izquierda" transform="translate(231 96.5) rotate(-14)"/>
 
-    <!-- torso, cuello, camisa -->
-    <path d="M260 72 C262 61 271 58 280 58 C291 58 300 61 303 70 L312 130 C294 135 276 135 258 130 Z" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.2"/>
-    <path d="M273 48 L273 59 C277 63 285 63 288 59 L288 48" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.2"/>
-    <path d="M268 58 L278 70 L289 58 L285 54 L278 61 L272 54 Z" fill="#7DD3FC" stroke="#0F172A" stroke-width="2"/>
-    <circle cx="278" cy="80" r="1.3" fill="#0F172A"/>
-    <circle cx="278" cy="92" r="1.3" fill="#0F172A"/>
+                <!-- piernas -->
+                <path d="M272 126 L270 182" stroke="#0F172A" stroke-width="23"/>
+                <path d="M272 126 L270 182" stroke="#E0F2FE" stroke-width="19"/>
+                <path d="M298 126 L304 182" stroke="#0F172A" stroke-width="23"/>
+                <path d="M298 126 L304 182" stroke="#E0F2FE" stroke-width="19"/>
 
-    <!-- oreja, cabeza, pelo -->
-    <path d="M297 36 C304 35 304 46 296 46" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.2"/>
-    <path d="M299 39 Q297 40 297 43" stroke="#0F172A" stroke-width="1.5"/>
-    <path d="M265 36 C265 20 297 20 297 36 C297 48 289 55 280 55 C271 55 265 48 265 36 Z" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.2"/>
-    <path d="M264 34 C262 21 271 12 285 13 C296 13 303 21 300 32 C298 35 296 35 295 33 C293 26 288 25 285 28 C282 23 277 23 274 28 C270 25 266 27 264 34 Z" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.2"/>
-    <!-- cara -->
-    <path d="M268 29 Q271 27 274 29" stroke="#0F172A" stroke-width="1.7"/>
-    <path d="M279 29 Q282 27 285 29" stroke="#0F172A" stroke-width="1.7"/>
-    <circle cx="271" cy="34.5" r="1.8" fill="#0F172A"/>
-    <circle cx="282" cy="34.5" r="1.8" fill="#0F172A"/>
-    <path d="M275 36 L272 40 L276 41" stroke="#0F172A" stroke-width="1.7"/>
-    <path d="M272 45 L284 45 C283 51 273 51 272 45 Z" fill="#FFFFFF" stroke="#0F172A" stroke-width="1.8"/>
+                <!-- torso, cuello, camisa -->
+                <path d="M260 72 C262 61 271 58 280 58 C291 58 300 61 303 70 L312 130 C294 135 276 135 258 130 Z" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.2"/>
+                <path d="M273 48 L273 59 C277 63 285 63 288 59 L288 48" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.2"/>
+                <path d="M268 58 L278 70 L289 58 L285 54 L278 61 L272 54 Z" fill="#7DD3FC" stroke="#0F172A" stroke-width="2"/>
+                <circle cx="278" cy="80" r="1.3" fill="#0F172A"/>
+                <circle cx="278" cy="92" r="1.3" fill="#0F172A"/>
 
-    <!-- brazo delantero con palma abierta -->
-    <path d="M295 84 L298 108 L262 117" stroke="#0F172A" stroke-width="15"/>
-    <path d="M295 84 L298 108 L262 117" stroke="#FFFFFF" stroke-width="11"/>
-    <path d="M298 96 L290 97" stroke="#0F172A" stroke-width="1.6" stroke-opacity="0.6"/>
-    <path d="M271 110 L274 122" stroke="#0F172A" stroke-width="2"/>
-    <!-- Mano delantera (un poco más abajo, palma hacia arriba recibiendo) -->
-    <use href="#pr-mano-recibe" transform="translate(260 117.5) rotate(12) scale(1, -1)"/>
-  </g>
-</svg>
+                <!-- oreja, cabeza, pelo -->
+                <path d="M297 36 C304 35 304 46 296 46" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.2"/>
+                <path d="M299 39 Q297 40 297 43" stroke="#0F172A" stroke-width="1.5"/>
+                <path d="M265 36 C265 20 297 20 297 36 C297 48 289 55 280 55 C271 55 265 48 265 36 Z" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.2"/>
+                <path d="M264 34 C262 21 271 12 285 13 C296 13 303 21 300 32 C298 35 296 35 295 33 C293 26 288 25 285 28 C282 23 277 23 274 28 C270 25 266 27 264 34 Z" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.2"/>
+                <!-- cara -->
+                <path d="M268 29 Q271 27 274 29" stroke="#0F172A" stroke-width="1.7"/>
+                <path d="M279 29 Q282 27 285 29" stroke="#0F172A" stroke-width="1.7"/>
+                <circle cx="271" cy="34.5" r="1.8" fill="#0F172A"/>
+                <circle cx="282" cy="34.5" r="1.8" fill="#0F172A"/>
+                <path d="M275 36 L272 40 L276 41" stroke="#0F172A" stroke-width="1.7"/>
+                <path d="M272 45 L284 45 C283 51 273 51 272 45 Z" fill="#FFFFFF" stroke="#0F172A" stroke-width="1.8"/>
+
+                <!-- brazo delantero con mano receptora normal (pulgar arriba, sin voltear) -->
+                <path d="M295 84 L298 108 L263 116" stroke="#0F172A" stroke-width="14.5"/>
+                <path d="M295 84 L298 108 L263 116" stroke="#FFFFFF" stroke-width="10.5"/>
+                <path d="M298 96 L290 97" stroke="#0F172A" stroke-width="1.6" stroke-opacity="0.6"/>
+                <path d="M272 109 L275 121" stroke="#0F172A" stroke-width="2"/>
+                <use href="#pr-mano-izquierda" transform="translate(260 116.5) rotate(-6)"/>
+              </g>
+            </svg>
             </div>
           </div>
 
