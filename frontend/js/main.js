@@ -1544,7 +1544,10 @@ async function cargarEntregasActivas() {
         contenedor.innerHTML = '';
 
         if (entregas.length === 0) {
-            contenedor.innerHTML = '<p class="text-[12.5px] text-slate-400 text-center py-8">No tienes entregas en curso en este momento.</p>';
+            const hayPedidos = document.querySelectorAll('#runner-disponibles .runner-order-card').length > 0;
+            contenedor.innerHTML = hayPedidos 
+                ? '<p class="text-[12.5px] text-slate-400 text-center py-4">No tienes entregas en curso en este momento.</p>'
+                : '';
             return;
         }
 
@@ -1954,14 +1957,124 @@ async function cargarPedidosPendientes() {
         const respuesta = await fetch('/api/pedidos', { headers: { 'ngrok-skip-browser-warning': 'true' } });
         const pedidos = await respuesta.json();
 
-        // 2. Limpiamos el contenedor
-        contenedor.innerHTML = ''; 
-
-        // 3. Si no hay pedidos, mostramos un mensaje
+        // 2. Si no hay pedidos, mostramos la ilustración animada sin reiniciar si ya está pintada
         if (pedidos.length === 0) {
-            contenedor.innerHTML = '<p class="text-center text-slate-400 py-8 text-[13px]">No hay pedidos disponibles en este momento. ¡Toma un descanso!</p>';
+            const contEntregas = document.getElementById('runner-entregas');
+            if (contEntregas && !contEntregas.querySelector('.runner-order-card')) {
+                contEntregas.innerHTML = '';
+            }
+
+            if (!contenedor.querySelector('.runner-idle-scene')) {
+                contenedor.innerHTML = `
+                  <div class="runner-idle-scene flex flex-col items-center justify-center py-6 px-4 text-center">
+                    <div class="w-64 h-44 mb-3">
+                      <svg viewBox="0 0 320 210" class="w-full h-full overflow-visible" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <style>
+                          .runner-head {
+                            transform-origin: 160px 88px;
+                            animation: headBob 2.6s ease-in-out infinite;
+                          }
+                          @keyframes headBob {
+                            0%, 100% { transform: rotate(-4deg) translateY(0px); }
+                            50% { transform: rotate(4deg) translateY(1.5px); }
+                          }
+                          .steam-1 { animation: steamRise 2.8s ease-in-out infinite; }
+                          .steam-2 { animation: steamRise 2.8s ease-in-out 1.2s infinite; }
+                          @keyframes steamRise {
+                            0% { opacity: 0; transform: translateY(4px); }
+                            40% { opacity: 0.85; }
+                            100% { opacity: 0; transform: translateY(-9px); }
+                          }
+                          .phone-glow { animation: screenPulse 2.4s ease-in-out infinite; }
+                          @keyframes screenPulse {
+                            0%, 100% { opacity: 0.4; }
+                            50% { opacity: 1; }
+                          }
+                        </style>
+
+                        <ellipse cx="160" cy="186" rx="115" ry="6" fill="#E2E8F0" />
+
+                        <!-- BANCA DEL CAMPUS -->
+                        <g stroke="#1E293B" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M84 148V182M236 148V182" />
+                          <rect x="68" y="88" width="184" height="16" rx="6" fill="#F8FAFC" />
+                          <rect x="68" y="112" width="184" height="16" rx="6" fill="#F1F5F9" />
+                          <rect x="56" y="138" width="208" height="11" rx="5" fill="#FFFFFF" />
+                          <path d="M72 149L68 184M248 149L252 184" />
+                        </g>
+
+                        <!-- MOCHILA UNIVERSITARIA -->
+                        <g stroke="#1E293B" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M92 94C92 87 104 87 104 94" />
+                          <path d="M118 102C127 106 128 128 117 136" />
+                          <path d="M76 126C76 104 86 94 98 94C110 94 120 104 120 126C120 135 113 138 98 138C83 138 76 135 76 126Z" fill="#ECFDF5" />
+                          <path d="M81 108C88 113 108 113 115 108" />
+                          <rect x="95" y="108" width="6" height="7" rx="2" fill="#10B981" />
+                          <rect x="81" y="120" width="32" height="16" rx="6" fill="#FFFFFF" />
+                          <path d="M87 126H107" stroke-width="2.5" />
+                        </g>
+
+                        <!-- VASO DE CAFÉ + VAPOR -->
+                        <g stroke="#1E293B" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+                          <path class="steam-1" d="M222 104C217 97 227 91 222 83" stroke="#10B981" stroke-width="2.8" />
+                          <path class="steam-2" d="M231 102C227 95 236 90 232 82" stroke="#64748B" stroke-width="2.6" />
+                          <path d="M216 116H236L233 138H219L216 116Z" fill="#FFFFFF" />
+                          <path d="M217.2 123H234.8L234.1 130H217.9L217.2 123Z" fill="#A7F3D0" stroke="none" />
+                          <path d="M217.2 123H234.8M217.9 130H234.1" stroke-width="2.4" />
+                          <rect x="213" y="111" width="26" height="5" rx="2.5" fill="#10B981" />
+                          <path d="M216 111L218 108H234L236 111" fill="#ECFDF5" />
+                        </g>
+
+                        <!-- ESTUDIANTE SENTADO -->
+                        <g stroke="#1E293B" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M132 132C125 134 123 144 126 174H141L145 147H175L179 174H194C197 144 195 134 188 132Z" fill="#334155" />
+                          <path d="M123 174H142V181C142 184 120 185 120 180C120 176 122 174 123 174Z" fill="#FFFFFF" />
+                          <path d="M178 174H197C198 174 200 176 200 180C200 185 178 184 178 181V174Z" fill="#FFFFFF" />
+                          <path d="M134 86C124 94 120 112 123 128C125 135 138 137 160 137C182 137 195 135 197 128C200 112 196 94 186 86Z" fill="#10B981" />
+                          <path d="M143 81C139 86 144 93 160 93C176 93 181 86 177 81" fill="#ECFDF5" />
+                          <path d="M131 98C124 112 129 124 146 121" fill="#10B981" />
+                          <path d="M189 98C196 112 191 124 174 121" fill="#10B981" />
+                          <rect x="150" y="96" width="20" height="31" rx="4.5" fill="#FFFFFF" />
+                          <circle class="phone-glow" cx="160" cy="103" r="2.2" fill="#10B981" stroke="none" />
+                          <path d="M146 109H151M146 114H151M146 119H151" stroke-width="2.8" />
+                          <path d="M169 109H174M169 114H174M169 119H174" stroke-width="2.8" />
+                        </g>
+
+                        <!-- CABEZA + AUDÍFONOS -->
+                        <g class="runner-head" stroke="#1E293B" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M136 58C136 36 184 36 184 58" stroke-width="3.5" />
+                          <path d="M142 56C142 74 149 84 160 84C171 84 178 74 178 56C178 44 170 39 160 39C150 39 142 44 142 56Z" fill="#FFFFFF" />
+                          <path d="M142 56C144 48 148 44 148 44C151 50 158 53 163 53C161 49 160 46 160 46C167 51 174 52 178 55C178 42 169 37 160 37C150 37 142 43 142 56Z" fill="#1E293B" />
+                          <path d="M149 56C151 55 153 55 154 56" stroke-width="2.3" />
+                          <path d="M166 56C167 55 169 55 171 56" stroke-width="2.3" />
+                          <circle cx="152" cy="63" r="2" fill="#1E293B" stroke="none" />
+                          <circle cx="168" cy="63" r="2" fill="#1E293B" stroke="none" />
+                          <path d="M160 63V67L158 68" stroke-width="2.2" />
+                          <path d="M156 73C158 75 162 75 164 73" stroke-width="2.4" />
+                          <rect x="132" y="51" width="9" height="19" rx="4.5" fill="#10B981" />
+                          <rect x="179" y="51" width="9" height="19" rx="4.5" fill="#10B981" />
+                        </g>
+
+                        <!-- Detalles de pasto -->
+                        <g stroke="#64748B" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M52 184L55 176L59 183L63 177L65 184" />
+                          <path d="M258 184L261 176L265 183L269 178L271 184" />
+                        </g>
+                      </svg>
+                    </div>
+
+                    <h3 class="text-sm font-bold text-slate-800">Todo tranquilo por el campus</h3>
+                    <p class="text-xs text-slate-500 mt-1 max-w-[240px] leading-relaxed">
+                      No hay entregas ni pedidos disponibles ahora. ¡Toma un descanso, te avisaremos apenas caiga uno!
+                    </p>
+                  </div>
+                `;
+            }
             return;
         }
+
+        // Si SÍ hay pedidos, limpiamos el contenedor antes de dibujar las tarjetas
+        contenedor.innerHTML = '';
 
        // 4. Dibujamos una tarjeta por cada pedido encontrado
     pedidos.forEach(pedido => {
