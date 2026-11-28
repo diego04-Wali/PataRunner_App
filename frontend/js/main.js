@@ -47,7 +47,7 @@ window.addEventListener('DOMContentLoaded', () => {
             btnRunner.classList.remove("opacity-50", "cursor-not-allowed");
             
             // 2. Le quitamos el candadito
-            btnRunner.innerHTML = "⚡ Runner";
+            btnRunner.innerHTML = "Runner";
         }
         
         // 3. NUEVO: Pintamos TODOS los botones de verde inmediatamente al abrir la web
@@ -3196,7 +3196,7 @@ function aplicarEstadoRunner() {
         
         if (tabRunner) {
             tabRunner.disabled = false;
-            tabRunner.innerHTML = '⚡ Runner';
+            tabRunner.innerHTML = 'Runner';
             tabRunner.classList.remove('opacity-50', 'cursor-not-allowed');
         }
         if (window.lucide) lucide.createIcons();
