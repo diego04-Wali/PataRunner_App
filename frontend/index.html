@@ -27,23 +27,24 @@
     <div class="w-full h-full bg-white rounded-none sm:rounded-[38px] overflow-hidden flex flex-col relative sm:max-h-[756px]">
 
       <div class="hidden sm:flex items-center justify-between px-6 pt-3 pb-1 text-[11px] font-medium text-slate-900 font-mono-stat shrink-0">
-        <span>9:41</span>
+
         <div class="w-4 h-2.5 border border-slate-900 rounded-sm relative">
           <div class="absolute inset-0.5 bg-slate-900 rounded-[1px]"></div>
         </div>
       </div>
-
-      <!-- ===== SELECTOR DE ROL ===== -->
-      <div id="role-switcher-bar" class="flex items-center justify-center py-2 border-b border-slate-50 shrink-0">
-        <div class="flex bg-slate-100 rounded-full p-1 gap-1">
-            <button id="role-btn-alumno" onclick="showTab('inicio')" class="role-btn flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[11px] font-semibold bg-blue-600 text-white transition-colors">
-                Alumno
-            </button>
-            <button id="role-btn-runner" onclick="showTab('runner')" disabled class="role-btn flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[11px] font-semibold text-slate-400 opacity-50 cursor-not-allowed transition-colors">
-                <i data-lucide="lock" class="w-3 h-3"></i> Runner
-            </button>
-        </div>
-      </div>
+      <!-- Conmutador flotante sobre la parte superior de la pantalla -->
+<div id="role-switcher-bar" class="sticky top-0 z-30 pt-4 pb-2 px-4 flex justify-center transition-colors duration-300">
+  <div class="bg-white/20 backdrop-blur-md p-1 rounded-full grid grid-cols-2 gap-1 w-64 border border-white/25 shadow-sm">
+    <button id="role-btn-alumno" type="button"
+      class="py-1.5 px-4 rounded-full text-xs font-bold transition-all bg-white text-blue-700 shadow-sm">
+      Alumno
+    </button>
+    <button id="role-btn-runner" type="button"
+      class="py-1.5 px-4 rounded-full text-xs font-bold transition-all text-white hover:bg-white/10">
+      ⚡ Runner
+    </button>
+  </div>
+</div>
 
       <!-- ===== PANTALLA: LOGIN Y REGISTRO ===== -->
       <div id="screen-login" class="absolute inset-0 z-40 bg-white flex flex-col items-center justify-start px-7 pb-8 pt-6 overflow-y-auto sm:rounded-[38px]">
@@ -196,7 +197,7 @@
         <!-- TAB: INICIO -->
         <div id="tab-inicio" class="bg-slate-50 min-h-full pb-4">
           <!-- HERO SUPERIOR CON ILUSTRACIÓN ANIMADA -->
-          <div class="bg-gradient-to-br from-blue-800 via-blue-600 to-cyan-500 text-white rounded-b-3xl shadow-md pt-3.5 pb-0 px-5 mb-4 overflow-hidden">
+          <div class="-mt-14 pt-16 pb-6 px-5 bg-gradient-to-b from-blue-600 via-blue-500 to-cyan-500 rounded-b-3xl text-white"></div>
             <!-- Cabecera Logo + UTP + Carrito -->
             <div class="flex items-center justify-between gap-2 mb-3.5">
               <div>
@@ -586,7 +587,7 @@
         <!-- TAB: RUNNER -->
         <div id="tab-runner" class="hidden bg-slate-50 min-h-full pb-6">
           <!-- HERO SUPERIOR MODO RUNNER (DEGRADADO ESMERALDA) -->
-          <div class="bg-gradient-to-br from-emerald-800 via-emerald-600 to-teal-500 text-white rounded-b-[32px] shadow-lg shadow-emerald-900/15 pt-5 pb-6 px-5 mb-5">
+          <div class="-mt-14 pt-16 pb-6 px-5 bg-gradient-to-b from-emerald-600 via-emerald-500 to-teal-500 rounded-b-3xl text-white"></div>
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2">
                 <p class="font-display text-xl font-extrabold text-white tracking-tight">Modo Runner</p>

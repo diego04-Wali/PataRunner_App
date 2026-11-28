@@ -1238,6 +1238,39 @@ if (typeof cargarCatalogo === 'function') await cargarCatalogo();
     });
 }
 
+function actualizarEstiloConmutador(tabActual) {
+    const switcherContainer = document.querySelector("#role-switcher-bar > div");
+    const btnAlumno = document.getElementById("role-btn-alumno");
+    const btnRunner = document.getElementById("role-btn-runner");
+    if (!switcherContainer || !btnAlumno || !btnRunner) return;
+
+    const sobreHeroDegradado = (tabActual === "inicio" || tabActual === "runner");
+
+    if (sobreHeroDegradado) {
+        // Modo cristal sobre degradado (Inicio / Runner)
+        switcherContainer.className = "bg-white/20 backdrop-blur-md p-1 rounded-full grid grid-cols-2 gap-1 w-64 border border-white/25 shadow-sm transition-all";
+        
+        btnAlumno.className = activeRole === "alumno"
+            ? "py-1.5 px-4 rounded-full text-xs font-bold transition-all bg-white text-blue-700 shadow-sm"
+            : "py-1.5 px-4 rounded-full text-xs font-bold transition-all text-white/90 hover:bg-white/10";
+
+        btnRunner.className = activeRole === "runner"
+            ? "py-1.5 px-4 rounded-full text-xs font-bold transition-all bg-white text-emerald-700 shadow-sm"
+            : "py-1.5 px-4 rounded-full text-xs font-bold transition-all text-white/90 hover:bg-white/10";
+    } else {
+        // Modo fondo claro para otras pestañas (Pedidos, Historial, Perfil)
+        switcherContainer.className = "bg-slate-100 p-1 rounded-full grid grid-cols-2 gap-1 w-64 border border-slate-200/80 transition-all";
+
+        btnAlumno.className = activeRole === "alumno"
+            ? "py-1.5 px-4 rounded-full text-xs font-bold transition-all bg-blue-600 text-white shadow-sm"
+            : "py-1.5 px-4 rounded-full text-xs font-bold transition-all text-slate-600";
+
+        btnRunner.className = activeRole === "runner"
+            ? "py-1.5 px-4 rounded-full text-xs font-bold transition-all bg-emerald-600 text-white shadow-sm"
+            : "py-1.5 px-4 rounded-full text-xs font-bold transition-all text-slate-600";
+    }
+}
+
 // --- CARGAR PEDIDOS DISPONIBLES PARA EL RUNNER ---
 async function cargarPedidosDisponibles() {
     const contenedor = document.getElementById('runner-disponibles');
