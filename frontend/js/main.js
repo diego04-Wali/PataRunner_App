@@ -1024,7 +1024,7 @@ if (logoutBtn) {
     // Resaltar el botón activo en la barra inferior según el rol
     document.querySelectorAll(".nav-btn").forEach(b => {
         const active = b.dataset.nav === tab || (tab === "historial-runner" && b.dataset.nav === "pedidos");
-        const activeColor = activeRole === "runner" ? "text-blue-600" : "text-emerald-600";
+        const activeColor = activeRole === "runner" ? "text-emerald-600" : "text-blue-600";
         
         b.classList.remove("text-blue-600", "text-emerald-600", "text-slate-400");
         b.classList.add(active ? activeColor : "text-slate-400");
@@ -1087,18 +1087,19 @@ function actualizarNavSegunRol(rol) {
 function setActiveRole(role) {
     activeRole = role;
 
-    // 1. Pintar el conmutador superior según el rol activo (INVERTIDO)
+    // 1. Pintar el conmutador superior según el rol activo (Azul = Alumno, Esmeralda = Runner)
     if (roleBtnAlumno) {
-        roleBtnAlumno.classList.toggle("bg-emerald-600", role === "alumno"); // Antes: bg-blue-600
+        roleBtnAlumno.classList.toggle("bg-blue-600", role === "alumno");
         roleBtnAlumno.classList.toggle("text-white", role === "alumno");
         roleBtnAlumno.classList.toggle("text-slate-600", role !== "alumno");
     }
 
     if (roleBtnRunner) {
-        roleBtnRunner.classList.toggle("bg-blue-600", role === "runner"); // Antes: bg-emerald-600
+        roleBtnRunner.classList.toggle("bg-emerald-600", role === "runner");
         roleBtnRunner.classList.toggle("text-white", role === "runner");
         roleBtnRunner.classList.toggle("text-slate-600", role !== "runner");
     }
+
     // 2. Mantener SIEMPRE visible el botón 'Inicio' en la barra inferior
     if (navBtnInicio) navBtnInicio.classList.remove("hidden");
 
@@ -2949,37 +2950,34 @@ if (pedidoHoy.estado === 'Cancelado' && !pedidoHoy.alerta_mostrada) {
 // =================================================================
 
 function cambiarVistaRunner(vista) {
-    const btnPedidos = document.getElementById('btn-vista-pedidos');
-    const btnTiendas = document.getElementById('btn-vista-tiendas');
+    const btnPedidos = document.getElementById('btn-tab-pedidos');
+    const btnTiendas = document.getElementById('btn-tab-tiendas');
     const contPedidos = document.getElementById('runner-disponibles');
     const contTiendas = document.getElementById('runner-tiendas');
-    // NUEVO: Seleccionamos el contenedor de las entregas en curso
-    const contEntregas = document.getElementById('runner-entregas'); 
+    const contEntregas = document.getElementById('runner-entregas');
+
+    if (!btnPedidos || !btnTiendas) return;
 
     if (vista === 'disponibles') {
-        // Pintar botón Pedidos de azul, Tiendas de gris
-        btnPedidos.className = "text-[12px] font-semibold px-3.5 py-1.5 rounded-full bg-blue-600 text-white transition-colors";
-        btnTiendas.className = "text-[12px] font-semibold px-3.5 py-1.5 rounded-full text-slate-500 bg-slate-100 hover:bg-slate-200 transition-colors";
+        btnPedidos.className = "runner-subtab py-2 px-4 rounded-full text-xs font-bold transition-all bg-white text-emerald-800 shadow-sm";
+        btnTiendas.className = "runner-subtab py-2 px-4 rounded-full text-xs font-bold transition-all bg-transparent text-white hover:bg-white/10";
         
-        // Mostrar pedidos y entregas en curso, ocultar tiendas
         contPedidos.classList.remove('hidden');
         if (contEntregas) contEntregas.classList.remove('hidden');
         contTiendas.classList.add('hidden');
         
     } else if (vista === 'tiendas') {
-        // Pintar botón Tiendas de azul, Pedidos de gris
-        btnTiendas.className = "text-[12px] font-semibold px-3.5 py-1.5 rounded-full bg-blue-600 text-white transition-colors";
-        btnPedidos.className = "text-[12px] font-semibold px-3.5 py-1.5 rounded-full text-slate-500 bg-slate-100 hover:bg-slate-200 transition-colors";
+        btnTiendas.className = "runner-subtab py-2 px-4 rounded-full text-xs font-bold transition-all bg-white text-emerald-800 shadow-sm";
+        btnPedidos.className = "runner-subtab py-2 px-4 rounded-full text-xs font-bold transition-all bg-transparent text-white hover:bg-white/10";
         
-        // Mostrar tiendas, ocultar todo lo relacionado a pedidos (incluyendo entregas en curso)
         contTiendas.classList.remove('hidden');
         contPedidos.classList.add('hidden');
         if (contEntregas) contEntregas.classList.add('hidden');
         
-        // Ejecutar la consulta al backend
         cargarDirectorioTiendas();
     }
 }
+window.cambiarVistaRunner = cambiarVistaRunner;
 
 async function cargarDirectorioTiendas() {
     const contenedor = document.getElementById('runner-tiendas');
