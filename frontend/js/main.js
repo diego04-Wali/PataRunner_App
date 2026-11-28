@@ -1021,44 +1021,6 @@ if (logoutBtn) {
     });
 }
 
-function moverIndicadorLiquido(index) {
-  const indicator = document.getElementById('liquid-indicator');
-  if (indicator && index !== undefined) {
-    indicator.style.transform = `translateX(${Number(index) * 100}%)`;
-  }
-}
-
-function moverMuescaBarra(index, totalCols) {
-  const path = document.getElementById('nav-notch-path');
-  const puck = document.getElementById('nav-floating-puck');
-  if (!path || !puck) return;
-
-  const pct = ((Number(index) + 0.5) / totalCols) * 100;
-  puck.style.left = `${pct}%`;
-
-  // Esculpir la cuna semicircular en el viewBox 0..380
-  const cx = ((Number(index) + 0.5) / totalCols) * 380;
-  const halfW = 36; // ancho de la boca de la cuna
-  const leftStart = Math.max(0, cx - halfW);
-  const rightEnd = Math.min(380, cx + halfW);
-
-  const d = `M0,24 L${leftStart.toFixed(1)},24 C${(cx - 21).toFixed(1)},24 ${(cx - 19).toFixed(1)},56 ${cx.toFixed(1)},56 C${(cx + 19).toFixed(1)},56 ${(cx + 21).toFixed(1)},24 ${rightEnd.toFixed(1)},24 L380,24 L380,86 L0,86 Z`;
-  path.setAttribute('d', d);
-}
-
-function activarCarritoEnBarra() {
-  const grupoAlumno = document.getElementById('nav-alumno-group');
-  if (grupoAlumno) {
-    grupoAlumno.querySelectorAll('.notch-tab-btn').forEach((btn) => {
-      const isCart = btn.dataset.nav === 'carrito';
-      btn.classList.toggle('active', isCart);
-      if (isCart) moverMuescaBarra(2, 5);
-    });
-  }
-  document.getElementById('cart-btn')?.click();
-}
-window.activarCarritoEnBarra = activarCarritoEnBarra;
-
 function showTab(tabName) {
   const tabs = [
     'tab-inicio',
@@ -1078,43 +1040,29 @@ function showTab(tabName) {
   const target = document.getElementById(`tab-${tabName}`);
   if (target) target.classList.remove('hidden');
 
-  const esRunner = activeRole === 'runner';
-  const grupoActivo = esRunner
-    ? document.getElementById('nav-runner-group')
-    : document.getElementById('nav-alumno-group');
-  const totalCols = esRunner ? 4 : 5;
-
-  if (grupoActivo) {
-    grupoActivo.querySelectorAll('.notch-tab-btn').forEach((btn) => {
-      const isMatch = btn.dataset.nav === tabName;
-      btn.classList.toggle('active', isMatch);
-      if (isMatch) {
-        moverMuescaBarra(btn.dataset.index, totalCols);
-      }
-    });
-  }
+  // Resaltar botón activo en la barra inferior
+  document.querySelectorAll('.nav-btn-item').forEach((btn) => {
+    const isMatch = btn.dataset.nav === tabName;
+    btn.classList.toggle('active', isMatch);
+    btn.classList.toggle('text-white', isMatch);
+    btn.classList.toggle('text-white/75', !isMatch);
+  });
 
   if (window.lucide) lucide.createIcons();
 }
 
 function actualizarBarraPorRol(rol) {
+  const curveSvg = document.getElementById('nav-curve-svg');
   const navAlumno = document.getElementById('nav-alumno-group');
   const navRunner = document.getElementById('nav-runner-group');
-  const path = document.getElementById('nav-notch-path');
-  const puck = document.getElementById('nav-floating-puck');
   const switcherBar = document.getElementById('role-switcher-bar');
   const btnAlumno = document.getElementById('role-btn-alumno');
   const btnRunner = document.getElementById('role-btn-runner');
 
   if (rol === 'runner') {
+    curveSvg?.classList.add('hidden');
     navAlumno?.classList.add('hidden');
     navRunner?.classList.remove('hidden');
-
-    if (path) path.setAttribute('fill', 'url(#navGradRunner)');
-    if (puck) {
-      puck.classList.remove('bg-blue-600');
-      puck.classList.add('bg-emerald-600');
-    }
     if (switcherBar) {
       switcherBar.classList.remove('bg-blue-600');
       switcherBar.classList.add('bg-emerald-600');
@@ -1125,14 +1073,9 @@ function actualizarBarraPorRol(rol) {
     }
     showTab('runner');
   } else {
+    curveSvg?.classList.remove('hidden');
     navAlumno?.classList.remove('hidden');
     navRunner?.classList.add('hidden');
-
-    if (path) path.setAttribute('fill', 'url(#navGradAlumno)');
-    if (puck) {
-      puck.classList.remove('bg-emerald-600');
-      puck.classList.add('bg-blue-600');
-    }
     if (switcherBar) {
       switcherBar.classList.remove('bg-emerald-600');
       switcherBar.classList.add('bg-blue-600');
