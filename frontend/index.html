@@ -764,10 +764,10 @@
 
       </div>
 
-      <!-- ===== NAV BAR INFERIOR CURVA ===== -->
+      <!-- ===== NAV BAR INFERIOR CURVA (ESTILO CUNA PROFUNDA) ===== -->
       <div id="bottom-nav-bar" class="shrink-0 w-full relative z-30 select-none bg-transparent">
-        <!-- SVG Curvo con muesca central (Modo Alumno) -->
-        <svg id="nav-curve-svg" viewBox="0 0 380 74" preserveAspectRatio="none" class="w-full h-[74px] block pointer-events-none drop-shadow-[0_-4px_12px_rgba(37,99,235,0.18)]">
+        <!-- SVG Curvo con muesca semicircular profunda (Modo Alumno) -->
+        <svg id="nav-curve-svg" viewBox="0 0 380 82" preserveAspectRatio="none" class="w-full h-[82px] block pointer-events-none drop-shadow-[0_-4px_14px_rgba(37,99,235,0.2)]">
           <defs>
             <linearGradient id="navGradAlumno" x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%" stop-color="#2563EB" />
@@ -775,61 +775,70 @@
               <stop offset="100%" stop-color="#06B6D4" />
             </linearGradient>
           </defs>
-          <path d="M0,16 L132,16 C146,16 151,42 190,42 C229,42 234,16 248,16 L380,16 L380,74 L0,74 Z" fill="url(#navGradAlumno)" />
+          <!-- Borde superior en y=18, hombros redondeados en x=130 y x=250, y valle semicircular profundo hasta y=58 -->
+          <path d="M0,18 L124,18 C142,18 148,58 190,58 C232,58 238,18 256,18 L380,18 L380,82 L0,82 Z" fill="url(#navGradAlumno)" />
         </svg>
 
-        <!-- MODO ALUMNO: 4 botones + Carrito flotante central -->
-        <div id="nav-alumno-group" class="absolute inset-x-0 bottom-0 h-[58px] px-3 grid grid-cols-5 items-center text-white">
-          <button onclick="showTab('inicio')" class="nav-btn-item active flex flex-col items-center justify-center gap-0.5" data-nav="inicio">
+        <!-- MODO ALUMNO: 4 botones + Carrito encajado en la cuna -->
+        <div id="nav-alumno-group" class="absolute inset-x-0 bottom-0 h-[64px] px-3 grid grid-cols-5 items-center text-white">
+          <button onclick="showTab('inicio')" class="nav-btn-item active flex flex-col items-center justify-center gap-0.5 pt-1" data-nav="inicio">
             <i data-lucide="home" class="w-5 h-5"></i>
-            <span class="text-[10px] font-semibold">Inicio</span>
+            <span class="text-[9.5px] font-semibold tracking-tight">Inicio</span>
+            <span class="nav-dot w-1 h-1 rounded-full bg-white mt-0.5"></span>
           </button>
 
-          <button onclick="showTab('pedidos'); if(typeof cargarMisPedidos === 'function') cargarMisPedidos();" class="nav-btn-item flex flex-col items-center justify-center gap-0.5 text-white/70" data-nav="pedidos">
+          <button onclick="showTab('pedidos'); if(typeof cargarMisPedidos === 'function') cargarMisPedidos();" class="nav-btn-item flex flex-col items-center justify-center gap-0.5 pt-1 text-white/75" data-nav="pedidos">
             <i data-lucide="package" class="w-5 h-5"></i>
-            <span class="text-[10px] font-semibold">Pedidos</span>
+            <span class="text-[9.5px] font-semibold tracking-tight">Pedidos</span>
+            <span class="nav-dot w-1 h-1 rounded-full bg-white mt-0.5 opacity-0"></span>
           </button>
 
-          <!-- Espacio central para botón flotante de Carrito -->
-          <div class="relative flex justify-center">
+          <!-- Botón flotante encajado dentro de la cuna -->
+          <div class="relative flex justify-center items-start h-full">
             <button id="nav-cart-fab" type="button" onclick="document.getElementById('cart-btn')?.click()"
-              class="nav-fab-cart -mt-11 w-[54px] h-[54px] rounded-full bg-slate-900 hover:bg-slate-800 active:scale-95 text-white shadow-lg shadow-blue-950/30 border-[3px] border-white flex items-center justify-center transition-all">
-              <i data-lucide="shopping-bag" class="w-5 h-5 text-cyan-300"></i>
-              <span id="nav-cart-badge" class="hidden absolute -top-1 -right-1 min-w-[19px] h-[19px] px-1 rounded-full bg-amber-400 text-slate-950 text-[10px] font-extrabold flex items-center justify-center shadow">0</span>
+              class="nav-fab-cart -mt-[24px] w-[56px] h-[56px] rounded-full bg-slate-900 hover:bg-slate-800 active:scale-95 text-white shadow-[0_6px_16px_rgba(15,23,42,0.35)] flex items-center justify-center transition-all">
+              <i data-lucide="shopping-bag" class="w-[22px] h-[22px] text-cyan-300"></i>
+              <span id="nav-cart-badge" class="hidden absolute -top-0.5 -right-0.5 min-w-[19px] h-[19px] px-1 rounded-full bg-amber-400 text-slate-950 text-[10px] font-extrabold flex items-center justify-center shadow">0</span>
             </button>
           </div>
 
-          <button onclick="showTab('historial-alumno'); if(typeof cargarHistorialPedidos === 'function') cargarHistorialPedidos();" class="nav-btn-item flex flex-col items-center justify-center gap-0.5 text-white/70" data-nav="historial-alumno">
+          <button onclick="showTab('historial-alumno'); if(typeof cargarHistorialPedidos === 'function') cargarHistorialPedidos();" class="nav-btn-item flex flex-col items-center justify-center gap-0.5 pt-1 text-white/75" data-nav="historial-alumno">
             <i data-lucide="history" class="w-5 h-5"></i>
-            <span class="text-[10px] font-semibold">Historial</span>
+            <span class="text-[9.5px] font-semibold tracking-tight">Historial</span>
+            <span class="nav-dot w-1 h-1 rounded-full bg-white mt-0.5 opacity-0"></span>
           </button>
 
-          <button onclick="showTab('perfil')" class="nav-btn-item flex flex-col items-center justify-center gap-0.5 text-white/70" data-nav="perfil">
+          <button onclick="showTab('perfil')" class="nav-btn-item flex flex-col items-center justify-center gap-0.5 pt-1 text-white/75" data-nav="perfil">
             <i data-lucide="user" class="w-5 h-5"></i>
-            <span class="text-[10px] font-semibold">Perfil</span>
+            <span class="text-[9.5px] font-semibold tracking-tight">Perfil</span>
+            <span class="nav-dot w-1 h-1 rounded-full bg-white mt-0.5 opacity-0"></span>
           </button>
         </div>
 
         <!-- MODO RUNNER: Barra esmeralda degradada limpia de 4 botones -->
-        <div id="nav-runner-group" class="hidden w-full h-[62px] px-4 grid grid-cols-4 items-center bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-500 text-white shadow-[0_-4px_12px_rgba(5,150,105,0.18)]">
-          <button onclick="showTab('runner'); if(typeof cargarEntregasActivas === 'function') cargarEntregasActivas();" class="nav-btn-item active flex flex-col items-center justify-center gap-0.5" data-nav="runner">
+        <div id="nav-runner-group" class="hidden w-full h-[64px] px-4 grid grid-cols-4 items-center bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-500 text-white shadow-[0_-4px_12px_rgba(5,150,105,0.18)]">
+          <button onclick="showTab('runner'); if(typeof cargarEntregasActivas === 'function') cargarEntregasActivas();" class="nav-btn-item active flex flex-col items-center justify-center gap-0.5 pt-1" data-nav="runner">
             <i data-lucide="home" class="w-5 h-5"></i>
-            <span class="text-[10px] font-semibold">Inicio</span>
+            <span class="text-[9.5px] font-semibold">Inicio</span>
+            <span class="nav-dot w-1 h-1 rounded-full bg-white mt-0.5"></span>
           </button>
 
-          <button onclick="showTab('runner'); if(typeof cambiarVistaRunner === 'function') cambiarVistaRunner('disponibles');" class="nav-btn-item flex flex-col items-center justify-center gap-0.5 text-white/75" data-nav="runner-pedidos">
+          <button onclick="showTab('runner'); if(typeof cambiarVistaRunner === 'function') cambiarVistaRunner('disponibles');" class="nav-btn-item flex flex-col items-center justify-center gap-0.5 pt-1 text-white/75" data-nav="runner-pedidos">
             <i data-lucide="bike" class="w-5 h-5"></i>
-            <span class="text-[10px] font-semibold">Pedidos</span>
+            <span class="text-[9.5px] font-semibold">Pedidos</span>
+            <span class="nav-dot w-1 h-1 rounded-full bg-white mt-0.5 opacity-0"></span>
           </button>
 
-          <button onclick="showTab('historial-runner'); if(typeof cargarHistorialRunner === 'function') cargarHistorialRunner();" class="nav-btn-item flex flex-col items-center justify-center gap-0.5 text-white/75" data-nav="historial-runner">
+          <button onclick="showTab('historial-runner'); if(typeof cargarHistorialRunner === 'function') cargarHistorialRunner();" class="nav-btn-item flex flex-col items-center justify-center gap-0.5 pt-1 text-white/75" data-nav="historial-runner">
             <i data-lucide="history" class="w-5 h-5"></i>
-            <span class="text-[10px] font-semibold">Historial</span>
+            <span class="text-[9.5px] font-semibold">Historial</span>
+            <span class="nav-dot w-1 h-1 rounded-full bg-white mt-0.5 opacity-0"></span>
           </button>
 
-          <button onclick="showTab('perfil')" class="nav-btn-item flex flex-col items-center justify-center gap-0.5 text-white/75" data-nav="perfil">
+          <button onclick="showTab('perfil')" class="nav-btn-item flex flex-col items-center justify-center gap-0.5 pt-1 text-white/75" data-nav="perfil">
             <i data-lucide="user" class="w-5 h-5"></i>
-            <span class="text-[10px] font-semibold">Perfil</span>
+            <span class="text-[9.5px] font-semibold">Perfil</span>
+            <span class="nav-dot w-1 h-1 rounded-full bg-white mt-0.5 opacity-0"></span>
           </button>
         </div>
       </div>
