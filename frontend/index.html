@@ -1,1269 +1,1119 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PataRunner - Delivery Estudiantil UTP</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts: Plus Jakarta Sans -->
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <style>
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: #0b1121;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            margin: 0;
-            padding: 1rem;
-        }
-        /* Ocultar scrollbar en contenedores internos */
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-        .phone-frame {
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 0 10px #000000, 0 0 0 12px #1e293b;
-        }
-        .hero-gradient {
-            background: linear-gradient(155deg, #2563EB 0%, #3B82F6 45%, #06B6D4 100%);
-        }
-        .btn-gradient {
-            background: linear-gradient(90deg, #10B981 0%, #0EA5E9 100%);
-        }
-        .card-shadow {
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
-        }
-        .pulse-dot {
-            animation: pulse 2s infinite;
-        }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: .4; }
-        }
-        
-        /* Efecto de destello / luz en banner */
-        .banner-shine {
-            position: relative;
-            overflow: hidden;
-        }
-        .banner-shine::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -150%;
-            width: 80%;
-            height: 100%;
-            background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.22) 50%, rgba(255,255,255,0) 100%);
-            transform: skewX(-25deg);
-            animation: shineSweep 6s infinite ease-in-out;
-            pointer-events: none;
-            z-index: 5;
-        }
-        @keyframes shineSweep {
-            0% { left: -150%; }
-            25% { left: 200%; }
-            100% { left: 200%; }
-        }
-
-        /* Animaciones Ilustración Vectorial PataRunner */
-        @keyframes patarunnerFloat {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-4px); }
-        }
-        @keyframes patarunnerHandShake {
-            0%, 100% { transform: rotate(0deg); }
-            50% { transform: rotate(-6deg); }
-        }
-        @keyframes patarunnerSparkle {
-            0%, 100% { opacity: 0.4; transform: scale(0.85); }
-            50% { opacity: 1; transform: scale(1.15); }
-        }
-        .animate-bag-float {
-            animation: patarunnerFloat 2.8s ease-in-out infinite;
-            transform-origin: center;
-        }
-        .animate-runner-arm {
-            animation: patarunnerHandShake 2.8s ease-in-out infinite;
-            transform-origin: 315px 150px;
-        }
-        .animate-sparkle-1 {
-            animation: patarunnerSparkle 2.2s ease-in-out infinite;
-            transform-origin: center;
-        }
-        .animate-sparkle-2 {
-            animation: patarunnerSparkle 2.8s ease-in-out infinite 0.7s;
-            transform-origin: center;
-        }
-    </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>PataRunner — Prototipo</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link rel="stylesheet" href="css/style.css" />
+<link rel="manifest" href="manifest.json" />
+<link rel="icon" type="image/png" sizes="512x512" href="logo.png">
+<link rel="apple-touch-icon" href="logo.png">
+<script>
+  // Oculta el login de forma inmediata si existe un token guardado
+  if (localStorage.getItem('token') && localStorage.getItem('usuario')) {
+    const style = document.createElement('style');
+    style.id = 'fast-hide-login';
+    style.innerHTML = '#screen-login { display: none !important; }';
+    document.head.appendChild(style);
+  }
+</script>
 </head>
-<body class="antialiased selection:bg-blue-500 selection:text-white">
+<body class="min-h-screen w-full bg-white sm:bg-gradient-to-br sm:from-slate-950 sm:via-slate-900 sm:to-black flex items-center justify-center sm:py-12 sm:px-4">
 
-    <!-- Contenedor Principal (Marco de Celular) -->
-    <div id="phone-container" class="phone-frame relative w-full max-w-[385px] h-[812px] bg-[#F8FAFC] rounded-[46px] overflow-hidden flex flex-col justify-between transition-colors duration-300">
-        
-        <!-- ========================================================= -->
-        <!-- PANTALLA 0: AUTH (LOGIN / REGISTRO ESTUDIANTE UTP)        -->
-        <!-- ========================================================= -->
-        <div id="auth-screen" class="absolute inset-0 bg-[#F8FAFC] z-[110] flex flex-col justify-between p-6 overflow-y-auto no-scrollbar">
-            
-            <!-- Top Logo & Bienvenida -->
-            <div class="pt-6 text-center">
-                <div class="w-16 h-16 hero-gradient rounded-2xl mx-auto flex items-center justify-center text-white shadow-lg shadow-blue-500/30 mb-3 relative">
-                    <i data-lucide="zap" class="w-8 h-8 fill-white"></i>
-                    <span class="absolute -bottom-1 -right-1 bg-slate-900 text-[9px] font-extrabold px-1.5 py-0.5 rounded-md border border-slate-700">UTP</span>
-                </div>
-                <h1 class="text-2xl font-extrabold tracking-tight text-slate-900">Pata<span class="text-blue-600">Runner</span></h1>
-                <p class="text-xs text-slate-500 font-medium mt-1">Exclusivo para estudiantes de la UTP</p>
-            </div>
+  <div class="relative w-full h-[100dvh] sm:w-[380px] sm:h-[780px] bg-white sm:bg-black sm:rounded-[48px] shadow-none sm:shadow-2xl sm:p-3">
+    <div class="w-full h-full bg-white rounded-none sm:rounded-[38px] overflow-hidden flex flex-col relative sm:max-h-[756px]">
 
-            <!-- Tabs Switch: Iniciar Sesión vs Registrarse -->
-            <div class="my-4">
-                <div class="bg-slate-200/70 p-1 rounded-xl flex mb-5">
-                    <button id="tab-auth-login" onclick="switchAuthMode('login')" class="flex-1 py-2 rounded-lg text-xs font-bold bg-white text-slate-800 shadow-sm transition-all">Iniciar Sesión</button>
-                    <button id="tab-auth-register" onclick="switchAuthMode('register')" class="flex-1 py-2 rounded-lg text-xs font-bold text-slate-500 hover:text-slate-700 transition-all">Registrarse</button>
-                </div>
+      <div class="hidden sm:flex items-center justify-between px-6 pt-3 pb-1 text-[11px] font-medium text-slate-900 font-mono-stat shrink-0">
 
-                <!-- FORMULARIO 1: INICIAR SESIÓN -->
-                <form id="form-login" onsubmit="handleLogin(event)" class="space-y-3.5">
-                    <div>
-                        <label class="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">Correo Institucional UTP</label>
-                        <div class="relative">
-                            <input type="text" id="login-email" required placeholder="u20241234@utp.edu.pe" class="w-full bg-white border border-slate-200 rounded-xl pl-3.5 pr-4 py-2.5 text-xs font-medium text-slate-800 focus:outline-none focus:border-blue-500 transition-colors">
-                        </div>
-                    </div>
+        <div class="w-4 h-2.5 border border-slate-900 rounded-sm relative">
+          <div class="absolute inset-0.5 bg-slate-900 rounded-[1px]"></div>
+        </div>
+      </div>
+      <!-- Conmutador flotante sobre la parte superior de la pantalla -->
+<div id="role-switcher-bar" class="sticky top-0 z-30 pt-4 pb-2 px-4 flex justify-center transition-colors duration-300">
+  <div class="bg-white/20 backdrop-blur-md p-1 rounded-full grid grid-cols-2 gap-1 w-64 border border-white/25 shadow-sm">
+    <button id="role-btn-alumno" type="button"
+      class="py-1.5 px-4 rounded-full text-xs font-bold transition-all bg-white text-blue-700 shadow-sm">
+      Alumno
+    </button>
+    <button id="role-btn-runner" type="button"
+      class="py-1.5 px-4 rounded-full text-xs font-bold transition-all text-white hover:bg-white/10">
+      ⚡ Runner
+    </button>
+  </div>
+</div>
 
-                    <div>
-                        <div class="flex justify-between items-center mb-1">
-                            <label class="text-[11px] font-bold text-slate-700 uppercase tracking-wider">Contraseña</label>
-                            <a href="#" onclick="recuperarContrasenaModal(event)" class="text-[10px] font-bold text-blue-600 hover:underline">¿Olvidaste tu clave?</a>
-                        </div>
-                        <div class="relative">
-                            <input type="password" id="login-password" required placeholder="••••••••" class="w-full bg-white border border-slate-200 rounded-xl pl-3.5 pr-10 py-2.5 text-xs font-medium text-slate-800 focus:outline-none focus:border-blue-500 transition-colors">
-                            <button type="button" onclick="togglePassword('login-password', this)" class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600">
-                                <i data-lucide="eye" class="w-4 h-4"></i>
-                            </button>
-                        </div>
-                    </div>
+      <!-- ===== PANTALLA: LOGIN Y REGISTRO ===== -->
+      <div id="screen-login" class="absolute inset-0 z-40 bg-white flex flex-col items-center justify-start px-7 pb-8 pt-6 overflow-y-auto sm:rounded-[38px]">
+          <div class="flex flex-col items-center justify-center text-center shrink-0 mb-6">
+              <p class="font-display text-[30px] font-bold text-slate-900 leading-none">Pata<span class="text-blue-600">Runner</span></p>
+              <p class="text-[13px] text-slate-500 mt-2.5">Logística colaborativa en el campus</p>
+              <div class="relative w-36 h-36 rounded-full bg-slate-50 flex items-center justify-center mt-6 p-2 overflow-hidden border border-slate-100 shadow-sm">
+                <img src="logo.png" alt="Logo PataRunner" class="w-full h-full object-contain rounded-full">
+              </div>
+              <div class="flex items-center gap-1.5 bg-blue-50 text-blue-700 text-[11.5px] font-medium px-3 py-1.5 rounded-full mt-8">
+                  <i data-lucide="lock" class="w-3.5 h-3.5"></i>
+                  Acceso exclusivo para la comunidad UTP
+              </div>
+          </div>
 
-                    <div id="login-error" class="hidden bg-red-50 text-red-600 text-[11px] font-medium p-2.5 rounded-xl border border-red-100 flex items-center gap-2">
-                        <i data-lucide="alert-circle" class="w-4 h-4 shrink-0"></i>
-                        <span id="login-error-text">Usa tu correo @utp.edu.pe válido.</span>
-                    </div>
+          <!-- FORMULARIO DE LOGIN -->
+          <div id="login-form" class="flex flex-col gap-3 w-full max-w-sm mt-2">
+              <input type="text" id="login-codigo" autocomplete="username" placeholder="Código de alumno o Correo personal" class="border border-slate-300 p-3 rounded-xl w-full text-slate-900 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+              
+              <div class="relative w-full">
+                  <input type="password" id="login-password" autocomplete="current-password" placeholder="Contraseña" class="border border-slate-300 p-3 rounded-xl w-full text-slate-900 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10">
+                  <button type="button" onclick="togglePassword()" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600">
+                      <i data-lucide="eye" id="toggle-icon" class="w-5 h-5"></i>
+                  </button>
+              </div>
 
-                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-3.5 rounded-xl shadow-md shadow-blue-500/25 active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-2">
-                        <span>Ingresar al Campus</span>
-                        <i data-lucide="arrow-right" class="w-4 h-4"></i>
-                    </button>
-                </form>
+              <!-- CÓDIGO DE RECUPERACIÓN DE CONTRASEÑA -->
+              <div class="text-right">
+                  <button type="button" onclick="recuperarContrasenaModal()" class="text-[11px] font-semibold text-blue-600 hover:underline">
+                      ¿Olvidaste tu contraseña?
+                  </button>
+              </div>
+              
+              <button id="login-btn" class="bg-slate-900 text-white font-bold py-3.5 px-4 rounded-xl mt-1 hover:bg-blue-600 transition-colors w-full">Iniciar sesión</button>
+              
+              <p class="text-center text-[12px] text-slate-500 mt-4">
+                  ¿No tienes una cuenta? <button type="button" id="show-register-btn" class="text-blue-600 font-semibold hover:underline">Crear cuenta</button>
+              </p>
+          </div>
 
-                <!-- FORMULARIO 2: REGISTRARSE -->
-                <form id="form-register" onsubmit="handleRegister(event)" class="hidden space-y-3">
-                    <div>
-                        <label class="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">Nombres y Apellidos</label>
-                        <input type="text" id="reg-name" required placeholder="Ej: Carlos Mendoza" class="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-medium text-slate-800 focus:outline-none focus:border-blue-500">
-                    </div>
+          <!-- FORMULARIO DE REGISTRO ACTUALIZADO -->
+          <div id="register-form" class="hidden flex flex-col gap-2.5 w-full max-w-sm mt-1 pb-6">
+              <input type="text" id="register-codigo" autocomplete="username" placeholder="Código de alumno (Ej: U21227585)" maxlength="9" class="border border-slate-300 p-3 rounded-xl w-full text-slate-900 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase">
+              
+              <div class="flex gap-2">
+                  <input type="text" id="register-nombres" placeholder="Nombres" class="border border-slate-300 p-3 rounded-xl w-1/2 text-slate-900 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <input type="text" id="register-apellidos" placeholder="Apellidos" class="border border-slate-300 p-3 rounded-xl w-1/2 text-slate-900 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+              </div>
 
-                    <div class="grid grid-cols-2 gap-2">
-                        <div>
-                            <label class="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">Código UTP</label>
-                            <input type="text" id="reg-code" required placeholder="u20241234" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-800 focus:outline-none focus:border-blue-500 uppercase">
-                        </div>
-                        <div>
-                            <label class="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">Sede</label>
-                            <select id="reg-sede" class="w-full bg-white border border-slate-200 rounded-xl px-2.5 py-2 text-xs font-medium text-slate-800 focus:outline-none focus:border-blue-500">
-                                <option value="San Juan de Lurigancho">Sede SJL</option>
-                                <option value="Lima Centro">Lima Centro</option>
-                                <option value="Lima Norte">Lima Norte</option>
-                                <option value="Lima Sur">Lima Sur</option>
-                                <option value="Ate">Ate</option>
-                            </select>
-                        </div>
-                    </div>
+              <select id="register-carrera" class="border border-slate-300 p-3 rounded-xl w-full text-slate-900 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="" disabled selected>Seleccionar carrera</option>
+                  <option value="Ingeniería de Sistemas e Informática">Ing. de Sistemas e Informática</option>
+                  <option value="Ingeniería de Software">Ingeniería de Software</option>
+                  <option value="Ingeniería Industrial">Ingeniería Industrial</option>
+                  <option value="Administración de Empresas">Administración de Empresas</option>
+                  <option value="Derecho">Derecho</option>
+                  <option value="Arquitectura">Arquitectura</option>
+                  <option value="Otra carrera">Otra carrera</option>
+              </select>
 
-                    <div>
-                        <label class="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">Correo Institucional (@utp.edu.pe)</label>
-                        <input type="email" id="reg-email" required placeholder="u20241234@utp.edu.pe" class="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-medium text-slate-800 focus:outline-none focus:border-blue-500">
-                    </div>
+              <!-- CORREO PERSONAL -->
+              <input type="email" id="register-correo" placeholder="Correo personal (Ej: mi_correo@gmail.com)" class="border border-slate-300 p-3 rounded-xl w-full text-slate-900 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
 
-                    <div>
-                        <label class="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">Celular (WhatsApp / Yape)</label>
-                        <input type="tel" id="reg-phone" required placeholder="987 654 321" class="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-medium text-slate-800 focus:outline-none focus:border-blue-500">
-                    </div>
+              <!-- NÚMERO DE TELÉFONO PARA WHATSAPP -->
+              <div class="relative w-full">
+                  <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500 text-xs font-semibold">+51</span>
+                  <input type="tel" id="register-telefono" maxlength="9" pattern="9[0-9]{8}" placeholder="Número de WhatsApp (9 dígitos)" class="border border-slate-300 p-3 pl-11 rounded-xl w-full text-slate-900 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+              </div>
 
-                    <div>
-                        <label class="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">Crear Contraseña</label>
-                        <input type="password" id="reg-password" required placeholder="Mínimo 6 caracteres" minlength="6" class="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-medium text-slate-800 focus:outline-none focus:border-blue-500">
-                    </div>
+              <div class="relative w-full">
+                  <input type="password" id="register-password" autocomplete="new-password" placeholder="Crea una contraseña" class="border border-slate-300 p-3 rounded-xl w-full text-slate-900 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10">
+                  <button type="button" onclick="toggleRegisterPassword()" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600">
+                      <i data-lucide="eye" id="toggle-register-icon" class="w-5 h-5"></i>
+                  </button>
+              </div>
+              
+              <label class="flex items-start gap-2 text-[11px] text-slate-500 mt-1 cursor-pointer">
+                  <input type="checkbox" id="register-terms" class="mt-0.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 shrink-0">
+                  <span>Autorizo el uso de mis datos exclusivamente para PataRunner.</span>
+              </label>
 
-                    <div id="reg-error" class="hidden bg-red-50 text-red-600 text-[11px] font-medium p-2 rounded-xl border border-red-100 flex items-center gap-1.5">
-                        <i data-lucide="alert-circle" class="w-3.5 h-3.5 shrink-0"></i>
-                        <span id="reg-error-text">El correo debe terminar en @utp.edu.pe</span>
-                    </div>
+              <button type="button" id="btn-register" class="w-full py-3.5 rounded-xl bg-blue-600 text-white font-display font-semibold text-[15px] shadow-lg shadow-blue-200 mt-2 shrink-0">Enviar código al correo</button>
+              
+              <p class="text-center text-[12px] text-slate-500 mt-2">
+                  ¿Ya tienes cuenta? <button type="button" id="show-login-btn" class="text-blue-600 font-semibold hover:underline">Inicia sesión</button>
+              </p>
+          </div>
+      </div>
 
-                    <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-3 rounded-xl shadow-md shadow-emerald-500/25 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
-                        <span>Crear Cuenta Estudiantil</span>
-                        <i data-lucide="check-circle-2" class="w-4 h-4"></i>
-                    </button>
-                </form>
-            </div>
-
-            <!-- Footer de Seguridad -->
-            <div class="text-center pb-2">
-                <div class="inline-flex items-center gap-1.5 bg-slate-100 px-3 py-1.5 rounded-full border border-slate-200/80 mb-2">
-                    <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-600"></i>
-                    <span class="text-[10px] font-semibold text-slate-600">Comunidad Verificada • Solo Alumnos UTP</span>
-                </div>
-                <p class="text-[9.5px] text-slate-400">Al ingresar aceptas las normas de convivencia del campus.</p>
-            </div>
-
+      <!-- ===== MODAL: VERIFICACIÓN CÓDIGO OTP (WHATSAPP) ===== -->
+<div id="modal-otp-whatsapp" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[99] flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl w-full max-w-sm p-6 space-y-4 shadow-2xl text-center">
+        <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto shadow-sm">
+            <i data-lucide="mail" class="w-6 h-6"></i>
+        </div>
+        <div>
+            <h3 class="text-base font-bold text-slate-800">Verifica tu correo</h3>
+            <p class="text-xs text-slate-500 mt-1">Hemos enviado un código de 6 dígitos al correo <span id="otp-display-phone" class="font-bold text-slate-800">correo@ejemplo.com</span></p>
         </div>
 
-        <!-- ========================================================= -->
-        <!-- PANTALLA: REGISTRO DE RUNNER (POSTULACIÓN)                -->
-        <!-- ========================================================= -->
-        <div id="postular-runner" class="hidden absolute inset-0 bg-[#F8FAFC] z-[120] flex flex-col justify-between p-6 overflow-y-auto no-scrollbar">
-            
-            <!-- Header con Botón Cerrar -->
-            <div class="pt-4">
-                <div class="flex items-center justify-between mb-4">
-                    <button onclick="document.getElementById('postular-runner').classList.add('hidden')" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-slate-200 transition-colors">
-                        <i data-lucide="arrow-left" class="w-4 h-4"></i>
-                    </button>
-                    <span class="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">Gana dinero entre clases</span>
-                </div>
+              <!-- CONTENEDOR DE 6 CAJAS DE TEXTO OTP -->
+              <div class="flex justify-center gap-1.5 my-3" id="otp-inputs-container">
+                  <input type="text" maxlength="1" class="otp-field w-10 h-12 text-center text-lg font-bold border border-slate-300 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white" autofocus>
+                  <input type="text" maxlength="1" class="otp-field w-10 h-12 text-center text-lg font-bold border border-slate-300 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white">
+                  <input type="text" maxlength="1" class="otp-field w-10 h-12 text-center text-lg font-bold border border-slate-300 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white">
+                  <input type="text" maxlength="1" class="otp-field w-10 h-12 text-center text-lg font-bold border border-slate-300 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white">
+                  <input type="text" maxlength="1" class="otp-field w-10 h-12 text-center text-lg font-bold border border-slate-300 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white">
+                  <input type="text" maxlength="1" class="otp-field w-10 h-12 text-center text-lg font-bold border border-slate-300 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white">
+              </div>
 
-                <div class="text-center mb-5">
-                    <div class="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-2xl mx-auto flex items-center justify-center mb-2.5 shadow-sm">
-                        <i data-lucide="bike" class="w-7 h-7"></i>
-                    </div>
-                    <h2 class="text-xl font-extrabold text-slate-900">Conviértete en Runner</h2>
-                    <p class="text-xs text-slate-500 mt-1">Reparte pedidos dentro del campus UTP y cobra al instante.</p>
-                </div>
+              <button type="button" id="btn-confirm-otp" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-xl transition-colors shadow">
+                  Validar y Crear Cuenta
+              </button>
 
-                <!-- Beneficios Rápidos -->
-                <div class="grid grid-cols-3 gap-2 mb-5">
-                    <div class="bg-white p-2.5 rounded-xl border border-slate-100 text-center shadow-sm">
-                        <i data-lucide="clock" class="w-4 h-4 text-blue-600 mx-auto mb-1"></i>
-                        <p class="text-[10px] font-bold text-slate-700">Horarios Libres</p>
-                    </div>
-                    <div class="bg-white p-2.5 rounded-xl border border-slate-100 text-center shadow-sm">
-                        <i data-lucide="wallet" class="w-4 h-4 text-emerald-600 mx-auto mb-1"></i>
-                        <p class="text-[10px] font-bold text-slate-700">100% Propina</p>
-                    </div>
-                    <div class="bg-white p-2.5 rounded-xl border border-slate-100 text-center shadow-sm">
-                        <i data-lucide="shield-check" class="w-4 h-4 text-amber-500 mx-auto mb-1"></i>
-                        <p class="text-[10px] font-bold text-slate-700">Pago Seguro</p>
-                    </div>
-                </div>
+              <div class="flex items-center justify-between pt-1">
+                  <button type="button" onclick="cerrarModalOTP()" class="text-xs text-slate-400 hover:text-slate-600 font-medium">Cancelar</button>
+                  <button type="button" id="btn-resend-otp" class="text-xs text-blue-600 hover:underline font-semibold">Reenviar código</button>
+              </div>
+          </div>
+      </div>
 
-                <!-- Formulario de Postulación -->
-                <form onsubmit="enviarPostulacionRunner(event)" class="space-y-3">
-                    <div>
-                        <label class="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">Número de Yape / Plin (Para recibir pagos)</label>
-                        <input type="tel" id="runner-yape" required placeholder="987 654 321" maxlength="9" class="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-medium text-slate-800 focus:outline-none focus:border-emerald-500">
-                    </div>
-
-                    <div>
-                        <label class="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">DNI o Carné Universitario</label>
-                        <input type="text" id="runner-dni" required placeholder="Ej: 74859612" maxlength="8" class="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-medium text-slate-800 focus:outline-none focus:border-emerald-500">
-                    </div>
-
-                    <div>
-                        <label class="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">¿En qué horarios tienes huecos libres?</label>
-                        <select id="runner-horario" class="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-medium text-slate-800 focus:outline-none focus:border-emerald-500">
-                            <option value="Mañanas (8:00 AM - 1:00 PM)">Mañanas (8:00 AM - 1:00 PM)</option>
-                            <option value="Tardes (1:00 PM - 6:00 PM)">Tardes (1:00 PM - 6:00 PM)</option>
-                            <option value="Noches (6:00 PM - 10:00 PM)">Noches (6:00 PM - 10:00 PM)</option>
-                            <option value="Todo el día / Flexible">Todo el día / Flexible</option>
-                        </select>
-                    </div>
-
-                    <!-- Términos -->
-                    <label class="flex items-start gap-2 pt-1 cursor-pointer">
-                        <input type="checkbox" required class="mt-0.5 rounded text-emerald-600 focus:ring-emerald-500">
-                        <span class="text-[10.5px] text-slate-500 leading-tight">Declaro ser estudiante activo de la UTP y comprometerme a entregar los pedidos con puntualidad y cuidado.</span>
-                    </label>
-
-                    <button type="submit" id="btn-enviar-runner" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-3.5 rounded-xl shadow-md shadow-emerald-500/25 active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-2">
-                        <span>Enviar Solicitud de Runner</span>
-                        <i data-lucide="send" class="w-4 h-4"></i>
-                    </button>
-                </form>
-            </div>
-
-            <div class="text-center pt-4 pb-2">
-                <p class="text-[10px] text-slate-400">Tu solicitud será revisada por el equipo de PataRunner UTP.</p>
+      <!-- ===== PANTALLA: ONBOARDING RUNNER ===== -->
+      <div id="postular-runner" class="hidden absolute inset-0 z-50 bg-white flex-col overflow-y-auto px-6 pt-16 pb-8">
+        <h2 class="text-2xl font-bold text-slate-900 mb-4">Activar modo runner</h2>
+        <p class="text-sm text-slate-600 mb-4 leading-relaxed">Como runner podrás visualizar solicitudes de compra realizadas por otros estudiantes y decidir libremente cuáles deseas atender.</p>
+        <p class="text-sm text-slate-800 font-semibold mb-3">Antes de aceptar una solicitud, podrás revisar:</p>
+        <ul class="list-disc pl-5 text-sm text-slate-600 mb-6 space-y-2">
+            <li>Los productos solicitados.</li>
+            <li>Las tiendas que deberás visitar.</li>
+            <li>La ubicación de cada establecimiento.</li>
+            <li>El punto final de entrega.</li>
+            <li>La tarifa ofrecida por el solicitante.</li>
+        </ul>
+        <p class="text-sm text-slate-600 mb-8 leading-relaxed">No estás obligado a aceptar todas las solicitudes. Solo acepta pedidos cuyo recorrido, tiempo y tarifa consideres adecuados.</p>
+        <div class="mt-auto flex flex-col gap-4">
+            <label class="flex items-start gap-3 cursor-pointer bg-slate-50 p-4 rounded-xl border border-slate-200">
+                <input type="checkbox" id="runner-terms-checkbox" class="mt-0.5 rounded text-blue-600 border-slate-300 focus:ring-blue-500 w-5 h-5 cursor-pointer">
+                <span class="text-sm font-medium text-slate-700 leading-snug">He leído y acepto las responsabilidades del rol de runner.</span>
+            </label>
+            <div class="flex items-center gap-3 w-full">
+                <button onclick="document.getElementById('postular-runner').classList.add('hidden'); document.getElementById('postular-runner').style.display = 'none';" class="flex-1 py-3.5 rounded-xl border border-slate-200 text-slate-600 font-semibold text-sm hover:bg-slate-50 transition-colors">Cancelar</button>
+                <button id="activate-runner-btn" disabled class="flex-1 py-3.5 rounded-xl bg-blue-600 text-white font-semibold text-sm opacity-50 cursor-not-allowed transition-all">Activar modo runner</button>
             </div>
         </div>
+      </div>
 
-        <!-- ===== TOP HEADER FLOTANTE SOBRE EL BANNER (SIN BATERÍA NI FRANJA BLANCA) ===== -->
-        <div id="top-mode-bar" class="shrink-0 z-30 bg-[#2563EB] pt-5 pb-2.5 px-4 flex justify-center items-center transition-colors duration-300">
-            <div id="mode-switcher-container" class="hidden flex items-center bg-white/15 backdrop-blur-md rounded-full p-1 border border-white/25 transition-colors duration-300">
-                <button id="btn-mode-cliente" onclick="switchMode('cliente')" class="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold bg-white text-blue-600 shadow-sm transition-all">
-                    <i data-lucide="graduation-cap" class="w-3.5 h-3.5"></i>
-                    <span>Estudiante</span>
+      <!-- ===== CONTENIDO SCROLLABLE PRINCIPAL ===== -->
+      <div class="flex-1 overflow-y-auto pb-20">
+
+        <!-- TAB: INICIO -->
+        <div id="tab-inicio" class="bg-slate-50 min-h-full pb-4">
+          <!-- HERO SUPERIOR CON ILUSTRACIÓN ANIMADA -->
+          <div class="-mt-14 pt-16 pb-6 px-5 bg-gradient-to-b from-blue-600 via-blue-500 to-cyan-500 rounded-b-3xl text-white">
+            <!-- Cabecera Logo + UTP + Carrito -->
+            <div class="flex items-center justify-between gap-2 mb-3.5">
+              <div>
+                <p class="font-display text-lg font-extrabold text-white leading-none tracking-tight">Pata<span class="text-cyan-200">Runner</span></p>
+                <p class="text-[10.5px] text-blue-100 mt-0.5 font-medium">De estudiante a estudiante</p>
+              </div>
+              <div class="flex items-center gap-1.5 shrink-0">
+                <button id="cart-btn" class="flex items-center gap-1.5 bg-slate-900/90 hover:bg-slate-900 text-white text-[10.5px] font-bold px-2.5 py-1 rounded-full shadow-sm transition-all">
+                  <i data-lucide="shopping-bag" class="w-3.5 h-3.5 text-cyan-300"></i>
+                  <span id="cart-summary-text">Carrito</span>
                 </button>
-                <button id="btn-mode-runner" onclick="switchMode('runner')" class="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-medium text-white/90 hover:text-white transition-all">
-                    <i data-lucide="zap" class="w-3.5 h-3.5 text-amber-300"></i>
-                    <span>Runner</span>
+              </div>
+            </div>
+
+            <!-- Título Principal -->
+            <div class="mb-1">
+              <h1 class="font-display text-[21px] leading-[1.15] font-extrabold text-white">¿Sin tiempo entre clases?</h1>
+              <p class="text-[12px] text-blue-100 mt-1 leading-snug">Pide y un compañero te lo lleva a tu aula</p>
+            </div>
+
+            <!-- ILUSTRACIÓN VECTORIAL ANIMADA (ESTUDIANTE ENTREGANDO BOLSA) -->
+            <!-- ILUSTRACIÓN VECTORIAL EDITORIAL ANIMADA (ESTILO TRAZO LIMPIO CENTRADO) -->
+            <div class="w-full -mx-1 pt-2 flex justify-center items-end">
+             <svg viewBox="0 0 380 165" class="w-full h-auto overflow-visible" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Un estudiante entrega una bolsa a un compañero">
+              <defs>
+                <!-- Mano derecha/izquierda relajada vista de perfil apuntando a la izquierda (pulgar SIEMPRE arriba) -->
+                <g id="pr-mano-izquierda" stroke-linecap="round" stroke-linejoin="round">
+                  <!-- Palma + pulgar arriba + dedo índice superior -->
+                  <path d="M2 -5 C-1 -5 -4 -9 -7 -10.5 C-9 -11.5 -11 -10 -10 -8 C-9 -6.5 -7 -5.5 -6 -4.5 L-16 -4 C-18 -4 -18.5 -1.5 -16 -1 L-17.5 -0.5 C-19.5 0 -19.5 2.5 -17 2.8 L-15.5 3.2 C-17.5 3.8 -17 6 -14.5 6 L-11 6.2 C-12.5 6.8 -12 8.8 -9.5 8.8 L-2 8 C2 7.5 3.5 4.5 3.5 1 C3.5 -2 3 -4.5 2 -5 Z" fill="#FFFFFF" stroke="#0F172A" stroke-width="2"/>
+                  <!-- Líneas internas sutiles de dedos -->
+                  <path d="M-16 -1 L-9 -1 M-17 2.8 L-9 2.6 M-14.5 6 L-8.5 5.6" stroke="#0F172A" stroke-width="1.4"/>
+                </g>
+
+                <!-- Mano extendida del Runner apuntando a la derecha (pulgar arriba, gesto abierto natural) -->
+                <g id="pr-mano-derecha" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M-2 -5 C1 -5 4 -9 7 -10.5 C9 -11.5 11 -10 10 -8 C9 -6.5 7 -5.5 6 -4.5 L16 -4 C18 -4 18.5 -1.5 16 -1 L17.5 -0.5 C19.5 0 19.5 2.5 17 2.8 L15.5 3.2 C17.5 3.8 17 6 14.5 6 L11 6.2 C12.5 6.8 12 8.8 9.5 8.8 L2 8 C-2 7.5 -3.5 4.5 -3.5 1 C-3.5 -2 -3 -4.5 -2 -5 Z" fill="#FFFFFF" stroke="#0F172A" stroke-width="2"/>
+                  <path d="M16 -1 L9 -1 M17 2.8 L9 2.6 M14.5 6 L8.5 5.6" stroke="#0F172A" stroke-width="1.4"/>
+                </g>
+              </defs>
+
+              <!-- DESTELLOS Y LÍNEAS DE VELOCIDAD -->
+              <g class="anim-destello-1">
+                <path d="M326 16 Q327 24 335 25 Q327 26 326 34 Q325 26 317 25 Q325 24 326 16 Z" fill="#FFFFFF"/>
+                <path d="M30 108 Q31 112 35 113 Q31 114 30 118 Q29 114 25 113 Q29 112 30 108 Z" fill="#FFFFFF" fill-opacity="0.9"/>
+                <circle cx="150" cy="24" r="2" fill="#FFFFFF" fill-opacity="0.8"/>
+                <line x1="176" y1="22" x2="194" y2="22" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-opacity="0.7"/>
+                <line x1="14" y1="66" x2="26" y2="66" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-opacity="0.6"/>
+                <line x1="340" y1="56" x2="354" y2="56" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-opacity="0.6"/>
+              </g>
+              <g class="anim-destello-2">
+                <path d="M214 40 Q215 44 219 45 Q215 46 214 50 Q213 46 209 45 Q213 44 214 40 Z" fill="#A5F3FC"/>
+                <path d="M346 90 Q347 94 351 95 Q347 96 346 100 Q345 96 341 95 Q345 94 346 90 Z" fill="#A5F3FC"/>
+                <line x1="14" y1="132" x2="40" y2="132" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-opacity="0.85"/>
+                <circle cx="50" cy="132" r="1.6" fill="#FFFFFF"/>
+                <line x1="326" y1="126" x2="346" y2="126" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-opacity="0.7"/>
+                <line x1="338" y1="136" x2="362" y2="136" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-opacity="0.7"/>
+                <line x1="64" y1="12" x2="72" y2="21" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-opacity="0.85"/>
+                <line x1="57" y1="22" x2="67" y2="27" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-opacity="0.85"/>
+              </g>
+
+              <!-- BOLSA -->
+              <g class="anim-bolsa" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M172 86 C171 70 175 63 182 63 C189 63 193 70 192 86" stroke="#0F172A" stroke-width="2.4"/>
+                <path d="M160 88 L170 85 L169 130 L158 125 Z" fill="#7DD3FC" stroke="#0F172A" stroke-width="2.2"/>
+                <path d="M170 85 L198 85 L204 130 L169 130 Z" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.2"/>
+                <path d="M171 91 L199 91" stroke="#0F172A" stroke-width="1.6" stroke-opacity="0.55"/>
+                <circle cx="186" cy="110" r="8.5" fill="#BAE6FD" stroke="#0F172A" stroke-width="1.8"/>
+                <path d="M183 110 L185.5 112.6 L190 107.6" stroke="#0F172A" stroke-width="1.8"/>
+                <path d="M150 104 Q147 112 152 118" stroke="#FFFFFF" stroke-width="1.8"/>
+                <path d="M145 106 Q142 115 148 122" stroke="#FFFFFF" stroke-width="1.5" stroke-opacity="0.7"/>
+                <path d="M204 74 Q211 77 212 84" stroke="#FFFFFF" stroke-width="1.8"/>
+                <path d="M209 69 Q217 73 218 81" stroke="#FFFFFF" stroke-width="1.5" stroke-opacity="0.7"/>
+              </g>
+
+              <!-- RUNNER (IZQUIERDA) -->
+              <g class="anim-runner" stroke-linecap="round" stroke-linejoin="round">
+                <!-- mochila -->
+                <path d="M80 66 C62 64 50 76 50 96 C50 110 56 120 66 123 L82 121 Z" fill="#7DD3FC" stroke="#0F172A" stroke-width="2.2"/>
+                <path d="M52 92 Q66 96 80 91" stroke="#0F172A" stroke-width="2"/>
+                <path d="M56 104 L70 106" stroke="#0F172A" stroke-width="1.8" stroke-opacity="0.6"/>
+
+                <!-- brazo extendido sujetando la bolsa -->
+                <path d="M108 74 L139 82 L166 67" stroke="#0F172A" stroke-width="15"/>
+                <path d="M108 74 L139 82 L166 67" stroke="#FFFFFF" stroke-width="11"/>
+                <path d="M129 73 L133 86" stroke="#0F172A" stroke-width="2"/>
+                <path d="M147 77.5 L152 69" stroke="#0F172A" stroke-width="1.6" stroke-opacity="0.6"/>
+
+                <!-- piernas -->
+                <path d="M90 122 L82 150 L70 182" stroke="#0F172A" stroke-width="23"/>
+                <path d="M90 122 L82 150 L70 182" stroke="#E0F2FE" stroke-width="19"/>
+                <path d="M106 122 L122 150 L118 182" stroke="#0F172A" stroke-width="23"/>
+                <path d="M106 122 L122 150 L118 182" stroke="#E0F2FE" stroke-width="19"/>
+
+                <!-- torso -->
+                <path d="M80 72 C82 61 91 58 99 58 C109 58 117 61 120 70 L123 129 C108 134 92 134 78 129 Z" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.2"/>
+                <path d="M90 118 L97 122 M108 112 L116 110" stroke="#0F172A" stroke-width="1.8"/>
+                <path d="M82 66 C86 80 87 100 84 120" stroke="#0F172A" stroke-width="2.2"/>
+
+                <!-- brazo izquierdo flexionado hacia adelante con MANO ABIERTA NATURAL -->
+                <path d="M86 76 L72 97 L91 106" stroke="#0F172A" stroke-width="14.5"/>
+                <path d="M86 76 L72 97 L91 106" stroke="#FFFFFF" stroke-width="10.5"/>
+                <path d="M72 87 L80 91" stroke="#0F172A" stroke-width="2"/>
+                <use href="#pr-mano-derecha" transform="translate(94 106.5) rotate(8)"/>
+
+                <!-- cuello, oreja, cabeza, pelo -->
+                <path d="M92 48 L92 60 C96 65 104 65 107 60 L107 48" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.2"/>
+                <path d="M83 36 C76 35 76 46 84 46" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.2"/>
+                <path d="M80.5 39 Q82.5 40 82.5 43" stroke="#0F172A" stroke-width="1.5"/>
+                <path d="M83 36 C83 20 115 20 116 36 C117 48 108 55 99 55 C89 55 83 47 83 36 Z" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.2"/>
+                <path d="M82 37 C78 23 88 13 102 14 C111 14 119 20 118 30 C115 27 111 26 108 28 C105 23 99 23 96 27 C92 25 86 28 82 37 Z" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.2"/>
+                <!-- cara -->
+                <path d="M97 30 Q100 28 103 30" stroke="#0F172A" stroke-width="1.7"/>
+                <path d="M108 30 Q111 28 114 30" stroke="#0F172A" stroke-width="1.7"/>
+                <path d="M98 36 Q100.5 33.5 103 36" stroke="#0F172A" stroke-width="2"/>
+                <path d="M108 36 Q110.5 33.5 113 36" stroke="#0F172A" stroke-width="2"/>
+                <path d="M107 38 L109.5 42 L106 43" stroke="#0F172A" stroke-width="1.7"/>
+                <path d="M100 46 L112 46 C112 52 101 53 100 46 Z" fill="#FFFFFF" stroke="#0F172A" stroke-width="1.8"/>
+                <path d="M101 48 L111 48" stroke="#0F172A" stroke-width="1" stroke-opacity="0.5"/>
+
+                <!-- puño derecho agarrando el asa -->
+                <path d="M170 61 C170 56 176 54.5 182.5 55 C188.5 55.5 190.5 60 189.5 65.5 C188.5 70.5 184.5 72.5 179.5 72.5 C173.5 72.5 170 68 170 61 Z" fill="#FFFFFF" stroke="#0F172A" stroke-width="2"/>
+                <path d="M177.5 56 L177 64 M182 56.5 L181.5 64.5 M186.5 58.5 L185.5 65.5" stroke="#0F172A" stroke-width="1.5"/>
+                <path d="M171.5 63 C174 59 180 59 181.5 63" fill="#FFFFFF" stroke="#0F172A" stroke-width="1.8"/>
+              </g>
+
+              <!-- ALUMNO QUE RECIBE (DERECHA) -->
+              <g class="anim-alumno" stroke-linecap="round" stroke-linejoin="round">
+                <!-- brazo trasero extendido hacia la bolsa -->
+                <path d="M272 74 L249 90 L234 96" stroke="#0F172A" stroke-width="14"/>
+                <path d="M272 74 L249 90 L234 96" stroke="#FFFFFF" stroke-width="10"/>
+                <path d="M242 87 L245 95" stroke="#0F172A" stroke-width="2"/>
+                <use href="#pr-mano-izquierda" transform="translate(231 96.5) rotate(-14)"/>
+
+                <!-- piernas -->
+                <path d="M272 126 L270 182" stroke="#0F172A" stroke-width="23"/>
+                <path d="M272 126 L270 182" stroke="#E0F2FE" stroke-width="19"/>
+                <path d="M298 126 L304 182" stroke="#0F172A" stroke-width="23"/>
+                <path d="M298 126 L304 182" stroke="#E0F2FE" stroke-width="19"/>
+
+                <!-- torso, cuello, camisa -->
+                <path d="M260 72 C262 61 271 58 280 58 C291 58 300 61 303 70 L312 130 C294 135 276 135 258 130 Z" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.2"/>
+                <path d="M273 48 L273 59 C277 63 285 63 288 59 L288 48" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.2"/>
+                <path d="M268 58 L278 70 L289 58 L285 54 L278 61 L272 54 Z" fill="#7DD3FC" stroke="#0F172A" stroke-width="2"/>
+                <circle cx="278" cy="80" r="1.3" fill="#0F172A"/>
+                <circle cx="278" cy="92" r="1.3" fill="#0F172A"/>
+
+                <!-- oreja, cabeza, pelo -->
+                <path d="M297 36 C304 35 304 46 296 46" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.2"/>
+                <path d="M299 39 Q297 40 297 43" stroke="#0F172A" stroke-width="1.5"/>
+                <path d="M265 36 C265 20 297 20 297 36 C297 48 289 55 280 55 C271 55 265 48 265 36 Z" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.2"/>
+                <path d="M264 34 C262 21 271 12 285 13 C296 13 303 21 300 32 C298 35 296 35 295 33 C293 26 288 25 285 28 C282 23 277 23 274 28 C270 25 266 27 264 34 Z" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.2"/>
+                <!-- cara -->
+                <path d="M268 29 Q271 27 274 29" stroke="#0F172A" stroke-width="1.7"/>
+                <path d="M279 29 Q282 27 285 29" stroke="#0F172A" stroke-width="1.7"/>
+                <circle cx="271" cy="34.5" r="1.8" fill="#0F172A"/>
+                <circle cx="282" cy="34.5" r="1.8" fill="#0F172A"/>
+                <path d="M275 36 L272 40 L276 41" stroke="#0F172A" stroke-width="1.7"/>
+                <path d="M272 45 L284 45 C283 51 273 51 272 45 Z" fill="#FFFFFF" stroke="#0F172A" stroke-width="1.8"/>
+
+                <!-- brazo delantero con mano receptora normal (pulgar arriba, sin voltear) -->
+                <path d="M295 84 L298 108 L263 116" stroke="#0F172A" stroke-width="14.5"/>
+                <path d="M295 84 L298 108 L263 116" stroke="#FFFFFF" stroke-width="10.5"/>
+                <path d="M298 96 L290 97" stroke="#0F172A" stroke-width="1.6" stroke-opacity="0.6"/>
+                <path d="M272 109 L275 121" stroke="#0F172A" stroke-width="2"/>
+                <use href="#pr-mano-izquierda" transform="translate(260 116.5) rotate(-6)"/>
+              </g>
+            </svg>
+            </div>
+          </div>
+
+          <!-- Buscando Runner -->
+          <div id="searching-box" class="hidden mx-5 mb-3 py-3 rounded-2xl bg-blue-100/80 border border-blue-200 text-blue-800 font-display font-bold text-[13.5px] items-center justify-center gap-2 shadow-sm">
+            <span class="w-2.5 h-2.5 rounded-full bg-blue-600 animate-ping"></span> Buscando Runner cercano…
+          </div>
+
+          <!-- Pedido Asignado -->
+          <div id="inicio-order-status" class="hidden mx-5 mb-3 rounded-2xl bg-gradient-to-r from-blue-700 to-blue-600 text-white p-3.5 shadow-md">
+            <div class="flex items-center gap-2 text-[13.5px] font-display font-bold">
+              <i data-lucide="check-circle-2" class="w-4 h-4 text-cyan-300"></i> Pedido asignado
+            </div>
+            <p id="inicio-order-status-text" class="text-[11.5px] text-blue-100 mt-1">Runner asignado · llega en ~9 min</p>
+            <button onclick="showTab('pedidos')" class="w-full mt-2.5 py-2 rounded-xl bg-white text-blue-700 text-[12px] font-bold flex items-center justify-center gap-1.5 shadow-sm">
+              Ver detalles en Mis pedidos <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+            </button>
+            <button id="reset-btn" class="mt-1.5 text-[11px] font-semibold underline text-blue-100">Publicar otro pedido</button>
+          </div>
+
+          <!-- 1. BANNER CARRUSEL AUTOMÁTICO DE ANCHO COMPLETO -->
+          <div class="px-5 mb-4">
+            <div class="flex items-center justify-between mb-2">
+              <p class="text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                <i data-lucide="flame" class="w-3.5 h-3.5 text-blue-600"></i> Destacados UTP
+              </p>
+              <div class="flex items-center gap-1">
+                <button onclick="moverCarruselDestacados(-1)" class="w-6 h-6 rounded-full bg-white border border-slate-200 text-slate-600 hover:bg-blue-50 hover:text-blue-600 flex items-center justify-center transition-colors shadow-2xs">
+                  <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i>
                 </button>
-            </div>
-        </div>
-
-        <!-- ===== ÁREA DE CONTENIDO SCROLLEABLE ===== -->
-        <div id="main-scroll" class="flex-1 overflow-y-auto no-scrollbar pb-24">
-
-            <!-- ========================================================= -->
-            <!-- MODO 1: CLIENTE (ESTUDIANTE)                              -->
-            <!-- ========================================================= -->
-            <div id="view-cliente" class="space-y-4">
-
-                <!-- TAB 1: INICIO -->
-                <div id="tab-inicio" class="space-y-4">
-                    
-                    <!-- Hero Banner Pegado Arriba -->
-                    <div id="inicio-hero-card" class="hero-gradient banner-shine rounded-b-[28px] px-5 pt-1 pb-5 text-white relative overflow-hidden shadow-lg shadow-blue-500/20 -mt-1">
-                        <!-- Top Row -->
-                        <div class="flex items-start justify-between relative z-10">
-                            <div>
-                                <h1 class="text-[22px] font-extrabold tracking-tight leading-none">
-                                    Pata<span class="text-sky-200 font-bold">Runner</span>
-                                </h1>
-                                <p class="text-[11px] text-blue-100 mt-1 font-medium">De estudiante a estudiante</p>
-                            </div>
-                            <button id="hero-cart-btn" onclick="openCartModal()" class="bg-[#0F172A]/85 hover:bg-[#0F172A] backdrop-blur-md text-white px-3.5 py-2 rounded-full flex items-center gap-2 text-xs font-semibold shadow-md transition-transform active:scale-95">
-                                <i data-lucide="shopping-bag" class="w-3.5 h-3.5 text-sky-400"></i>
-                                <span>Carrito</span>
-                                <span id="cart-badge" class="hidden bg-sky-400 text-slate-900 text-[10px] font-extrabold w-4 h-4 rounded-full flex items-center justify-center">0</span>
-                            </button>
-                        </div>
-
-                        <!-- Main Copy -->
-                        <div class="mt-4 relative z-10">
-                            <h2 class="text-[21px] font-extrabold leading-tight tracking-tight">¿Sin tiempo entre clases?</h2>
-                            <p class="text-xs text-blue-100 mt-1">Pide y un compañero te lo lleva a tu aula</p>
-                        </div>
-
-                        <!-- Ilustración Vectorial Animada de Entrega Estudiantil -->
-                        <div class="mt-3 relative z-10 w-full flex justify-center">
-                            <svg viewBox="0 0 420 200" class="w-full max-w-[330px] h-auto overflow-visible drop-shadow-sm" xmlns="http://www.w3.org/2000/svg">
-                                <!-- Destellos / Partículas flotantes -->
-                                <g class="animate-sparkle-1">
-                                    <path d="M350 38 L354 48 L364 52 L354 56 L350 66 L346 56 L336 52 L346 48 Z" fill="#FFFFFF" opacity="0.9"/>
-                                    <circle cx="145" cy="45" r="3" fill="#BAE6FD"/>
-                                    <circle cx="52" cy="148" r="2.5" fill="#E0F2FE"/>
-                                    <path d="M40 120 L42 125 L47 127 L42 129 L40 134 L38 129 L33 127 L38 125 Z" fill="#FFFFFF" opacity="0.85"/>
-                                </g>
-                                <g class="animate-sparkle-2">
-                                    <path d="M220 75 L222 80 L227 82 L222 84 L220 89 L218 84 L213 82 L218 80 Z" fill="#BAE6FD"/>
-                                    <circle cx="385" cy="130" r="2.5" fill="#FFFFFF" opacity="0.8"/>
-                                </g>
-
-                                <!-- Líneas de velocidad / movimiento -->
-                                <line x1="175" y1="45" x2="205" y2="45" stroke="#BAE6FD" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
-                                <line x1="22" y1="95" x2="45" y2="95" stroke="#BAE6FD" stroke-width="2.5" stroke-linecap="round" opacity="0.6"/>
-                                <line x1="365" y1="88" x2="390" y2="88" stroke="#BAE6FD" stroke-width="2.5" stroke-linecap="round" opacity="0.7"/>
-                                <line x1="350" y1="145" x2="375" y2="145" stroke="#BAE6FD" stroke-width="2.5" stroke-linecap="round" opacity="0.6"/>
-                                <line x1="370" y1="154" x2="388" y2="154" stroke="#E0F2FE" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
-
-                                <!-- ================= PERSONAJE 1: RUNNER (IZQUIERDA) ================= -->
-                                <g id="character-runner">
-                                    <!-- Mochila -->
-                                    <path d="M88 92 C60 95 55 135 68 152 C78 162 95 158 102 150 Z" fill="#7DD3FC" stroke="#0F172A" stroke-width="2.5" stroke-linejoin="round"/>
-                                    <path d="M65 125 L88 130" stroke="#0F172A" stroke-width="2" stroke-linecap="round"/>
-
-                                    <!-- Piernas -->
-                                    <path d="M92 148 L72 195 L88 195 L106 155" fill="#E0F2FE" stroke="#0F172A" stroke-width="2.5" stroke-linejoin="round"/>
-                                    <path d="M112 152 L116 195 L132 195 L128 148" fill="#BAE6FD" stroke="#0F172A" stroke-width="2.5" stroke-linejoin="round"/>
-
-                                    <!-- Torso / Polo -->
-                                    <path d="M88 92 L128 92 L134 152 L86 152 Z" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.5" stroke-linejoin="round"/>
-                                    <!-- Tirante de mochila -->
-                                    <path d="M96 92 C94 115 96 135 104 152" fill="none" stroke="#38BDF8" stroke-width="5"/>
-                                    <path d="M96 92 C94 115 96 135 104 152" fill="none" stroke="#0F172A" stroke-width="2"/>
-
-                                    <!-- Brazo Izquierdo (doblado en cintura) -->
-                                    <path d="M88 98 L75 124 L98 132" fill="none" stroke="#FFFFFF" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
-                                    <path d="M88 98 L75 124 L98 132" fill="none" stroke="#0F172A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                    <!-- Mano Izquierda -->
-                                    <circle cx="102" cy="133" r="6" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.2"/>
-
-                                    <!-- Cabeza y Cabello Runner -->
-                                    <g transform="translate(88, 36)">
-                                        <!-- Cuello -->
-                                        <rect x="16" y="45" width="10" height="12" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.5"/>
-                                        <!-- Rostro -->
-                                        <path d="M6 22 C6 8 38 8 38 24 C38 42 28 48 18 48 C10 48 6 38 6 22 Z" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.5"/>
-                                        <!-- Oreja -->
-                                        <circle cx="6" cy="28" r="4.5" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.2"/>
-                                        <!-- Cabello dinámico -->
-                                        <path d="M4 22 C2 8 22 0 36 8 C42 12 43 18 40 21 C33 17 24 17 16 21 C12 23 8 23 4 22 Z" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.5" stroke-linejoin="round"/>
-                                        <!-- Ojos felices cerrados -->
-                                        <path d="M18 24 Q21 20 24 24" fill="none" stroke="#0F172A" stroke-width="2.2" stroke-linecap="round"/>
-                                        <path d="M29 24 Q32 20 35 24" fill="none" stroke="#0F172A" stroke-width="2.2" stroke-linecap="round"/>
-                                        <!-- Sonrisa -->
-                                        <path d="M21 32 Q27 38 33 32 Z" fill="#BAE6FD" stroke="#0F172A" stroke-width="2" stroke-linejoin="round"/>
-                                    </g>
-
-                                    <!-- Brazo Derecho extendido sosteniendo bolsa -->
-                                    <path d="M128 98 L162 104 L192 92" fill="none" stroke="#FFFFFF" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
-                                    <path d="M128 98 L162 104 L192 92" fill="none" stroke="#0F172A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                    <!-- Mano sosteniendo asa -->
-                                    <circle cx="195" cy="90" r="6.5" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.3"/>
-                                </g>
-
-                                <!-- ================= BOLSA DE DELIVERY (CENTRO) ================= -->
-                                <g class="animate-bag-float">
-                                    <!-- Líneas de movimiento de bolsa -->
-                                    <path d="M168 135 Q164 145 168 155" fill="none" stroke="#BAE6FD" stroke-width="2" stroke-linecap="round"/>
-                                    <path d="M162 138 Q159 145 162 152" fill="none" stroke="#E0F2FE" stroke-width="1.8" stroke-linecap="round"/>
-                                    <path d="M225 100 Q232 105 235 113" fill="none" stroke="#BAE6FD" stroke-width="2" stroke-linecap="round"/>
-
-                                    <!-- Asa de la bolsa -->
-                                    <path d="M186 112 C186 94 204 94 204 112" fill="none" stroke="#0F172A" stroke-width="2.5" stroke-linecap="round"/>
-                                    <!-- Cuerpo de la bolsa -->
-                                    <polygon points="178,112 212,112 216,162 174,162" fill="#E0F2FE" stroke="#0F172A" stroke-width="2.5" stroke-linejoin="round"/>
-                                    <!-- Pliegue lateral -->
-                                    <polygon points="205,112 212,112 216,162 208,162" fill="#7DD3FC" stroke="#0F172A" stroke-width="2" stroke-linejoin="round"/>
-                                    <!-- Sello Check UTP -->
-                                    <circle cx="192" cy="138" r="10" fill="#FFFFFF" stroke="#0F172A" stroke-width="2"/>
-                                    <path d="M188 138 L191 141 L197 135" fill="none" stroke="#0284C7" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
-                                </g>
-
-                                <!-- ================= PERSONAJE 2: ESTUDIANTE CLIENTE (DERECHA) ================= -->
-                                <g id="character-student">
-                                    <!-- Piernas -->
-                                    <path d="M284 152 L282 195 L298 195 L302 152" fill="#E0F2FE" stroke="#0F172A" stroke-width="2.5" stroke-linejoin="round"/>
-                                    <path d="M306 152 L308 195 L324 195 L322 152" fill="#BAE6FD" stroke="#0F172A" stroke-width="2.5" stroke-linejoin="round"/>
-
-                                    <!-- Torso / Camisa -->
-                                    <path d="M282 92 L324 92 L328 154 L278 154 Z" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.5" stroke-linejoin="round"/>
-                                    <!-- Cuello azul de camisa -->
-                                    <polygon points="292,92 303,104 314,92" fill="#38BDF8" stroke="#0F172A" stroke-width="2" stroke-linejoin="round"/>
-                                    <!-- Botones -->
-                                    <circle cx="303" cy="115" r="1.5" fill="#0F172A"/>
-                                    <circle cx="303" cy="128" r="1.5" fill="#0F172A"/>
-
-                                    <!-- Brazo Derecho (al frente recibiendo) -->
-                                    <g class="animate-runner-arm">
-                                        <path d="M284 98 L262 126 L232 132" fill="none" stroke="#FFFFFF" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
-                                        <path d="M284 98 L262 126 L232 132" fill="none" stroke="#0F172A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                        <!-- Mano abierta recibiendo -->
-                                        <path d="M232 132 L222 129 M232 132 L221 134 M232 132 L224 138" stroke="#0F172A" stroke-width="2.3" stroke-linecap="round"/>
-                                        <circle cx="231" cy="133" r="5.5" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.2"/>
-                                    </g>
-
-                                    <!-- Cabeza y Cabello Estudiante -->
-                                    <g transform="translate(282, 36)">
-                                        <!-- Cuello -->
-                                        <rect x="16" y="45" width="10" height="12" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.5"/>
-                                        <!-- Rostro -->
-                                        <path d="M6 24 C6 8 38 8 38 22 C38 38 34 48 24 48 C14 48 6 42 6 24 Z" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.5"/>
-                                        <!-- Oreja derecha -->
-                                        <circle cx="38" cy="28" r="4.5" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.2"/>
-                                        <!-- Cabello -->
-                                        <path d="M5 20 C4 6 24 0 38 8 C43 11 43 19 39 22 C34 18 26 17 18 20 C12 22 8 22 5 20 Z" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.5" stroke-linejoin="round"/>
-                                        <!-- Ojos -->
-                                        <path d="M10 24 Q13 20 16 24" fill="none" stroke="#0F172A" stroke-width="2.2" stroke-linecap="round"/>
-                                        <path d="M21 24 Q24 20 27 24" fill="none" stroke="#0F172A" stroke-width="2.2" stroke-linecap="round"/>
-                                        <!-- Sonrisa -->
-                                        <path d="M12 32 Q17 38 23 32 Z" fill="#BAE6FD" stroke="#0F172A" stroke-width="2" stroke-linejoin="round"/>
-                                    </g>
-                                </g>
-                            </svg>
-                        </div>
-                    </div>
-
-                    <!-- Destacados UTP (Carrusel Horizontal) -->
-                    <div class="pt-1 px-4">
-                        <div class="flex items-center justify-between mb-2.5">
-                            <div class="flex items-center gap-1.5">
-                                <i data-lucide="flame" class="w-4 h-4 text-blue-600"></i>
-                                <span class="text-[11px] font-bold tracking-wider text-slate-600 uppercase">Destacados UTP</span>
-                            </div>
-                            <div class="flex items-center gap-1.5">
-                                <button onclick="scrollCarousel(-1)" class="w-6 h-6 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:text-blue-600 shadow-xs">
-                                    <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i>
-                                </button>
-                                <button onclick="scrollCarousel(1)" class="w-6 h-6 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:text-blue-600 shadow-xs">
-                                    <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Cards Carrusel -->
-                        <div id="featured-carousel" class="flex gap-3 overflow-x-auto no-scrollbar scroll-smooth pb-1">
-                            <!-- Card 1: Desayunos -->
-                            <div onclick="filtrarPorCategoria('Desayunos')" class="min-w-[140px] bg-white rounded-2xl p-2 border border-slate-100 card-shadow cursor-pointer active:scale-95 transition-transform">
-                                <div class="h-20 rounded-xl overflow-hidden bg-amber-50 relative">
-                                    <img src="https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=300&q=80" alt="Desayunos" class="w-full h-full object-cover">
-                                </div>
-                                <h3 class="text-xs font-bold text-slate-800 mt-2">Desayunos</h3>
-                                <p class="text-[10px] text-slate-400">Listos para clase</p>
-                            </div>
-                            <!-- Card 2: Menús -->
-                            <div onclick="filtrarPorCategoria('Almuerzos')" class="min-w-[140px] bg-white rounded-2xl p-2 border border-slate-100 card-shadow cursor-pointer active:scale-95 transition-transform">
-                                <div class="h-20 rounded-xl overflow-hidden bg-orange-50 relative">
-                                    <img src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=300&q=80" alt="Menús" class="w-full h-full object-cover">
-                                </div>
-                                <h3 class="text-xs font-bold text-slate-800 mt-2">Menús</h3>
-                                <p class="text-[10px] text-slate-400">Almuerzos del día</p>
-                            </div>
-                            <!-- Card 3: Cafetería / Café -->
-                            <div onclick="filtrarPorCategoria('Cafetería')" class="min-w-[140px] bg-white rounded-2xl p-2 border border-slate-100 card-shadow cursor-pointer active:scale-95 transition-transform">
-                                <div class="h-20 rounded-xl overflow-hidden bg-amber-900/10 relative">
-                                    <img src="https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=300&q=80" alt="Cafetería" class="w-full h-full object-cover">
-                                </div>
-                                <h3 class="text-xs font-bold text-slate-800 mt-2">Cafetería</h3>
-                                <p class="text-[10px] text-slate-400">Energía al toque</p>
-                            </div>
-                            <!-- Card 4: Bebidas -->
-                            <div onclick="filtrarPorCategoria('Bebidas')" class="min-w-[140px] bg-white rounded-2xl p-2 border border-slate-100 card-shadow cursor-pointer active:scale-95 transition-transform">
-                                <div class="h-20 rounded-xl overflow-hidden bg-cyan-50 relative">
-                                    <img src="https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=300&q=80" alt="Bebidas" class="w-full h-full object-cover">
-                                </div>
-                                <h3 class="text-xs font-bold text-slate-800 mt-2">Bebidas</h3>
-                                <p class="text-[10px] text-slate-400">Refrescantes</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- ¿Qué necesitas hoy? (Categorías) -->
-                    <div class="pt-1 px-4">
-                        <h3 class="text-xs font-bold text-slate-800 mb-2.5">¿Qué necesitas hoy?</h3>
-                        <div class="grid grid-cols-3 gap-2.5">
-                            <button onclick="openRequestModal('Cafetería UTP', 'Cafetería')" class="bg-white rounded-2xl py-3.5 px-2 flex flex-col items-center justify-center gap-2 border border-slate-100 card-shadow hover:border-blue-200 active:scale-95 transition-all">
-                                <div class="w-9 h-9 rounded-full bg-amber-50 flex items-center justify-center text-amber-600">
-                                    <i data-lucide="coffee" class="w-4 h-4"></i>
-                                </div>
-                                <span class="text-[11px] font-semibold text-slate-700">Cafetería</span>
-                            </button>
-                            <button onclick="openRequestModal('Impresiones / Copias', 'Impresiones')" class="bg-white rounded-2xl py-3.5 px-2 flex flex-col items-center justify-center gap-2 border border-slate-100 card-shadow hover:border-blue-200 active:scale-95 transition-all">
-                                <div class="w-9 h-9 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
-                                    <i data-lucide="printer" class="w-4 h-4"></i>
-                                </div>
-                                <span class="text-[11px] font-semibold text-slate-700">Impresiones</span>
-                            </button>
-                            <button onclick="openRequestModal('Tambo / Bodega', 'Bodega')" class="bg-white rounded-2xl py-3.5 px-2 flex flex-col items-center justify-center gap-2 border border-slate-100 card-shadow hover:border-blue-200 active:scale-95 transition-all">
-                                <div class="w-9 h-9 rounded-full bg-purple-50 flex items-center justify-center text-purple-600">
-                                    <i data-lucide="store" class="w-4 h-4"></i>
-                                </div>
-                                <span class="text-[11px] font-semibold text-slate-700">Bodega</span>
-                            </button>
-                            <button onclick="openRequestModal('Menú / Almuerzo', 'Almuerzo')" class="bg-white rounded-2xl py-3.5 px-2 flex flex-col items-center justify-center gap-2 border border-slate-100 card-shadow hover:border-blue-200 active:scale-95 transition-all">
-                                <div class="w-9 h-9 rounded-full bg-orange-50 flex items-center justify-center text-orange-600">
-                                    <i data-lucide="utensils" class="w-4 h-4"></i>
-                                </div>
-                                <span class="text-[11px] font-semibold text-slate-700">Almuerzo</span>
-                            </button>
-                            <button onclick="openRequestModal('Útiles / Librería', 'Útiles')" class="bg-white rounded-2xl py-3.5 px-2 flex flex-col items-center justify-center gap-2 border border-slate-100 card-shadow hover:border-blue-200 active:scale-95 transition-all">
-                                <div class="w-9 h-9 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600">
-                                    <i data-lucide="book-open" class="w-4 h-4"></i>
-                                </div>
-                                <span class="text-[11px] font-semibold text-slate-700">Útiles</span>
-                            </button>
-                            <button onclick="openRequestModal('Favor Personal', 'Otro')" class="bg-white rounded-2xl py-3.5 px-2 flex flex-col items-center justify-center gap-2 border border-slate-100 card-shadow hover:border-blue-200 active:scale-95 transition-all">
-                                <div class="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-600">
-                                    <i data-lucide="sparkles" class="w-4 h-4"></i>
-                                </div>
-                                <span class="text-[11px] font-semibold text-slate-700">Otro</span>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- CTA Principal -->
-                    <div class="pt-1 px-4">
-                        <button onclick="openRequestModal('', 'Personalizado')" class="w-full btn-gradient text-white font-bold text-xs py-3.5 px-4 rounded-2xl shadow-md shadow-emerald-500/20 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
-                            <i data-lucide="plus" class="w-4 h-4 stroke-[2.5]"></i>
-                            <span>Hacer pedido personalizado</span>
-                        </button>
-                    </div>
-
-                    <!-- Banner Postulación Runner -->
-                    <div id="banner-postular-runner" onclick="abrirModalPostulacion()" class="mx-4 bg-gradient-to-r from-slate-900 to-slate-800 rounded-2xl p-4 text-white flex items-center justify-between cursor-pointer active:scale-[0.98] transition-all shadow-md">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
-                                <i data-lucide="bike" class="w-5 h-5"></i>
-                            </div>
-                            <div>
-                                <h4 class="text-xs font-extrabold text-white">¿Quieres ganar dinero entre clases?</h4>
-                                <p class="text-[10.5px] text-slate-300 mt-0.5">Postula para ser Runner oficial UTP</p>
-                            </div>
-                        </div>
-                        <div class="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center shrink-0">
-                            <i data-lucide="chevron-right" class="w-4 h-4 text-emerald-400"></i>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- TAB 2: PEDIDOS (TRACKING EN TIEMPO REAL) -->
-                <div id="tab-pedidos" class="hidden space-y-4 px-4 pt-3">
-                    <div class="flex items-center justify-between">
-                        <h2 class="text-lg font-extrabold text-slate-800">Mis Pedidos</h2>
-                        <span class="text-[11px] font-semibold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full">Campus UTP</span>
-                    </div>
-
-                    <!-- Pedido Activo Card -->
-                    <div id="active-order-container" class="hidden bg-white rounded-3xl p-4 border border-blue-100 shadow-sm space-y-4">
-                        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-                            <div>
-                                <span id="order-status-badge" class="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-amber-100 text-amber-700">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500 pulse-dot"></span>
-                                    Buscando Runner...
-                                </span>
-                                <h3 id="active-order-title" class="text-sm font-bold text-slate-800 mt-1.5">Café Americano + Empanada</h3>
-                            </div>
-                            <span id="active-order-total" class="text-sm font-extrabold text-blue-600">S/ 11.50</span>
-                        </div>
-
-                        <!-- Progreso de entrega -->
-                        <div class="space-y-2.5">
-                            <div class="flex items-center gap-3">
-                                <div id="step-1-dot" class="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px]"><i data-lucide="check" class="w-3 h-3"></i></div>
-                                <span class="text-xs font-semibold text-slate-700">Pedido publicado en el campus</span>
-                            </div>
-                            <div class="flex items-center gap-3">
-                                <div id="step-2-dot" class="w-5 h-5 rounded-full bg-slate-200 text-slate-400 flex items-center justify-center text-[10px] font-bold">2</div>
-                                <span id="step-2-text" class="text-xs text-slate-400">Runner aceptó y está comprando</span>
-                            </div>
-                            <div class="flex items-center gap-3">
-                                <div id="step-3-dot" class="w-5 h-5 rounded-full bg-slate-200 text-slate-400 flex items-center justify-center text-[10px] font-bold">3</div>
-                                <span id="step-3-text" class="text-xs text-slate-400">En camino a tu aula</span>
-                            </div>
-                        </div>
-
-                        <!-- Info del Runner Asignado -->
-                        <div id="assigned-runner-box" class="hidden bg-slate-50 rounded-2xl p-3 flex items-center justify-between">
-                            <div class="flex items-center gap-2.5">
-                                <div class="w-9 h-9 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center">MR</div>
-                                <div>
-                                    <p class="text-xs font-bold text-slate-800">Mateo Rojas <span class="text-amber-500 font-semibold">★ 4.9</span></p>
-                                    <p class="text-[10px] text-slate-500">Ing. Sistemas • Ciclo 6</p>
-                                </div>
-                            </div>
-                            <div class="flex gap-1.5">
-                                <button onclick="openChatModal()" class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center hover:bg-blue-200 relative">
-                                    <i data-lucide="message-circle" class="w-4 h-4"></i>
-                                    <span id="chat-unread-dot" class="hidden absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
-                                </button>
-                                <button onclick="simulateOrderDelivery()" class="px-2.5 py-1.5 rounded-xl bg-emerald-600 text-white text-[10px] font-bold shadow-xs">
-                                    Recibí pedido
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Botón cancelar pedido -->
-                        <div class="pt-1 flex justify-end">
-                            <button onclick="cancelarPedidoActivo()" class="text-[11px] font-semibold text-red-500 hover:underline flex items-center gap-1">
-                                <i data-lucide="x-circle" class="w-3.5 h-3.5"></i>
-                                Cancelar pedido
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Estado vacío si no hay pedido activo -->
-                    <div id="empty-order-state" class="bg-white rounded-3xl p-6 text-center border border-slate-100 card-shadow">
-                        <div class="w-12 h-12 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center mx-auto mb-3">
-                            <i data-lucide="package-search" class="w-6 h-6"></i>
-                        </div>
-                        <h3 class="text-sm font-bold text-slate-800">No tienes pedidos activos</h3>
-                        <p class="text-xs text-slate-400 mt-1">Pide algo de cafetería o impresiones y un compañero lo llevará a tu salón.</p>
-                        <button onclick="showTab('inicio')" class="mt-4 bg-blue-600 text-white text-xs font-bold px-4 py-2.5 rounded-xl">Explorar categorías</button>
-                    </div>
-
-                    <!-- Historial Pasado -->
-                    <div>
-                        <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2.5">Historial reciente</h3>
-                        <div id="order-history-list" class="space-y-2.5">
-                            <div class="bg-white rounded-2xl p-3 border border-slate-100 flex items-center justify-between">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                                        <i data-lucide="check-circle-2" class="w-4 h-4"></i>
-                                    </div>
-                                    <div>
-                                        <h4 class="text-xs font-bold text-slate-800">Impresión Guía Lab #4</h4>
-                                        <p class="text-[10px] text-slate-400">Ayer • Pabellón B - Aula 304</p>
-                                    </div>
-                                </div>
-                                <span class="text-xs font-bold text-slate-700">S/ 4.50</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- TAB 3: PERFIL (ESTUDIANTE) -->
-                <div id="tab-perfil" class="hidden space-y-4 px-4 pt-3">
-                    <div class="bg-white rounded-3xl p-5 border border-slate-100 card-shadow text-center relative">
-                        <button onclick="openEditProfileModal()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center hover:bg-blue-50 hover:text-blue-600 transition-colors" title="Editar perfil">
-                            <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
-                        </button>
-                        <div id="profile-avatar-initials" class="w-16 h-16 rounded-full hero-gradient text-white font-extrabold text-xl flex items-center justify-center mx-auto shadow-md">
-                            JD
-                        </div>
-                        <h2 id="profile-user-name" class="text-base font-extrabold text-slate-800 mt-3">Juan Diego Terrones</h2>
-                        <p id="profile-user-career" class="text-xs text-slate-500">Ingeniería de Sistemas • Código <span id="profile-user-code">U23244283</span></p>
-                        <span id="profile-user-sede" class="inline-block mt-1 text-[10px] font-bold text-blue-600 bg-blue-50 px-2.5 py-0.5 rounded-full">Sede San Juan de Lurigancho</span>
-                        
-                        <div class="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-slate-100">
-                            <div>
-                                <p id="stat-pedidos-count" class="text-sm font-extrabold text-slate-800">12</p>
-                                <p class="text-[10px] text-slate-400">Pedidos</p>
-                            </div>
-                            <div>
-                                <p id="stat-rating-avg" class="text-sm font-extrabold text-amber-500">4.9 ★</p>
-                                <p class="text-[10px] text-slate-400">Calificación</p>
-                            </div>
-                            <div>
-                                <p class="text-sm font-extrabold text-emerald-600">Activo</p>
-                                <p class="text-[10px] text-slate-400">Estado UTP</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="bg-white rounded-2xl p-2 border border-slate-100 card-shadow divide-y divide-slate-100">
-                        <button onclick="openEditProfileModal()" class="w-full flex items-center justify-between p-3 text-left hover:bg-slate-50 rounded-xl transition-colors">
-                            <div class="flex items-center gap-3">
-                                <i data-lucide="map-pin" class="w-4 h-4 text-blue-600"></i>
-                                <div>
-                                    <p class="text-xs font-semibold text-slate-700">Aula frecuente</p>
-                                    <p id="profile-default-aula" class="text-[10px] text-slate-400">Pabellón A • Piso 4 • Aula 402</p>
-                                </div>
-                            </div>
-                            <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
-                        </button>
-                        <button onclick="openPaymentMethodsModal()" class="w-full flex items-center justify-between p-3 text-left hover:bg-slate-50 rounded-xl transition-colors">
-                            <div class="flex items-center gap-3">
-                                <i data-lucide="credit-card" class="w-4 h-4 text-purple-600"></i>
-                                <div>
-                                    <p class="text-xs font-semibold text-slate-700">Métodos de pago</p>
-                                    <p id="profile-default-payment" class="text-[10px] text-slate-400">Yape / Plin / Efectivo exacto</p>
-                                </div>
-                            </div>
-                            <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
-                        </button>
-                        <button onclick="openHelpModal()" class="w-full flex items-center justify-between p-3 text-left hover:bg-slate-50 rounded-xl transition-colors">
-                            <div class="flex items-center gap-3">
-                                <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600"></i>
-                                <span class="text-xs font-semibold text-slate-700">Seguridad y Ayuda UTP</span>
-                            </div>
-                            <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
-                        </button>
-                    </div>
-
-                    <!-- Botón Cerrar Sesión -->
-                    <button onclick="handleLogout()" class="w-full bg-red-50 hover:bg-red-100 text-red-600 font-bold text-xs py-3 rounded-2xl border border-red-100 flex items-center justify-center gap-2 transition-colors active:scale-[0.98]">
-                        <i data-lucide="log-out" class="w-4 h-4"></i>
-                        <span>Cerrar Sesión</span>
-                    </button>
-                </div>
-
+                <button onclick="moverCarruselDestacados(1)" class="w-6 h-6 rounded-full bg-white border border-slate-200 text-slate-600 hover:bg-blue-50 hover:text-blue-600 flex items-center justify-center transition-colors shadow-2xs">
+                  <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                </button>
+              </div>
             </div>
 
-            <!-- ========================================================= -->
-            <!-- MODO 2: RUNNER (REPARTIDOR ESTUDIANTE)                    -->
-            <!-- ========================================================= -->
-            <div id="view-runner" class="hidden space-y-4 px-4 pt-3">
-                
-                <!-- Sub-Tab 1: Pedidos Disponibles / Entregas Activas -->
-                <div id="tab-runner-entregas" class="space-y-4">
-                    <!-- Panel Ganancias Runner -->
-                    <div class="bg-slate-900 rounded-3xl p-5 text-white shadow-lg relative overflow-hidden">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-[11px] text-slate-400 font-medium">Ganancias de hoy</p>
-                                <h2 id="runner-earnings" class="text-2xl font-extrabold text-emerald-400 mt-0.5">S/ 18.50</h2>
-                            </div>
-                            <div class="flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-full border border-slate-700">
-                                <span id="runner-status-dot" class="w-2 h-2 rounded-full bg-emerald-400 pulse-dot"></span>
-                                <span id="runner-status-text" class="text-[11px] font-bold text-emerald-300">Disponible</span>
-                            </div>
-                        </div>
-                        <div class="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-300">
-                            <span>Entregas hoy: <strong id="runner-deliveries-count" class="text-white">4</strong></span>
-                            <span>Tiempo prom: <strong class="text-sky-400">8 min</strong></span>
-                        </div>
+            <div class="relative overflow-hidden rounded-2xl bg-white border border-slate-200/90 shadow-sm">
+              <div id="carrusel-track" class="flex transition-transform duration-500 ease-out">
+                <!-- SLIDE 1 -->
+                <div class="w-full shrink-0 p-3.5 flex items-center justify-between gap-3 bg-gradient-to-r from-slate-50 via-white to-blue-50/60">
+                  <div class="flex-1 min-w-0">
+                    <span class="inline-flex items-center gap-1 bg-slate-900 text-white text-[9.5px] font-bold px-2 py-0.5 rounded-md mb-1.5">
+                      📍 Fraga Gourmet • Torre A
+                    </span>
+                    <h3 class="text-[14px] font-extrabold text-slate-900 truncate">Menú Estudiante</h3>
+                    <p class="text-[11px] text-slate-500 truncate mb-2.5">Arroz con pollo + ensalada + bebida</p>
+                    <div class="flex items-center gap-2">
+                      <span class="font-mono-stat text-[13px] font-extrabold text-blue-700">S/ 11.00</span>
+                      <button onclick="agregarAlCarrito(1, 'Menú Estudiante', 11.00); Swal.fire({toast:true, position:'top', icon:'success', title:'Añadido al carrito', showConfirmButton:false, timer:1200})"
+                        class="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-[11px] font-bold flex items-center gap-1 transition-all shadow-xs">
+                        <i data-lucide="plus" class="w-3.5 h-3.5"></i> Añadir
+                      </button>
                     </div>
-
-                    <!-- Encargo Actual del Runner (Si aceptó uno) -->
-                    <div id="runner-current-job" class="hidden bg-emerald-50 border border-emerald-200 rounded-3xl p-4 space-y-3">
-                        <div class="flex items-center justify-between">
-                            <span class="text-[10px] font-extrabold uppercase tracking-wider bg-emerald-600 text-white px-2.5 py-0.5 rounded-full">Entrega en curso</span>
-                            <span id="job-reward" class="text-xs font-extrabold text-emerald-700">+ S/ 2.50 ganancia</span>
-                        </div>
-                        <div>
-                            <h3 id="job-title" class="text-sm font-bold text-slate-800">Café + Sándwich de Pollo</h3>
-                            <p id="job-route" class="text-xs text-slate-600 mt-0.5">Recoger: Cafetería Piso 1 → Llevar: Pab. B Aula 501</p>
-                        </div>
-                        <div class="flex gap-2">
-                            <button onclick="openChatModal()" class="flex-1 bg-white border border-emerald-200 text-emerald-700 font-bold text-xs py-2.5 rounded-xl flex items-center justify-center gap-1.5 relative">
-                                <i data-lucide="message-square" class="w-3.5 h-3.5"></i> Chat Alumno
-                                <span id="runner-chat-dot" class="hidden w-2 h-2 bg-red-500 rounded-full"></span>
-                            </button>
-                            <button onclick="completeRunnerJob()" class="flex-1 bg-emerald-600 text-white font-bold text-xs py-2.5 rounded-xl shadow-sm">
-                                Marcar Entregado
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Lista de Pedidos Cercanos en el Campus -->
-                    <div>
-                        <div class="flex items-center justify-between mb-2.5">
-                            <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider">Pedidos cerca de ti</h3>
-                            <span id="available-jobs-count" class="text-[10px] font-bold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">3 disponibles</span>
-                        </div>
-
-                        <div id="runner-jobs-list" class="space-y-3">
-                            <!-- Job 1 -->
-                            <div class="bg-white rounded-2xl p-3.5 border border-slate-100 card-shadow space-y-2.5">
-                                <div class="flex justify-between items-start">
-                                    <div class="flex items-center gap-2">
-                                        <span class="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center"><i data-lucide="coffee" class="w-4 h-4"></i></span>
-                                        <div>
-                                            <h4 class="text-xs font-bold text-slate-800">2x Capuccino + Galletas</h4>
-                                            <p class="text-[10px] text-slate-400">Cafetería Central → Pabellón A - Aula 205</p>
-                                        </div>
-                                    </div>
-                                    <span class="text-xs font-extrabold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg">+ S/ 2.50</span>
-                                </div>
-                                <div class="flex items-center justify-between pt-1">
-                                    <span class="text-[10px] text-slate-500">Pago cliente: <strong>Yape (S/ 14.50)</strong></span>
-                                    <button onclick="acceptRunnerJob('2x Capuccino + Galletas', 'Cafetería Central → Pabellón A - Aula 205', 2.50)" class="bg-slate-900 text-white text-[11px] font-bold px-3.5 py-1.5 rounded-xl hover:bg-blue-600 transition-colors">
-                                        Aceptar encargo
-                                    </button>
-                                </div>
-                            </div>
-
-                            <!-- Job 2 -->
-                            <div class="bg-white rounded-2xl p-3.5 border border-slate-100 card-shadow space-y-2.5">
-                                <div class="flex justify-between items-start">
-                                    <div class="flex items-center gap-2">
-                                        <span class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center"><i data-lucide="printer" class="w-4 h-4"></i></span>
-                                        <div>
-                                            <h4 class="text-xs font-bold text-slate-800">Impresión 15 hojas B/N</h4>
-                                            <p class="text-[10px] text-slate-400">Librería Frente UTP → Pabellón C - Lab 102</p>
-                                        </div>
-                                    </div>
-                                    <span class="text-xs font-extrabold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg">+ S/ 3.00</span>
-                                </div>
-                                <div class="flex items-center justify-between pt-1">
-                                    <span class="text-[10px] text-slate-500">Pago cliente: <strong>Efectivo (S/ 6.00)</strong></span>
-                                    <button onclick="acceptRunnerJob('Impresión 15 hojas B/N', 'Librería Frente UTP → Pabellón C - Lab 102', 3.00)" class="bg-slate-900 text-white text-[11px] font-bold px-3.5 py-1.5 rounded-xl hover:bg-blue-600 transition-colors">
-                                        Aceptar encargo
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                  </div>
+                  <div class="w-20 h-20 rounded-2xl bg-blue-100/70 border border-blue-200/60 flex items-center justify-center text-4xl shrink-0">
+                    🍱
+                  </div>
                 </div>
 
-                <!-- Sub-Tab 2: Historial de Entregas del Runner -->
-                <div id="tab-runner-historial" class="hidden space-y-3">
-                    <div class="flex items-center justify-between">
-                        <h2 class="text-base font-extrabold text-slate-800">Historial de Entregas</h2>
-                        <span class="text-[10px] font-bold bg-emerald-100 text-emerald-700 px-2.5 py-1 rounded-full">Completadas</span>
+                <!-- SLIDE 2 -->
+                <div class="w-full shrink-0 p-3.5 flex items-center justify-between gap-3 bg-gradient-to-r from-slate-50 via-white to-blue-50/60">
+                  <div class="flex-1 min-w-0">
+                    <span class="inline-flex items-center gap-1 bg-slate-900 text-white text-[9.5px] font-bold px-2 py-0.5 rounded-md mb-1.5">
+                      📍 Fraga Gourmet • Torre A
+                    </span>
+                    <h3 class="text-[14px] font-extrabold text-slate-900 truncate">Hamburguesita Clásica</h3>
+                    <p class="text-[11px] text-slate-500 truncate mb-2.5">Ideal para el break entre clases</p>
+                    <div class="flex items-center gap-2">
+                      <span class="font-mono-stat text-[13px] font-extrabold text-blue-700">S/ 5.90</span>
+                      <button onclick="agregarAlCarrito(2, 'Hamburguesita', 5.90); Swal.fire({toast:true, position:'top', icon:'success', title:'Añadido al carrito', showConfirmButton:false, timer:1200})"
+                        class="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-[11px] font-bold flex items-center gap-1 transition-all shadow-xs">
+                        <i data-lucide="plus" class="w-3.5 h-3.5"></i> Añadir
+                      </button>
                     </div>
-                    <div id="runner-history-list" class="space-y-2.5">
-                        <!-- Se llena dinámicamente -->
-                    </div>
+                  </div>
+                  <div class="w-20 h-20 rounded-2xl bg-blue-100/70 border border-blue-200/60 flex items-center justify-center text-4xl shrink-0">
+                    🍔
+                  </div>
                 </div>
 
+                <!-- SLIDE 3 -->
+                <div class="w-full shrink-0 p-3.5 flex items-center justify-between gap-3 bg-gradient-to-r from-slate-50 via-white to-blue-50/60">
+                  <div class="flex-1 min-w-0">
+                    <span class="inline-flex items-center gap-1 bg-slate-900 text-white text-[9.5px] font-bold px-2 py-0.5 rounded-md mb-1.5">
+                      📍 LISTO! • Torre A
+                    </span>
+                    <h3 class="text-[14px] font-extrabold text-slate-900 truncate">Gatorade 500ml Helado</h3>
+                    <p class="text-[11px] text-slate-500 truncate mb-2.5">Hidratación rápida directo a tu aula</p>
+                    <div class="flex items-center gap-2">
+                      <span class="font-mono-stat text-[13px] font-extrabold text-blue-700">S/ 4.00</span>
+                      <button onclick="agregarAlCarrito(3, 'Gatorade 500ml', 4.00); Swal.fire({toast:true, position:'top', icon:'success', title:'Añadido al carrito', showConfirmButton:false, timer:1200})"
+                        class="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-[11px] font-bold flex items-center gap-1 transition-all shadow-xs">
+                        <i data-lucide="plus" class="w-3.5 h-3.5"></i> Añadir
+                      </button>
+                    </div>
+                  </div>
+                  <div class="w-20 h-20 rounded-2xl bg-blue-100/70 border border-blue-200/60 flex items-center justify-center text-4xl shrink-0">
+                    🥤
+                  </div>
+                </div>
+
+                <!-- SLIDE 4 -->
+                <div class="w-full shrink-0 p-3.5 flex items-center justify-between gap-3 bg-gradient-to-r from-slate-50 via-white to-blue-50/60">
+                  <div class="flex-1 min-w-0">
+                    <span class="inline-flex items-center gap-1 bg-slate-900 text-white text-[9.5px] font-bold px-2 py-0.5 rounded-md mb-1.5">
+                      📍 Papelería UTP • Torre A
+                    </span>
+                    <h3 class="text-[14px] font-extrabold text-slate-900 truncate">Folder Manila x10</h3>
+                    <p class="text-[11px] text-slate-500 truncate mb-2.5">Para entregas y trabajos de última hora</p>
+                    <div class="flex items-center gap-2">
+                      <span class="font-mono-stat text-[13px] font-extrabold text-blue-700">S/ 3.00</span>
+                      <button onclick="agregarAlCarrito(4, 'Folder Manila x10', 3.00); Swal.fire({toast:true, position:'top', icon:'success', title:'Añadido al carrito', showConfirmButton:false, timer:1200})"
+                        class="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-[11px] font-bold flex items-center gap-1 transition-all shadow-xs">
+                        <i data-lucide="plus" class="w-3.5 h-3.5"></i> Añadir
+                      </button>
+                    </div>
+                  </div>
+                  <div class="w-20 h-20 rounded-2xl bg-blue-100/70 border border-blue-200/60 flex items-center justify-center text-4xl shrink-0">
+                    📁
+                  </div>
+                </div>
+              </div>
+
+              <!-- Puntitos indicadores (Dots) -->
+              <div class="flex justify-center gap-1.5 pb-2 bg-white">
+                <span class="carrusel-dot w-4 h-1.5 rounded-full bg-blue-600 transition-all"></span>
+                <span class="carrusel-dot w-1.5 h-1.5 rounded-full bg-slate-300 transition-all"></span>
+                <span class="carrusel-dot w-1.5 h-1.5 rounded-full bg-slate-300 transition-all"></span>
+                <span class="carrusel-dot w-1.5 h-1.5 rounded-full bg-slate-300 transition-all"></span>
+              </div>
             </div>
+          </div>
 
-            <!-- ========================================================= -->
-            <!-- MODO 3: ADMINISTRADOR (PANEL DE CONTROL UTP)              -->
-            <!-- ========================================================= -->
-            <div id="view-admin" class="hidden space-y-4 px-4 pt-3">
-                <!-- Header Admin -->
-                <div class="bg-gradient-to-r from-indigo-900 to-slate-900 rounded-3xl p-5 text-white shadow-lg">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <span class="text-[10px] font-bold uppercase tracking-widest text-indigo-300">Panel de Control</span>
-                            <h2 class="text-xl font-extrabold text-white mt-0.5">Administración UTP</h2>
-                        </div>
-                        <div class="w-10 h-10 rounded-2xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center text-indigo-300">
-                            <i data-lucide="shield" class="w-5 h-5"></i>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-white/10 text-center">
-                        <div>
-                            <p id="admin-stat-solicitudes" class="text-base font-extrabold text-amber-400">0</p>
-                            <p class="text-[10px] text-slate-300">Solicitudes</p>
-                        </div>
-                        <div>
-                            <p id="admin-stat-runners" class="text-base font-extrabold text-emerald-400">0</p>
-                            <p class="text-[10px] text-slate-300">Runners Activos</p>
-                        </div>
-                        <div>
-                            <p id="admin-stat-usuarios" class="text-base font-extrabold text-sky-400">0</p>
-                            <p class="text-[10px] text-slate-300">Alumnos</p>
-                        </div>
-                    </div>
+          <!-- 2. CATEGORÍAS MOVIDAS DEBAJO DEL CARRUSEL -->
+          <div class="px-5 mb-4">
+            <p class="text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-2.5">¿Qué necesitas hoy?</p>
+            <div class="grid grid-cols-4 gap-2.5" id="category-group">
+              <button data-cat="snack" class="cat-btn flex flex-col items-center gap-1.5 group">
+                <div class="w-full aspect-square max-w-[62px] rounded-2xl bg-white border border-slate-200/80 text-blue-600 shadow-2xs group-hover:border-blue-300 group-hover:bg-blue-50/50 flex items-center justify-center group-active:scale-95 transition-all">
+                  <i data-lucide="coffee" class="w-5 h-5"></i>
                 </div>
+                <span class="text-[11px] font-semibold text-slate-700">Snack</span>
+              </button>
 
-                <!-- Sub-navegación Admin -->
-                <div class="flex gap-2 bg-slate-200/70 p-1 rounded-xl">
-                    <button id="admin-subtab-solicitudes" onclick="switchAdminSubtab('solicitudes')" class="flex-1 py-2 rounded-lg text-xs font-bold bg-white text-slate-800 shadow-xs transition-all">
-                        Postulaciones Runner
-                    </button>
-                    <button id="admin-subtab-usuarios" onclick="switchAdminSubtab('usuarios')" class="flex-1 py-2 rounded-lg text-xs font-bold text-slate-500 hover:text-slate-700 transition-all">
-                        Usuarios UTP
-                    </button>
+              <button data-cat="almuerzo" class="cat-btn flex flex-col items-center gap-1.5 group">
+                <div class="w-full aspect-square max-w-[62px] rounded-2xl bg-white border border-slate-200/80 text-blue-600 shadow-2xs group-hover:border-blue-300 group-hover:bg-blue-50/50 flex items-center justify-center group-active:scale-95 transition-all">
+                  <i data-lucide="utensils-crossed" class="w-5 h-5"></i>
                 </div>
+                <span class="text-[11px] font-semibold text-slate-700">Almuerzo</span>
+              </button>
 
-                <!-- Lista de Solicitudes Pendientes -->
-                <div id="admin-panel-solicitudes" class="space-y-3">
-                    <div class="flex items-center justify-between">
-                        <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider">Solicitudes por revisar</h3>
-                        <button onclick="cargarDatosAdmin()" class="text-[11px] font-bold text-indigo-600 flex items-center gap-1">
-                            <i data-lucide="refresh-cw" class="w-3 h-3"></i> Actualizar
-                        </button>
-                    </div>
-                    <div id="admin-solicitudes-list" class="space-y-3">
-                        <div class="bg-white rounded-2xl p-6 text-center border border-slate-100">
-                            <p class="text-xs text-slate-400">Cargando solicitudes...</p>
-                        </div>
-                    </div>
+              <button data-cat="utiles" class="cat-btn flex flex-col items-center gap-1.5 group">
+                <div class="w-full aspect-square max-w-[62px] rounded-2xl bg-white border border-slate-200/80 text-blue-600 shadow-2xs group-hover:border-blue-300 group-hover:bg-blue-50/50 flex items-center justify-center group-active:scale-95 transition-all">
+                  <i data-lucide="book-open" class="w-5 h-5"></i>
                 </div>
+                <span class="text-[11px] font-semibold text-slate-700">Útiles</span>
+              </button>
 
-                <!-- Lista de Usuarios Registrados -->
-                <div id="admin-panel-usuarios" class="hidden space-y-3">
-                    <div class="flex items-center justify-between">
-                        <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider">Comunidad Registrada</h3>
-                    </div>
-                    <div id="admin-usuarios-list" class="space-y-2.5">
-                        <!-- Se llena dinámicamente -->
-                    </div>
+              <button data-cat="otro" id="cat-otro-btn" class="cat-btn flex flex-col items-center gap-1.5 group">
+                <div class="w-full aspect-square max-w-[62px] rounded-2xl bg-white border border-slate-200/80 text-blue-600 shadow-2xs group-hover:border-blue-300 group-hover:bg-blue-50/50 flex items-center justify-center group-active:scale-95 transition-all">
+                  <i data-lucide="package" class="w-5 h-5"></i>
                 </div>
+                <span class="text-[11px] font-semibold text-slate-700">Otro</span>
+              </button>
             </div>
+          </div>
 
-        </div>
-
-        <!-- ===== NAV BAR INFERIOR ===== -->
-        <div id="bottom-nav-bar" class="shrink-0 w-full bg-white border-t border-slate-100 px-6 py-3 flex items-center justify-between z-30">
-            <button onclick="showTab('inicio')" class="nav-btn text-blue-600 flex flex-col items-center gap-1" data-nav="inicio">
-                <i data-lucide="home" class="w-5 h-5"></i><span class="text-[9.5px] font-medium">Inicio</span>
-            </button>
-            
-            <button onclick="showTab('pedidos'); if(typeof cargarMisPedidos === 'function') cargarMisPedidos();" class="nav-btn text-slate-300 flex flex-col items-center gap-1" data-nav="pedidos">
-                <i data-lucide="package" class="w-5 h-5"></i><span class="text-[9.5px] font-medium">Pedidos</span>
-            </button>
-            
-            <button onclick="showTab('runner'); if(typeof cargarEntregasActivas === 'function') cargarEntregasActivas();" class="hidden nav-btn text-slate-300 flex flex-col items-center gap-1" data-nav="runner">
-                <i data-lucide="wallet" class="w-5 h-5"></i><span class="text-[9.5px] font-medium">Runner</span>
-            </button>
-            
-            <button id="nav-btn-historial" onclick="showTab('historial-runner'); if(typeof cargarHistorialRunner === 'function') cargarHistorialRunner();" class="hidden nav-btn text-slate-300 flex flex-col items-center gap-1" data-nav="historial">
-                <i data-lucide="history" class="w-5 h-5"></i><span class="text-[9.5px] font-medium">Historial</span>
+          <!-- 3. INSIGNIA RUNNER + SEGURIDAD -->
+          <div class="px-5 space-y-2.5">
+            <button id="btn-abrir-postulacion" onclick="abrirModalPostulacion()" class="w-full flex items-center justify-between gap-3 p-3.5 rounded-2xl bg-white border border-slate-100 shadow-2xs hover:border-blue-200 hover:bg-blue-50/30 active:scale-[0.99] transition-all text-left group">
+              <div class="flex items-center gap-3 min-w-0">
+                <div class="w-8 h-8 rounded-xl bg-slate-900 text-amber-300 flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
+                  <i data-lucide="zap" class="w-4 h-4 fill-amber-300"></i>
+                </div>
+                <div class="min-w-0">
+                  <p class="text-[12.5px] font-bold text-slate-900 leading-tight">Quiero ser Runner</p>
+                  <p class="text-[11px] text-slate-500 font-medium truncate mt-0.5">Gana dinero extra entregando entre clases</p>
+                </div>
+              </div>
+              <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400 group-hover:text-blue-600 shrink-0 transition-colors"></i>
             </button>
 
-            <button onclick="showTab('perfil')" class="nav-btn text-slate-300 flex flex-col items-center gap-1" data-nav="perfil">
-                <i data-lucide="user" class="w-5 h-5"></i><span class="text-[9.5px] font-medium">Perfil</span>
-            </button>
-        </div>
-
-        <!-- ========================================================= -->
-        <!-- MODAL 1: CREAR PEDIDO / AGREGAR AL CARRITO                -->
-        <!-- ========================================================= -->
-        <div id="request-modal" class="hidden absolute inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-end">
-            <div class="bg-white w-full rounded-t-[32px] p-5 space-y-4 animate-slide-up max-h-[88%] overflow-y-auto no-scrollbar">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <span id="modal-category-badge" class="text-[10px] font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-2.5 py-0.5 rounded-full">Cafetería</span>
-                        <h3 id="modal-title" class="text-base font-extrabold text-slate-800 mt-1">Nuevo Encargo</h3>
-                    </div>
-                    <button onclick="closeRequestModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center">
-                        <i data-lucide="x" class="w-4 h-4"></i>
-                    </button>
-                </div>
-
-                <div class="space-y-3">
-                    <div>
-                        <label class="text-[11px] font-bold text-slate-600 block mb-1">¿Qué necesitas que te lleven?</label>
-                        <input id="input-item-desc" type="text" placeholder="Ej: 1 Café Americano + 1 Triple de pollo" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-blue-500">
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-2.5">
-                        <div>
-                            <label class="text-[11px] font-bold text-slate-600 block mb-1">Punto de recojo</label>
-                            <select id="input-pickup" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs focus:outline-none focus:border-blue-500">
-                                <option>Cafetería Piso 1</option>
-                                <option>Cafetería Piso 5</option>
-                                <option>Tambo Frente UTP</option>
-                                <option>Librería / Copias</option>
-                                <option>Menú Calle</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="text-[11px] font-bold text-slate-600 block mb-1">Tu Aula / Pabellón</label>
-                            <input id="input-aula" type="text" value="Pab. A - Aula 402" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs focus:outline-none focus:border-blue-500">
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-2.5">
-                        <div>
-                            <label class="text-[11px] font-bold text-slate-600 block mb-1">Costo aprox. producto (S/)</label>
-                            <input id="input-price" type="number" step="0.50" value="8.00" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs focus:outline-none focus:border-blue-500">
-                        </div>
-                        <div>
-                            <label class="text-[11px] font-bold text-slate-600 block mb-1">Propina Runner (S/)</label>
-                            <select id="input-tip" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-emerald-600 focus:outline-none focus:border-blue-500">
-                                <option value="2.00">S/ 2.00 (Normal)</option>
-                                <option value="2.50" selected>S/ 2.50 (Rápido)</option>
-                                <option value="3.50">S/ 3.50 (Urgente ⚡)</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Método de pago selector -->
-                    <div>
-                        <label class="text-[11px] font-bold text-slate-600 block mb-1">Método de pago</label>
-                        <div class="grid grid-cols-3 gap-2">
-                            <button type="button" onclick="selectPaymentMethod('Yape', this)" class="pay-method-btn bg-purple-50 border-2 border-purple-500 text-purple-700 font-bold text-[11px] py-2 rounded-xl">Yape</button>
-                            <button type="button" onclick="selectPaymentMethod('Plin', this)" class="pay-method-btn bg-slate-50 border border-slate-200 text-slate-600 font-semibold text-[11px] py-2 rounded-xl">Plin</button>
-                            <button type="button" onclick="selectPaymentMethod('Efectivo', this)" class="pay-method-btn bg-slate-50 border border-slate-200 text-slate-600 font-semibold text-[11px] py-2 rounded-xl">Efectivo</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="pt-2 flex gap-2">
-                    <button onclick="addToCart()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs py-3.5 rounded-2xl transition-colors">
-                        + Al Carrito
-                    </button>
-                    <button onclick="publishOrderDirectly()" class="flex-[1.5] btn-gradient text-white font-bold text-xs py-3.5 rounded-2xl shadow-md shadow-emerald-500/20">
-                        Pedir Ahora
-                    </button>
-                </div>
+            <div class="flex items-center gap-3 p-3.5 rounded-2xl bg-white border border-slate-100 shadow-2xs">
+              <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                <i data-lucide="shield-check" class="w-4 h-4"></i>
+              </div>
+              <p class="text-[11px] text-slate-500 font-medium leading-snug">
+                Todos los Runners verifican su identidad antes de repartir.
+              </p>
             </div>
+          </div>
+
+        </div> <!-- Cierre de #tab-inicio -->
+
+        <!-- TAB: MIS PEDIDOS -->
+        <div id="tab-pedidos" class="hidden">
+          <div class="px-5 pt-4 pb-3">
+            <p class="font-display text-lg font-bold text-slate-900">Mis pedidos</p>
+            <p class="text-[12px] text-slate-500 mt-1">Sigue tus pedidos activos y revisa tu historial.</p>
+          </div>
+          <div class="px-5 mb-4 flex gap-2" id="pedidos-filter-group">
+            <button data-filter="activos" class="filter-btn active text-[12px] font-semibold px-3.5 py-1.5 rounded-full bg-blue-600 text-white" id="filter-activos-btn">Activos (0)</button>
+            <!-- CÓDIGO ACTUALIZADO: -->
+<button id="btn-tab-historial" 
+        data-filter="historial" 
+        onclick="if(typeof cargarHistorialPedidos === 'function') cargarHistorialPedidos();" 
+        class="filter-btn text-[12px] font-semibold px-3.5 py-1.5 rounded-full bg-slate-100 text-slate-500">
+    Historial
+</button>
+          </div>
+          <div id="pedidos-activos" class="px-5 space-y-3">
+            <p id="pedidos-empty-text" class="text-[12.5px] text-slate-400 text-center py-8">No tienes pedidos activos.<br />Publica uno desde Inicio.</p>
+            <div id="active-order-card" class="hidden rounded-2xl border border-blue-100 bg-blue-50/60 p-4"></div>
+          </div>
+          <div id="pedidos-historial" class="hidden px-5 space-y-3">
+            <div id="contenedor-historial"></div>
+          </div>
         </div>
 
-        <!-- ========================================================= -->
-        <!-- MODAL 2: CARRITO DE COMPRAS                               -->
-        <!-- ========================================================= -->
-        <div id="cart-modal" class="hidden absolute inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-end">
-            <div class="bg-white w-full rounded-t-[32px] p-5 space-y-4 max-h-[82%] flex flex-col">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-base font-extrabold text-slate-800 flex items-center gap-2">
-                        <i data-lucide="shopping-bag" class="w-4 h-4 text-blue-600"></i> Tu Carrito UTP
-                    </h3>
-                    <button onclick="closeCartModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center">
-                        <i data-lucide="x" class="w-4 h-4"></i>
-                    </button>
-                </div>
-
-                <div id="cart-items-list" class="flex-1 overflow-y-auto space-y-2.5 no-scrollbar min-h-[120px]">
-                    <!-- Items dinámicos -->
-                </div>
-
-                <div id="cart-summary" class="border-t border-slate-100 pt-3 space-y-2">
-                    <div class="flex justify-between text-xs text-slate-500">
-                        <span>Productos aprox.</span>
-                        <span id="cart-subtotal">S/ 0.00</span>
-                    </div>
-                    <div class="flex justify-between text-xs text-emerald-600 font-semibold">
-                        <span>Delivery Runner</span>
-                        <span id="cart-delivery">S/ 2.50</span>
-                    </div>
-                    <div class="flex justify-between text-sm font-extrabold text-slate-800 pt-1">
-                        <span>Total estimado</span>
-                        <span id="cart-total">S/ 0.00</span>
-                    </div>
-                    <button id="cart-publish-btn" onclick="checkoutCart()" class="w-full btn-gradient text-white font-bold text-xs py-3.5 rounded-2xl shadow-md mt-2">
-                        Publicar pedido para Runners
-                    </button>
-                </div>
+        <!-- TAB: RUNNER -->
+        <div id="tab-runner" class="hidden bg-slate-50 min-h-full pb-6">
+          <!-- HERO SUPERIOR MODO RUNNER (DEGRADADO ESMERALDA) -->
+          <div class="-mt-14 pt-16 pb-6 px-5 bg-gradient-to-b from-emerald-600 via-emerald-500 to-teal-500 rounded-b-3xl text-white">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <p class="font-display text-xl font-extrabold text-white tracking-tight">Modo Runner</p>
+                <span id="runner-tab-badge" class="hidden items-center gap-1 text-[9.5px] font-extrabold text-amber-950 bg-amber-300 px-2.5 py-0.5 rounded-full shadow-sm">
+                  <i data-lucide="zap" class="w-2.5 h-2.5"></i> VERIFICADO
+                </span>
+              </div>
+              <div class="w-9 h-9 rounded-xl bg-white/15 backdrop-blur-sm border border-white/20 flex items-center justify-center text-emerald-100">
+                <i data-lucide="bike" class="w-5 h-5"></i>
+              </div>
             </div>
+            <p class="text-[13px] text-emerald-100 mt-1.5 leading-snug">Entrega pedidos entre tus clases y gana sin desviarte de tu ruta.</p>
+
+            <!-- Pestañas Pedidos / Tiendas integradas -->
+<div class="bg-emerald-900/30 p-1 rounded-full grid grid-cols-2 gap-1 mt-5">
+  <button id="btn-tab-pedidos" type="button" onclick="cambiarVistaRunner('disponibles')"
+    class="runner-subtab py-2 px-4 rounded-full text-xs font-bold transition-all bg-white text-emerald-800 shadow-sm">
+    Pedidos disponibles
+  </button>
+  <button id="btn-tab-tiendas" type="button" onclick="cambiarVistaRunner('tiendas')"
+    class="runner-subtab py-2 px-4 rounded-full text-xs font-bold transition-all bg-transparent text-white hover:bg-white/10">
+    Directorio Tiendas
+  </button>
+</div>
+          </div>
+
+          <!-- Contenedores Dinámicos -->
+          <div id="runner-entregas" class="mb-5 w-full px-5"></div>
+          <div id="runner-disponibles" class="px-5 space-y-3 pb-2"></div>
+          <div id="runner-tiendas" class="hidden px-5 space-y-3 pb-2"></div>
         </div>
 
-        <!-- ========================================================= -->
-        <!-- MODAL 3: CHAT EN VIVO CON RUNNER / ALUMNO                 -->
-        <!-- ========================================================= -->
-        <div id="chat-modal" class="hidden absolute inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-end">
-            <div class="bg-white w-full h-[78%] rounded-t-[32px] flex flex-col overflow-hidden">
-                <!-- Header Chat -->
-                <div class="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-                    <div class="flex items-center gap-2.5">
-                        <div class="w-9 h-9 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center">MR</div>
-                        <div>
-                            <h4 class="text-xs font-extrabold text-slate-800">Mateo Rojas (Runner)</h4>
-                            <p class="text-[10px] text-emerald-600 font-semibold">● En línea • Campus UTP</p>
-                        </div>
-                    </div>
-                    <button onclick="closeChatModal()" class="w-8 h-8 rounded-full bg-white border border-slate-200 text-slate-500 flex items-center justify-center">
-                        <i data-lucide="x" class="w-4 h-4"></i>
-                    </button>
-                </div>
-
-                <!-- Mensajes -->
-                <div id="chat-messages" class="flex-1 p-4 overflow-y-auto space-y-2.5 bg-[#F8FAFC] no-scrollbar">
-                    <div class="flex justify-start">
-                        <div class="bg-white border border-slate-100 rounded-2xl rounded-tl-xs px-3.5 py-2 max-w-[80%] shadow-2xs">
-                            <p class="text-xs text-slate-700">¡Hola! Ya estoy en la cola de la cafetería comprando tu pedido 🙌</p>
-                            <span class="text-[9px] text-slate-400 block mt-1">Hace 1 min</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Respuestas rápidas -->
-                <div class="px-3 py-2 bg-white border-t border-slate-100 flex gap-1.5 overflow-x-auto no-scrollbar">
-                    <button onclick="sendQuickChat('Estoy en la puerta del salón')" class="shrink-0 bg-slate-100 hover:bg-blue-50 hover:text-blue-600 text-[10px] font-semibold text-slate-600 px-2.5 py-1 rounded-full">Estoy en la puerta</button>
-                    <button onclick="sendQuickChat('Te pago por Yape al llegar')" class="shrink-0 bg-slate-100 hover:bg-blue-50 hover:text-blue-600 text-[10px] font-semibold text-slate-600 px-2.5 py-1 rounded-full">Pago por Yape</button>
-                    <button onclick="sendQuickChat('¡Muchas gracias!')" class="shrink-0 bg-slate-100 hover:bg-blue-50 hover:text-blue-600 text-[10px] font-semibold text-slate-600 px-2.5 py-1 rounded-full">¡Gracias!</button>
-                </div>
-
-                <!-- Input mensaje -->
-                <form onsubmit="sendChatMessage(event)" class="p-3 bg-white border-t border-slate-100 flex gap-2">
-                    <input id="chat-input" type="text" placeholder="Escribe un mensaje..." class="flex-1 bg-slate-100 rounded-full px-4 py-2 text-xs focus:outline-none">
-                    <button type="submit" class="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center shrink-0">
-                        <i data-lucide="send" class="w-4 h-4"></i>
-                    </button>
-                </form>
-            </div>
-        </div>
-
-        <!-- ========================================================= -->
-        <!-- MODAL 4: EDITAR PERFIL Y AULA FRECUENTE                   -->
-        <!-- ========================================================= -->
-        <div id="edit-profile-modal" class="hidden absolute inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-end">
-            <div class="bg-white w-full rounded-t-[32px] p-5 space-y-4">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-base font-extrabold text-slate-800">Editar Perfil UTP</h3>
-                    <button onclick="closeEditProfileModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center">
-                        <i data-lucide="x" class="w-4 h-4"></i>
-                    </button>
-                </div>
-                <form onsubmit="saveProfileChanges(event)" class="space-y-3">
-                    <div>
-                        <label class="text-[11px] font-bold text-slate-600 block mb-1">Nombre completo</label>
-                        <input id="edit-name" type="text" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs">
-                    </div>
-                    <div>
-                        <label class="text-[11px] font-bold text-slate-600 block mb-1">Carrera</label>
-                        <input id="edit-career" type="text" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs">
-                    </div>
-                    <div>
-                        <label class="text-[11px] font-bold text-slate-600 block mb-1">Aula / Pabellón frecuente</label>
-                        <input id="edit-aula" type="text" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs">
-                    </div>
-                    <button type="submit" class="w-full bg-blue-600 text-white font-bold text-xs py-3.5 rounded-2xl shadow-md">
-                        Guardar cambios
-                    </button>
-                </form>
-            </div>
-        </div>
-
-        <!-- ========================================================= -->
-        <!-- MODAL 5: MÉTODOS DE PAGO                                  -->
-        <!-- ========================================================= -->
-        <div id="payment-modal" class="hidden absolute inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-end">
-            <div class="bg-white w-full rounded-t-[32px] p-5 space-y-4">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-base font-extrabold text-slate-800">Método de Pago Preferido</h3>
-                    <button onclick="closePaymentMethodsModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center">
-                        <i data-lucide="x" class="w-4 h-4"></i>
-                    </button>
-                </div>
-                <div class="space-y-2.5">
-                    <div onclick="setDefaultPayment('Yape (927 680 676)')" class="p-3.5 rounded-2xl border border-purple-200 bg-purple-50/50 flex items-center justify-between cursor-pointer">
-                        <div class="flex items-center gap-3">
-                            <div class="w-9 h-9 rounded-xl bg-purple-600 text-white font-extrabold text-xs flex items-center justify-center">Yape</div>
-                            <div>
-                                <p class="text-xs font-bold text-slate-800">Yape Instantáneo</p>
-                                <p class="text-[10px] text-slate-500">Pago directo al Runner al recibir</p>
-                            </div>
-                        </div>
-                        <i data-lucide="check-circle-2" class="w-5 h-5 text-purple-600"></i>
-                    </div>
-                    <div onclick="setDefaultPayment('Plin Instantáneo')" class="p-3.5 rounded-2xl border border-slate-200 bg-white flex items-center justify-between cursor-pointer hover:border-cyan-400">
-                        <div class="flex items-center gap-3">
-                            <div class="w-9 h-9 rounded-xl bg-cyan-500 text-white font-extrabold text-xs flex items-center justify-center">Plin</div>
-                            <div>
-                                <p class="text-xs font-bold text-slate-800">Plin</p>
-                                <p class="text-[10px] text-slate-500">Transferencia interbancaria sin comisión</p>
-                            </div>
-                        </div>
-                        <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
-                    </div>
-                    <div onclick="setDefaultPayment('Efectivo exacto')" class="p-3.5 rounded-2xl border border-slate-200 bg-white flex items-center justify-between cursor-pointer hover:border-emerald-400">
-                        <div class="flex items-center gap-3">
-                            <div class="w-9 h-9 rounded-xl bg-emerald-600 text-white font-extrabold text-xs flex items-center justify-center">S/</div>
-                            <div>
-                                <p class="text-xs font-bold text-slate-800">Efectivo contra entrega</p>
-                                <p class="text-[10px] text-slate-500">Paga en efectivo en tu salón</p>
-                            </div>
-                        </div>
-                        <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- ========================================================= -->
-        <!-- MODAL 6: SEGURIDAD Y AYUDA UTP                            -->
-        <!-- ========================================================= -->
-        <div id="help-modal" class="hidden absolute inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-end">
-            <div class="bg-white w-full rounded-t-[32px] p-5 space-y-4">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-base font-extrabold text-slate-800">Seguridad Campus UTP</h3>
-                    <button onclick="closeHelpModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center">
-                        <i data-lucide="x" class="w-4 h-4"></i>
-                    </button>
-                </div>
-                <div class="space-y-3 text-xs text-slate-600">
-                    <div class="bg-emerald-50 p-3.5 rounded-2xl border border-emerald-100 flex gap-3">
-                        <i data-lucide="user-check" class="w-5 h-5 text-emerald-600 shrink-0"></i>
-                        <p><strong class="text-slate-800 block mb-0.5">100% Estudiantes Verificados</strong>Todos los Runners validan su correo institucional <code>@utp.edu.pe</code> y código de alumno.</p>
-                    </div>
-                    <div class="bg-blue-50 p-3.5 rounded-2xl border border-blue-100 flex gap-3">
-                        <i data-lucide="shield-alert" class="w-5 h-5 text-blue-600 shrink-0"></i>
-                        <p><strong class="text-slate-800 block mb-0.5">Entrega en Zonas Seguras</strong>Las entregas se realizan únicamente dentro de pabellones, biblioteca o cafeterías del campus.</p>
-                    </div>
-                </div>
-                <button onclick="closeHelpModal()" class="w-full bg-slate-900 text-white font-bold text-xs py-3 rounded-2xl">Entendido</button>
-            </div>
-        </div>
-
-        <!-- ========================================================= -->
-        <!-- MODAL 7: CALIFICAR RUNNER AL RECIBIR PEDIDO               -->
-        <!-- ========================================================= -->
-        <div id="rating-modal" class="hidden absolute inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-5">
-            <div class="bg-white w-full rounded-3xl p-6 text-center space-y-4 shadow-xl">
-                <div class="w-14 h-14 rounded-full bg-amber-100 text-amber-500 flex items-center justify-center mx-auto">
-                    <i data-lucide="star" class="w-7 h-7 fill-amber-400"></i>
-                </div>
+        <!-- TAB: HISTORIAL RUNNER -->
+        <div id="tab-historial-runner" class="hidden w-full h-full pt-5 pb-24 overflow-y-auto">
+            <div class="px-5 pb-4 flex items-center gap-3">
+                <button onclick="showTab('runner')" class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                </button>
                 <div>
-                    <h3 class="text-base font-extrabold text-slate-800">¡Pedido Entregado!</h3>
-                    <p class="text-xs text-slate-500 mt-1">¿Qué tal estuvo el servicio de tu compañero Runner?</p>
+                    <p class="font-display text-lg font-bold text-slate-900">Historial Runner</p>
+                    <p class="text-[12px] text-slate-500">Tus entregas completadas y canceladas</p>
                 </div>
-                <div class="flex justify-center gap-2 py-1" id="rating-stars">
-                    <button onclick="setRating(1)" class="star-btn text-amber-400 text-2xl">★</button>
-                    <button onclick="setRating(2)" class="star-btn text-amber-400 text-2xl">★</button>
-                    <button onclick="setRating(3)" class="star-btn text-amber-400 text-2xl">★</button>
-                    <button onclick="setRating(4)" class="star-btn text-amber-400 text-2xl">★</button>
-                    <button onclick="setRating(5)" class="star-btn text-amber-400 text-2xl">★</button>
+            </div>
+            <div id="historial-runner-list" class="px-5"></div>
+        </div>
+
+        <!-- TAB: ADMINISTRACIÓN (Oculto por defecto) -->
+        <div id="tab-admin" class="hidden w-full h-full pt-6 pb-24 overflow-y-auto bg-slate-50">
+            <div class="px-5 pb-3 shrink-0">
+               <div class="flex items-center justify-between mb-1">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="shield-alert" class="w-5 h-5 text-indigo-600"></i>
+                        <p class="font-display text-lg font-bold text-slate-900">Panel Admin</p>
+                    </div>
+                    <button id="admin-logout-btn" class="bg-red-50 text-red-600 border border-red-100 px-3 py-1.5 rounded-lg text-[10px] font-bold flex items-center gap-1">
+                        <i data-lucide="log-out" class="w-3 h-3"></i> Salir
+                    </button>
                 </div>
-                <button onclick="submitRating()" class="w-full btn-gradient text-white font-bold text-xs py-3.5 rounded-2xl shadow-md">
-                    Finalizar y calificar
+            </div>
+
+            <div id="admin-menu-tabs" class="flex overflow-x-auto gap-2 px-5 pb-3 border-b border-slate-200 shrink-0 cursor-grab select-none scrollbar-thin scrollbar-thumb-slate-300 hover:scrollbar-thumb-slate-400 touch-pan-x active:cursor-grabbing">
+                <button id="btn-mod-usuarios" class="mod-btn bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-[11px] font-semibold whitespace-nowrap pointer-events-auto">1. Usuarios</button>
+                <button id="btn-mod-pedidos" class="mod-btn bg-white text-slate-600 border border-slate-200 px-3 py-1.5 rounded-lg text-[11px] font-semibold whitespace-nowrap pointer-events-auto">2. Operaciones</button>
+                <button id="btn-mod-auditoria" class="mod-btn bg-white text-slate-600 border border-slate-200 px-3 py-1.5 rounded-lg text-[11px] font-semibold whitespace-nowrap pointer-events-auto">3. Reportes</button>
+                <button id="btn-mod-kpi" class="mod-btn bg-white text-slate-600 border border-slate-200 px-3 py-1.5 rounded-lg text-[11px] font-semibold whitespace-nowrap pointer-events-auto">4. KPIs</button>
+                <button id="btn-mod-tiendas" class="mod-btn bg-white text-slate-600 border border-slate-200 px-3 py-1.5 rounded-lg text-[11px] font-semibold whitespace-nowrap pointer-events-auto">5. Catálogo</button>
+                <button id="btn-mod-resenas" class="mod-btn bg-white text-slate-600 border border-slate-200 px-3 py-1.5 rounded-lg text-[11px] font-semibold whitespace-nowrap pointer-events-auto">6. ⭐ Reseñas</button>
+            </div>
+
+            <div class="px-5 pt-4">
+                <div id="mod-usuarios" class="modulo-admin space-y-3">
+                    <p class="text-[12px] font-bold text-slate-800 uppercase mb-2">MI PERFIL</p>
+                </div>
+
+                <div id="mod-pedidos" class="modulo-admin hidden space-y-3">
+                    <div class="flex items-center justify-between mb-2">
+                        <p class="text-[12px] font-bold text-slate-800 uppercase">Monitoreo en Vivo</p>
+                        <button onclick="cargarOperacionesAdmin()" class="text-blue-600 hover:bg-blue-50 p-1 rounded transition-colors">
+                            <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                    <div id="contenedor-operaciones-admin" class="space-y-3 pb-10">
+                        <p class="text-[13px] text-slate-500 text-center py-4">Haz clic en Operaciones para cargar...</p>
+                    </div>
+                </div>
+
+                <div id="mod-auditoria" class="modulo-admin hidden space-y-3">
+                    <p class="text-[12px] font-bold text-slate-800 uppercase mb-2">Resolución de Reportes</p>
+                </div>
+
+                <div id="mod-kpi" class="modulo-admin hidden space-y-3">
+                    <p class="text-[12px] font-bold text-slate-800 uppercase mb-2">Estadísticas del Día</p>
+                </div>
+
+                <div id="mod-tiendas" class="modulo-admin hidden space-y-3">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-2">
+                            <p class="text-[12px] font-bold text-slate-800 uppercase">Directorio y Catálogo UTP</p>
+                            <button onclick="cargarTiendasAdmin()" class="text-blue-600 hover:bg-blue-50 p-1 rounded transition-colors">
+                                <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                        <div class="flex gap-1.5">
+                            <button onclick="abrirModalNuevaTienda()" class="bg-slate-900 text-white px-2.5 py-1 rounded-lg text-[10.5px] font-semibold flex items-center gap-1 hover:bg-slate-800 transition-colors">
+                                <i data-lucide="plus" class="w-3 h-3"></i> Tienda
+                            </button>
+                            <button onclick="abrirModalNuevoProducto()" class="bg-indigo-600 text-white px-2.5 py-1 rounded-lg text-[10.5px] font-semibold flex items-center gap-1 hover:bg-indigo-700 transition-colors">
+                                <i data-lucide="package-plus" class="w-3 h-3"></i> Producto
+                            </button>
+                        </div>
+                    </div>
+                    <div id="contenedor-tiendas-admin" class="space-y-3"></div>
+                </div>
+
+                <div id="mod-resenas" class="modulo-admin hidden space-y-3">
+                    <div class="flex items-center justify-between mb-2">
+                        <p class="text-[12px] font-bold text-slate-800 uppercase">Reseñas de la Aplicación</p>
+                        <button onclick="cargarResenasAdmin()" class="text-blue-600 hover:bg-blue-50 p-1 rounded transition-colors">
+                            <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                    <div id="contenedor-resenas-admin" class="space-y-3 pb-10"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: PERFIL -->
+        <div id="tab-perfil" class="hidden w-full h-full pt-4 pb-24 overflow-y-auto px-5 space-y-4">
+            <div class="flex items-center gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                <div class="relative">
+                    <img id="profile-img-preview" src="https://ui-avatars.com/api/?name=Usuario&background=4f46e5&color=fff" class="w-16 h-16 rounded-full object-cover border-2 border-indigo-600 shadow" alt="Foto de perfil">
+                    <label for="input-foto-perfil" class="absolute bottom-0 right-0 bg-indigo-600 text-white p-1 rounded-full cursor-pointer hover:bg-indigo-700 transition shadow">
+                        <i data-lucide="camera" class="w-3.5 h-3.5"></i>
+                    </label>
+                    <input type="file" id="input-foto-perfil" accept="image/*" class="hidden" onchange="previsualizarFotoPerfil(event)">
+                </div>
+                <div class="min-w-0 flex-1">
+                    <h2 id="profile-display-name" class="font-bold text-slate-800 text-base truncate">Cargando...</h2>
+                    <p id="profile-display-carrera" class="text-xs text-slate-500 truncate">Estudiante UTP</p>
+                </div>
+            </div>
+
+            <div class="space-y-3">
+                <button onclick="abrirModalEditarPerfil()" class="w-full flex items-center justify-between p-3.5 bg-white border border-slate-200 rounded-xl shadow-sm hover:bg-slate-50 transition-colors">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-base shrink-0">✏️</div>
+                        <div class="text-left">
+                            <p class="text-xs font-bold text-slate-800">Editar mis datos</p>
+                            <p class="text-[10px] text-slate-400">Nombre, carrera profesional o contraseña</p>
+                        </div>
+                    </div>
+                    <span class="text-slate-300 font-bold text-xs">❯</span>
+                </button>
+
+                <button onclick="abrirModalReporte()" class="w-full flex items-center justify-between p-3.5 bg-white border border-slate-200 rounded-xl shadow-sm hover:bg-slate-50 transition-colors">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-xl bg-red-50 text-red-500 flex items-center justify-center font-bold text-base shrink-0">🚨</div>
+                        <div class="text-left">
+                            <p class="text-xs font-bold text-slate-800">Reportar un problema</p>
+                            <p class="text-[10px] text-slate-400">Envía incidencias al administrador</p>
+                        </div>
+                    </div>
+                    <span class="text-slate-300 font-bold text-xs">❯</span>
+                </button>
+
+                <div onclick="abrirModalResenaApp()" class="bg-white border border-slate-200 rounded-xl p-3.5 shadow-sm flex items-center justify-between cursor-pointer hover:bg-slate-50 transition-colors">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center font-bold text-base shrink-0">⭐</div>
+                        <div class="text-left">
+                            <p class="text-xs font-bold text-slate-800">Calificar la aplicación</p>
+                            <p class="text-[10px] text-slate-400">Deja tu opinión sobre PataRunner</p>
+                        </div>
+                    </div>
+                    <span class="text-slate-300 font-bold text-xs">❯</span>
+                </div>
+
+                <button id="logout-btn" class="w-full py-3 rounded-xl border border-red-200 text-red-600 font-medium text-[13px] bg-white hover:bg-red-50 transition-colors shadow-sm mt-2">
+                    Cerrar sesión
                 </button>
             </div>
         </div>
 
-        <!-- Toast Notificación Flotante -->
-        <div id="toast" class="hidden absolute top-14 left-1/2 -translate-x-1/2 bg-slate-900/95 text-white text-xs font-semibold px-4 py-2.5 rounded-full shadow-lg z-[130] flex items-center gap-2 whitespace-nowrap">
-            <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i>
-            <span id="toast-msg">Acción completada</span>
+      </div>
+
+      <!-- ===== NAV BAR INFERIOR ===== -->
+<div id="bottom-nav-bar" class="shrink-0 w-full bg-white border-t border-slate-100 px-6 py-3 flex items-center justify-between z-30">
+    <button onclick="showTab('inicio')" class="nav-btn text-blue-600 flex flex-col items-center gap-1" data-nav="inicio">
+        <i data-lucide="home" class="w-5 h-5"></i><span class="text-[9.5px] font-medium">Inicio</span>
+    </button>
+    
+    <button onclick="showTab('pedidos'); if(typeof cargarMisPedidos === 'function') cargarMisPedidos();" class="nav-btn text-slate-300 flex flex-col items-center gap-1" data-nav="pedidos">
+        <i data-lucide="package" class="w-5 h-5"></i><span class="text-[9.5px] font-medium">Pedidos</span>
+    </button>
+    
+    <button onclick="showTab('runner'); if(typeof cargarEntregasActivas === 'function') cargarEntregasActivas();" class="hidden nav-btn text-slate-300 flex flex-col items-center gap-1" data-nav="runner">
+        <i data-lucide="wallet" class="w-5 h-5"></i><span class="text-[9.5px] font-medium">Runner</span>
+    </button>
+    
+    <button id="nav-btn-historial" onclick="showTab('historial-runner'); if(typeof cargarHistorialRunner === 'function') cargarHistorialRunner();" class="hidden nav-btn text-slate-300 flex flex-col items-center gap-1" data-nav="historial">
+        <i data-lucide="history" class="w-5 h-5"></i><span class="text-[9.5px] font-medium">Historial</span>
+    </button>
+
+    <button onclick="showTab('perfil')" class="nav-btn text-slate-300 flex flex-col items-center gap-1" data-nav="perfil">
+        <i data-lucide="user" class="w-5 h-5"></i><span class="text-[9.5px] font-medium">Perfil</span>
+    </button>
+</div>
+
+      <!-- MODALS FLOTANTES SECUNDARIOS -->
+      <div id="product-modal" class="hidden absolute inset-0 z-50 bg-black/50 items-end">
+        <div class="w-full h-[80%] bg-white rounded-t-[28px] flex flex-col overflow-hidden shadow-2xl">
+          <div class="flex items-center gap-2 px-4 py-3 border-b border-slate-50 shrink-0">
+            <p id="product-modal-title" class="text-[14px] font-display font-bold text-slate-900 flex-1 truncate">Productos</p>
+              <button id="product-modal-close-btn" class="text-slate-400 shrink-0"><i data-lucide="x" class="w-5 h-5"></i></button>
+          </div>
+          <div class="px-4 pt-2 shrink-0">
+            <div class="flex bg-slate-100 p-1 rounded-xl text-xs font-semibold">
+              <button id="btn-torre-a" onclick="seleccionarTorreModal('A')" class="flex-1 py-1.5 rounded-lg bg-white text-blue-600 shadow-sm transition-all flex items-center justify-center gap-1 font-bold">
+                🏢 Torre A (Principal)
+              </button>
+              <button id="btn-torre-b" onclick="seleccionarTorreModal('B')" class="flex-1 py-1.5 rounded-lg text-slate-500 hover:text-slate-700 transition-all flex items-center justify-center gap-1 font-normal">
+                🏢 Torre B
+              </button>
+            </div>
+          </div>
+          <div id="store-tabs" class="flex items-start gap-4 px-4 pt-3 pb-3 border-b border-slate-100 shrink-0 overflow-x-auto"></div>
+          <div id="product-list-view" class="flex-1 flex flex-col overflow-hidden">
+            <div id="product-list" class="flex-1 overflow-y-auto px-4 py-2"></div>
+          </div>
+          <div id="catalog-cart-bar" class="hidden shrink-0 border-t border-slate-100 p-3">
+            <button id="catalog-cart-bar-btn" class="w-full py-3 rounded-xl bg-blue-600 text-white text-[13px] font-display font-semibold flex items-center justify-center gap-2">
+              <i data-lucide="shopping-bag" class="w-4 h-4"></i>
+              <span id="catalog-cart-bar-text">Ver carrito</span>
+            </button>
+          </div>
         </div>
+      </div>
+
+      <div id="specify-modal" class="hidden absolute inset-0 z-50 bg-black/50 items-center justify-center px-6">
+        <div class="w-full bg-white rounded-2xl p-5">
+          <p class="text-[14px] font-display font-bold text-slate-900 mb-1">¿Qué necesitas?</p>
+          <p class="text-[12px] text-slate-500 mb-3">Cuéntale a tu Runner qué quieres que te traiga.</p>
+          <textarea id="specify-input" rows="3" placeholder="Ej: una copia anillada de 40 hojas" class="w-full text-[13px] border border-slate-200 rounded-xl p-3 outline-none resize-none text-slate-700"></textarea>
+          <p class="text-[10.5px] font-semibold text-slate-500 uppercase tracking-wide mt-3 mb-1">Precio aproximado</p>
+          <div class="flex items-center gap-2 bg-slate-50 rounded-xl px-3 py-2 border border-slate-100">
+            <span class="font-mono-stat text-slate-500 text-[13px]">S/</span>
+            <input id="specify-price-input" type="number" min="0.5" step="0.5" placeholder="3.00" class="flex-1 bg-transparent outline-none text-[13px] font-mono-stat font-semibold text-slate-900" />
+          </div>
+          <div class="flex gap-2 mt-4">
+            <button id="specify-cancel-btn" class="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-500 text-[13px] font-semibold">Cancelar</button>
+            <button id="specify-confirm-btn" disabled class="flex-1 py-2.5 rounded-xl bg-slate-100 text-slate-400 text-[13px] font-semibold">Agregar</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="cart-modal" class="hidden absolute inset-0 z-50 bg-black/50 items-end">
+        <div class="w-full h-[92%] bg-white rounded-t-[28px] flex flex-col overflow-hidden shadow-2xl">
+          <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100 shrink-0">
+            <p class="text-[14px] font-display font-bold text-slate-900">Tu pedido</p>
+            <button id="cart-close-btn" class="text-slate-400"><i data-lucide="x" class="w-5 h-5"></i></button>
+          </div>
+          <div class="flex-1 overflow-y-auto px-4 py-3">
+            <div class="mb-4">
+              <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mb-2">Resumen del pedido</p>
+              <div id="cart-items-list" class="rounded-2xl border border-slate-100 divide-y divide-slate-50"></div>
+              <div class="flex items-center justify-between mt-2 px-1">
+                <span class="text-[12.5px] text-slate-500">Subtotal tienda</span>
+                <span id="cart-subtotal-text" class="font-mono-stat text-[13px] font-semibold text-slate-900">S/ 0.00</span>
+              </div>
+            </div>
+            <div class="rounded-2xl border border-blue-100 bg-blue-50/50 p-4 mb-4">
+              <p class="text-[12px] font-display font-bold text-slate-900 mb-3">Datos de entrega</p>
+              <p class="text-[10.5px] font-semibold text-slate-500 uppercase tracking-wide mb-1">Ubicación de entrega</p>
+              <input id="cart-location-input" type="text" placeholder="Ej: Torre B, Piso 6" class="w-full text-[13px] bg-white border border-slate-200 rounded-xl px-3 py-2.5 outline-none text-slate-700 mb-3" />
+              <p class="text-[10.5px] font-semibold text-slate-500 uppercase tracking-wide mb-1">Tarifa para tu Runner</p>
+              <div class="flex items-center gap-2 bg-white border-2 border-blue-300 rounded-xl px-3 py-2.5">
+                <span class="font-mono-stat text-[16px] font-bold text-blue-600">S/</span>
+                <input id="cart-fee-input" type="number" min="0.5" step="0.5" placeholder="3.50" class="flex-1 bg-transparent outline-none text-[16px] font-mono-stat font-bold text-slate-900" />
+              </div>
+              <p class="text-[11px] text-slate-500 mt-1 mb-2">Tú decides cuánto pagar por la entrega.</p>
+              <div class="bg-blue-50 border border-blue-100 rounded-lg p-2.5 flex items-start gap-2 mt-2 mb-3">
+                  <span class="text-[14px] shrink-0">💡</span>
+                  <p class="text-[10.5px] text-blue-800 leading-tight">
+                      <span class="font-semibold">Un pequeño recordatorio:</span> Si tu pedido incluye productos de <span class="font-bold">diferentes tiendas</span>, tu Runner tendrá que caminar más para recolectarlos. ¡Considera una tarifa justa por su esfuerzo! 💙
+                  </p>
+              </div>              
+              <p class="text-[10.5px] font-semibold text-slate-500 uppercase tracking-wide mb-1 mt-3">Método de pago</p>
+              <select id="cart-payment-input" class="w-full text-[13px] bg-white border border-slate-200 rounded-xl px-3 py-2.5 outline-none text-slate-700 mb-3">
+                  <option value="Efectivo">Efectivo</option>
+                  <option value="Yape">Yape</option>
+                  <option value="Plin">Plin</option>
+              </select>
+            </div>
+            <div class="flex items-center justify-between px-1 mb-2">
+              <span class="text-[13px] font-semibold text-slate-700">Total a cobrar</span>
+              <span id="cart-total-text" class="font-mono-stat text-[18px] font-bold text-blue-600">S/ 0.00</span>
+            </div>
+          </div>
+          <div class="border-t border-slate-100 p-3 shrink-0">
+            <button id="cart-publish-btn" disabled class="w-full py-3.5 rounded-xl bg-slate-100 text-slate-400 font-display font-semibold text-[15px]">Publicar Anuncio</button>
+            <p id="cart-hint-text" class="text-[10.5px] text-slate-400 text-center mt-1.5">Agrega productos, la ubicación y la tarifa para publicar</p>
+          </div>
+        </div>
+      </div>
+
+      <div id="rating-modal" class="hidden absolute inset-0 z-50 bg-black/50 items-center justify-center px-6">
+        <div class="w-full bg-white rounded-2xl p-5">
+          <div class="text-center mb-1">
+            <div id="rating-runner-avatar" class="w-12 h-12 rounded-full bg-blue-600 text-white flex items-center justify-center font-display font-bold text-[14px] mx-auto mb-2">CR</div>
+            <p class="text-[14px] font-display font-bold text-slate-900 leading-snug">¿Cómo estuvo tu pedido con <span id="rating-runner-name">tu Runner</span>?</p>
+          </div>
+          <div class="flex justify-center gap-1.5 my-4" id="rating-stars">
+            <button data-star="1" class="rating-star text-3xl leading-none text-slate-300">★</button>
+            <button data-star="2" class="rating-star text-3xl leading-none text-slate-300">★</button>
+            <button data-star="3" class="rating-star text-3xl leading-none text-slate-300">★</button>
+            <button data-star="4" class="rating-star text-3xl leading-none text-slate-300">★</button>
+            <button data-star="5" class="rating-star text-3xl leading-none text-slate-300">★</button>
+          </div>
+          <button id="submit-rating-btn" disabled class="w-full py-3 rounded-xl bg-slate-100 text-slate-400 font-display font-semibold text-[14px] transition-colors">Enviar calificación</button>
+          <button id="skip-rating-btn" class="w-full py-2 mt-1 text-[12px] text-slate-400 font-medium">Ahora no</button>
+        </div>
+      </div>
+
+      <div id="cancel-alert-modal" class="hidden absolute inset-0 z-50 bg-black/50 items-center justify-center px-6">
+        <div class="w-full bg-white rounded-2xl p-5">
+          <div class="w-11 h-11 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-3">
+            <i data-lucide="x-circle" class="w-6 h-6 text-red-500"></i>
+          </div>
+          <p class="text-[14px] font-display font-bold text-slate-900 text-center">Tu Runner canceló el pedido</p>
+          <p class="text-[11.5px] text-slate-400 text-center mt-1">Así lo vería <span id="cancel-alert-student">el alumno</span> en su pantalla ahora mismo.</p>
+          <p class="text-[13px] text-slate-600 text-center mt-4 mb-3">¿Quieres volver a publicar tu pedido?</p>
+          <div class="flex flex-col gap-2">
+            <button id="cancel-alert-yes" class="w-full py-2.5 rounded-xl bg-blue-600 text-white text-[13px] font-semibold">Sí, publicarlo de nuevo</button>
+            <button id="cancel-alert-no" class="w-full py-2.5 rounded-xl border border-slate-200 text-slate-500 text-[13px] font-semibold">No, gracias</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="chat-modal" class="hidden absolute inset-0 z-50 bg-black/40 items-end">
+        <div class="w-full h-[86%] bg-white rounded-t-[28px] flex flex-col overflow-hidden shadow-2xl">
+          <div class="flex items-center gap-3 px-4 py-3 border-b border-slate-100 shrink-0">
+            <button id="chat-close-btn" onclick="cerrarChat()" class="text-slate-400"><i data-lucide="chevron-down" class="w-5 h-5"></i></button>
+            <div id="chat-student-avatar" class="w-9 h-9 rounded-full bg-blue-600 overflow-hidden flex items-center justify-center text-white text-[12px] font-semibold shrink-0 border border-slate-200"></div>
+            <div class="flex-1 min-w-0">
+              <p id="chat-student-name" class="text-[13px] font-semibold text-slate-900 truncate">Andrea Ruiz</p>
+              <p id="chat-order-summary" class="text-[10.5px] text-slate-500 truncate">Snack · Cafetería → Aula 210</p>
+            </div>
+            <i data-lucide="shield-check" class="w-4 h-4 text-blue-600 shrink-0"></i>
+          </div>
+          <div id="chat-pickup-banner" class="hidden mx-4 mt-3 rounded-lg bg-blue-600 px-3 py-2 flex items-start gap-2 shrink-0">
+            <span class="text-[15px] leading-none shrink-0">📍</span>
+            <div class="min-w-0">
+              <p class="text-[9px] font-semibold text-blue-100 uppercase tracking-wide leading-none">Recoger en (asignado por el sistema)</p>
+              <p id="chat-pickup-text" class="text-[13px] font-bold text-white leading-tight mt-0.5">Frago Gourmet - Torre A</p>
+            </div>
+          </div>
+          <div id="chat-messages" class="flex-1 overflow-y-auto px-4 py-3 space-y-2.5 bg-slate-50"></div>
+          <div class="border-t border-slate-100 px-3 py-2.5 flex items-center gap-2 shrink-0">
+              <input type="file" id="chat-image-input" accept="image/*" capture="environment" class="hidden" onchange="enviarImagenChat(event)" />
+              <button type="button" onclick="document.getElementById('chat-image-input').click()" class="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 shrink-0 hover:bg-slate-200 transition-colors">
+                  <i data-lucide="camera" class="w-4.5 h-4.5"></i>
+              </button>
+              <input id="caja-chat-verdadera" type="text" placeholder="Escribe un mensaje..." onkeypress="if(event.key === 'Enter') enviarMensaje()" class="flex-1 text-[13px] bg-slate-100 rounded-full px-4 py-2 outline-none text-slate-700" />
+              <button type="button" onclick="enviarMensaje()" class="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white shrink-0 transition-colors">
+                  <i data-lucide="send" class="w-4 h-4"></i>
+              </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODALES DE NAVEGACIÓN Y EDICIÓN -->
+      <div id="modal-nueva-tienda" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+          <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-slate-100">
+              <div class="flex justify-between items-center mb-4">
+                  <h3 class="text-sm font-bold text-slate-800">Añadir Nueva Tienda</h3>
+                  <button onclick="cerrarModalNuevaTienda()" class="text-slate-400 hover:text-slate-600">
+                      <i data-lucide="x" class="w-4 h-4"></i>
+                  </button>
+              </div>
+              <form id="form-nueva-tienda" class="space-y-3">
+                  <div>
+                      <label class="text-[11px] font-semibold text-slate-600 block mb-1">Nombre de la Tienda</label>
+                      <input type="text" id="input-nombre-tienda" required placeholder="Ej. Frago Gourmet (Torre B)" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:border-indigo-600">
+                  </div>
+                  <div>
+                      <label class="text-[11px] font-semibold text-slate-600 block mb-1">Ubicación en Sede</label>
+                      <input type="text" id="input-ubicacion-tienda" required placeholder="Ej. Torre B - Piso 1" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:border-indigo-600">
+                  </div>
+                  <button type="submit" class="w-full py-2 bg-indigo-600 text-white font-semibold rounded-lg text-xs hover:bg-indigo-700 transition-colors mt-2">
+                      Guardar Tienda
+                  </button>
+              </form>
+          </div>
+      </div>
+
+      <div id="modal-nuevo-producto" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+          <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-slate-100">
+              <div class="flex justify-between items-center mb-4">
+                  <h3 class="text-sm font-bold text-slate-800">Añadir Nuevo Producto</h3>
+                  <button onclick="cerrarModalNuevoProducto()" class="text-slate-400 hover:text-slate-600">
+                      <i data-lucide="x" class="w-4 h-4"></i>
+                  </button>
+              </div>
+              <form id="form-nuevo-producto" class="space-y-2.5">
+                  <div>
+                      <label class="text-[11px] font-semibold text-slate-600 block mb-1">Asignar a Tienda</label>
+                      <select id="select-tienda-producto" required class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:border-indigo-600"></select>
+                  </div>
+                  <div>
+                      <label class="text-[11px] font-semibold text-slate-600 block mb-1">Nombre del Producto</label>
+                      <input type="text" id="input-nombre-producto" required placeholder="Ej. Empanada de Carne" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:border-indigo-600">
+                  </div>
+                  <div class="grid grid-cols-2 gap-2">
+                      <div>
+                          <label class="text-[11px] font-semibold text-slate-600 block mb-1">Precio (S/)</label>
+                          <input type="number" step="0.10" id="input-precio-producto" required placeholder="4.50" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:border-indigo-600">
+                      </div>
+                      <div>
+                          <label class="text-[11px] font-semibold text-slate-600 block mb-1">Categoría</label>
+                          <select id="select-categoria-producto" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:border-indigo-600">
+                              <option value="snack">Snack</option>
+                              <option value="almuerzo">Almuerzo</option>
+                              <option value="utiles">Útiles</option>
+                              <option value="otro">Otro</option>
+                          </select>
+                      </div>
+                  </div>
+                  <div>
+                      <label class="text-[11px] font-semibold text-slate-600 block mb-1">Stock Inicial</label>
+                      <input type="number" id="input-stock-producto" min="0" value="10" required placeholder="Ej: 10" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:border-indigo-600">
+                  </div>
+                  <div>
+                      <label class="block text-[11px] font-bold text-slate-600 mb-1">Subcategoría (Opcional)</label>
+                      <input type="text" id="input-subcategoria-producto" placeholder="Ej: Desayunos, Menú del día" class="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-600" />
+                  </div>
+                  <div>
+                      <label class="text-[11px] font-semibold text-slate-600 block mb-1">Descripción (Opcional)</label>
+                      <input type="text" id="input-desc-producto" placeholder="Ej. Rellena de carne picada y huevo" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:border-indigo-600">
+                  </div>
+                  <div>
+                      <label class="text-[11px] font-semibold text-slate-600 block mb-1">URL de Imagen (Opcional)</label>
+                      <input type="url" id="input-imagen-producto" placeholder="https://ejemplo.com/imagen.jpg" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:border-indigo-600">
+                  </div>
+                  <button type="submit" class="w-full py-2 bg-indigo-600 text-white font-semibold rounded-lg text-xs hover:bg-indigo-700 transition-colors mt-2">
+                      Guardar Producto
+                  </button>
+              </form>
+          </div>
+      </div>
+      <!-- ===== MODAL: EDITAR MIS DATOS ===== -->
+      <div id="modal-editar-perfil" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[99] flex items-center justify-center p-4">
+          <div class="bg-white rounded-3xl w-full max-w-sm p-6 space-y-4 shadow-2xl">
+              <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                  <h3 class="text-base font-bold text-slate-800">Editar Perfil</h3>
+                  <button type="button" onclick="cerrarModalEditarPerfil()" class="text-slate-400 hover:text-slate-600">
+                      <i data-lucide="x" class="w-5 h-5"></i>
+                  </button>
+              </div>
+              <form onsubmit="guardarPerfilUsuario(event)" class="space-y-3">
+                  <div>
+                      <label class="text-[11px] font-semibold text-slate-600 block mb-1">Nombre Completo</label>
+                      <input type="text" id="edit-nombre" required class="w-full p-3 border border-slate-300 rounded-xl text-xs bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-600">
+                  </div>
+                  <div>
+                      <label class="text-[11px] font-semibold text-slate-600 block mb-1">Carrera Profesional</label>
+                      <input type="text" id="edit-carrera" required class="w-full p-3 border border-slate-300 rounded-xl text-xs bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-600">
+                  </div>
+                  <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-xl transition-colors shadow">
+                      Guardar Cambios
+                  </button>
+              </form>
+          </div>
+      </div>
+
+      <!-- ===== MODAL: REPORTAR PROBLEMA ===== -->
+      <div id="modal-reportar-incidencia" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[99] flex items-center justify-center p-4">
+          <div class="bg-white rounded-3xl w-full max-w-sm p-6 space-y-4 shadow-2xl">
+              <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                  <h3 class="text-base font-bold text-slate-800">Reportar un Problema</h3>
+                  <button type="button" onclick="cerrarModalReporte()" class="text-slate-400 hover:text-slate-600">
+                      <i data-lucide="x" class="w-5 h-5"></i>
+                  </button>
+              </div>
+              <form id="form-nuevo-reporte" class="space-y-3">
+                  <div>
+                      <label class="text-[11px] font-semibold text-slate-600 block mb-1">Detalla el inconveniente</label>
+                      <textarea id="input-motivo-reporte" rows="4" required placeholder="Describe lo sucedido brevemente..." class="w-full p-3 border border-slate-300 rounded-xl text-xs bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-600 resize-none"></textarea>
+                  </div>
+                  <button type="submit" class="w-full py-3 bg-red-600 hover:bg-red-700 text-white font-semibold text-xs rounded-xl transition-colors shadow">
+                      Enviar Reporte
+                  </button>
+              </form>
+          </div>
+      </div>
+
+      <!-- ===== MODAL: CALIFICAR LA APLICACIÓN ===== -->
+      <div id="modal-resena-app" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[99] flex items-center justify-center p-4">
+          <div class="bg-white rounded-3xl w-full max-w-sm p-6 space-y-4 shadow-2xl text-center">
+              <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                  <h3 class="text-base font-bold text-slate-800">Calificar PataRunner</h3>
+                  <button type="button" onclick="cerrarModalResenaApp()" class="text-slate-400 hover:text-slate-600">
+                      <i data-lucide="x" class="w-5 h-5"></i>
+                  </button>
+              </div>
+              <form id="form-resena-app" class="space-y-3">
+                  <p class="text-xs text-slate-500">¿Qué tal ha sido tu experiencia usando la plataforma?</p>
+                  <div class="flex justify-center gap-2 my-2">
+                      <button type="button" data-value="1" class="star-app-btn text-2xl text-slate-300 hover:text-amber-400 transition-colors">★</button>
+                      <button type="button" data-value="2" class="star-app-btn text-2xl text-slate-300 hover:text-amber-400 transition-colors">★</button>
+                      <button type="button" data-value="3" class="star-app-btn text-2xl text-slate-300 hover:text-amber-400 transition-colors">★</button>
+                      <button type="button" data-value="4" class="star-app-btn text-2xl text-slate-300 hover:text-amber-400 transition-colors">★</button>
+                      <button type="button" data-value="5" class="star-app-btn text-2xl text-slate-300 hover:text-amber-400 transition-colors">★</button>
+                  </div>
+                  <textarea id="input-comentario-resena" rows="3" placeholder="Déjanos una sugerencia u opinión (opcional)..." class="w-full p-3 border border-slate-300 rounded-xl text-xs bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-600 resize-none text-left"></textarea>
+                  <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-xl transition-colors shadow">
+                      Enviar Opinión
+                  </button>
+              </form>
+          </div>
+      </div>
 
     </div>
+  </div>
 
-    <!-- Script Principal de la Aplicación -->
-    <script src="main.js"></script>
+  <!-- SCRIPTS AL FINAL -->
+  <script src="js/main.js"></script>
+  <script type="module" src="js/auth.js"></script>
+
 </body>
 </html>
