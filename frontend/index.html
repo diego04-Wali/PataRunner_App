@@ -764,82 +764,67 @@
 
       </div>
 
-      <!-- ===== NAV BAR INFERIOR CURVA (ESTILO CUNA PROFUNDA) ===== -->
-      <div id="bottom-nav-bar" class="shrink-0 w-full relative z-30 select-none bg-transparent">
-        <!-- SVG Curvo con muesca semicircular profunda (Modo Alumno) -->
-        <svg id="nav-curve-svg" viewBox="0 0 380 82" preserveAspectRatio="none" class="w-full h-[82px] block pointer-events-none drop-shadow-[0_-4px_14px_rgba(37,99,235,0.2)]">
-          <defs>
-            <linearGradient id="navGradAlumno" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stop-color="#2563EB" />
-              <stop offset="50%" stop-color="#0284C7" />
-              <stop offset="100%" stop-color="#06B6D4" />
-            </linearGradient>
-          </defs>
-          <!-- Borde superior en y=18, hombros redondeados en x=130 y x=250, y valle semicircular profundo hasta y=58 -->
-          <path d="M0,18 L124,18 C142,18 148,58 190,58 C232,58 238,18 256,18 L380,18 L380,82 L0,82 Z" fill="url(#navGradAlumno)" />
-        </svg>
+      <!-- ===== NAV BAR INFERIOR LÍQUIDA (ALUMNO & RUNNER) ===== -->
+      <div id="bottom-nav-bar" class="shrink-0 w-full relative z-30 select-none bg-transparent pt-5">
+        <!-- Indicador líquido que se desliza horizontalmente -->
+        <div id="liquid-indicator" class="absolute top-0 left-0 w-1/4 h-[84px] pointer-events-none transition-transform duration-300 ease-[cubic-bezier(0.34,1.35,0.64,1)]">
+          <!-- Curva líquida superior (gota que sobresale) -->
+          <svg viewBox="0 0 120 34" preserveAspectRatio="none" class="w-full h-[26px] block">
+            <path d="M0,34 C24,34 32,4 60,4 C88,4 96,34 120,34 Z" class="liquid-fill fill-blue-600 transition-colors duration-300" />
+          </svg>
+          <!-- Círculo elevado del ícono activo -->
+          <div class="liquid-circle mx-auto -mt-[19px] w-[46px] h-[46px] rounded-full bg-blue-600 border-[3px] border-white/25 shadow-md transition-colors duration-300"></div>
+        </div>
 
-        <!-- MODO ALUMNO: 4 botones + Carrito encajado en la cuna -->
-        <div id="nav-alumno-group" class="absolute inset-x-0 bottom-0 h-[64px] px-3 grid grid-cols-5 items-center text-white">
-          <button onclick="showTab('inicio')" class="nav-btn-item active flex flex-col items-center justify-center gap-0.5 pt-1" data-nav="inicio">
-            <i data-lucide="home" class="w-5 h-5"></i>
-            <span class="text-[9.5px] font-semibold tracking-tight">Inicio</span>
-            <span class="nav-dot w-1 h-1 rounded-full bg-white mt-0.5"></span>
-          </button>
+        <!-- Barra base color sólido/degradado -->
+        <div id="nav-base-bar" class="relative w-full h-[62px] bg-gradient-to-r from-blue-600 via-sky-600 to-cyan-500 text-white shadow-[0_-4px_14px_rgba(37,99,235,0.2)] transition-colors duration-300">
+          
+          <!-- GRUPO ALUMNO (4 pestañas) -->
+          <div id="nav-alumno-group" class="w-full h-full grid grid-cols-4 items-center">
+            <button onclick="showTab('inicio')" class="liquid-tab-btn active flex flex-col items-center justify-center h-full" data-nav="inicio" data-index="0">
+              <i data-lucide="home" class="tab-icon w-5 h-5 transition-transform duration-300"></i>
+              <span class="tab-label text-[10px] font-medium mt-1 opacity-80 transition-all duration-300">Inicio</span>
+            </button>
 
-          <button onclick="showTab('pedidos'); if(typeof cargarMisPedidos === 'function') cargarMisPedidos();" class="nav-btn-item flex flex-col items-center justify-center gap-0.5 pt-1 text-white/75" data-nav="pedidos">
-            <i data-lucide="package" class="w-5 h-5"></i>
-            <span class="text-[9.5px] font-semibold tracking-tight">Pedidos</span>
-            <span class="nav-dot w-1 h-1 rounded-full bg-white mt-0.5 opacity-0"></span>
-          </button>
+            <button onclick="showTab('pedidos'); if(typeof cargarMisPedidos === 'function') cargarMisPedidos();" class="liquid-tab-btn flex flex-col items-center justify-center h-full" data-nav="pedidos" data-index="1">
+              <i data-lucide="package" class="tab-icon w-5 h-5 transition-transform duration-300"></i>
+              <span class="tab-label text-[10px] font-medium mt-1 opacity-80 transition-all duration-300">Pedidos</span>
+            </button>
 
-          <!-- Botón flotante encajado dentro de la cuna -->
-          <div class="relative flex justify-center items-start h-full">
-            <button id="nav-cart-fab" type="button" onclick="document.getElementById('cart-btn')?.click()"
-              class="nav-fab-cart -mt-[24px] w-[56px] h-[56px] rounded-full bg-slate-900 hover:bg-slate-800 active:scale-95 text-white shadow-[0_6px_16px_rgba(15,23,42,0.35)] flex items-center justify-center transition-all">
-              <i data-lucide="shopping-bag" class="w-[22px] h-[22px] text-cyan-300"></i>
-              <span id="nav-cart-badge" class="hidden absolute -top-0.5 -right-0.5 min-w-[19px] h-[19px] px-1 rounded-full bg-amber-400 text-slate-950 text-[10px] font-extrabold flex items-center justify-center shadow">0</span>
+            <button onclick="showTab('historial-alumno'); if(typeof cargarHistorialPedidos === 'function') cargarHistorialPedidos();" class="liquid-tab-btn flex flex-col items-center justify-center h-full" data-nav="historial-alumno" data-index="2">
+              <i data-lucide="history" class="tab-icon w-5 h-5 transition-transform duration-300"></i>
+              <span class="tab-label text-[10px] font-medium mt-1 opacity-80 transition-all duration-300">Historial</span>
+            </button>
+
+            <button onclick="showTab('perfil')" class="liquid-tab-btn flex flex-col items-center justify-center h-full" data-nav="perfil" data-index="3">
+              <i data-lucide="user" class="tab-icon w-5 h-5 transition-transform duration-300"></i>
+              <span class="tab-label text-[10px] font-medium mt-1 opacity-80 transition-all duration-300">Perfil</span>
             </button>
           </div>
 
-          <button onclick="showTab('historial-alumno'); if(typeof cargarHistorialPedidos === 'function') cargarHistorialPedidos();" class="nav-btn-item flex flex-col items-center justify-center gap-0.5 pt-1 text-white/75" data-nav="historial-alumno">
-            <i data-lucide="history" class="w-5 h-5"></i>
-            <span class="text-[9.5px] font-semibold tracking-tight">Historial</span>
-            <span class="nav-dot w-1 h-1 rounded-full bg-white mt-0.5 opacity-0"></span>
-          </button>
+          <!-- GRUPO RUNNER (4 pestañas) -->
+          <div id="nav-runner-group" class="hidden w-full h-full grid grid-cols-4 items-center">
+            <button onclick="setActiveRole('alumno')" class="liquid-tab-btn flex flex-col items-center justify-center h-full" data-nav="inicio-runner" data-index="0">
+              <i data-lucide="home" class="tab-icon w-5 h-5 transition-transform duration-300"></i>
+              <span class="tab-label text-[10px] font-medium mt-1 opacity-80 transition-all duration-300">Inicio</span>
+            </button>
 
-          <button onclick="showTab('perfil')" class="nav-btn-item flex flex-col items-center justify-center gap-0.5 pt-1 text-white/75" data-nav="perfil">
-            <i data-lucide="user" class="w-5 h-5"></i>
-            <span class="text-[9.5px] font-semibold tracking-tight">Perfil</span>
-            <span class="nav-dot w-1 h-1 rounded-full bg-white mt-0.5 opacity-0"></span>
-          </button>
-        </div>
+            <button onclick="showTab('runner'); if(typeof cambiarVistaRunner === 'function') cambiarVistaRunner('disponibles');" class="liquid-tab-btn active flex flex-col items-center justify-center h-full" data-nav="runner" data-index="1">
+              <i data-lucide="bike" class="tab-icon w-5 h-5 transition-transform duration-300"></i>
+              <span class="tab-label text-[10px] font-medium mt-1 opacity-80 transition-all duration-300">Pedidos</span>
+            </button>
 
-        <!-- MODO RUNNER: Barra esmeralda degradada limpia de 4 botones -->
-        <div id="nav-runner-group" class="hidden w-full h-[64px] px-4 grid grid-cols-4 items-center bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-500 text-white shadow-[0_-4px_12px_rgba(5,150,105,0.18)]">
-          <button onclick="setActiveRole('alumno')" class="nav-btn-item flex flex-col items-center justify-center gap-0.5 pt-1 text-white/75" data-nav="inicio-runner">
-            <i data-lucide="home" class="w-5 h-5"></i>
-            <span class="text-[9.5px] font-semibold">Inicio</span>
-            <span class="nav-dot w-1 h-1 rounded-full bg-white mt-0.5 opacity-0"></span>
-          </button>
+            <button onclick="showTab('historial-runner'); if(typeof cargarHistorialRunner === 'function') cargarHistorialRunner();" class="liquid-tab-btn flex flex-col items-center justify-center h-full" data-nav="historial-runner" data-index="2">
+              <i data-lucide="history" class="tab-icon w-5 h-5 transition-transform duration-300"></i>
+              <span class="tab-label text-[10px] font-medium mt-1 opacity-80 transition-all duration-300">Historial</span>
+            </button>
 
-          <button onclick="showTab('runner'); if(typeof cambiarVistaRunner === 'function') cambiarVistaRunner('disponibles');" class="nav-btn-item active flex flex-col items-center justify-center gap-0.5 pt-1" data-nav="runner">
-            <i data-lucide="bike" class="w-5 h-5"></i>
-            <span class="text-[9.5px] font-semibold">Pedidos</span>
-            <span class="nav-dot w-1 h-1 rounded-full bg-white mt-0.5"></span>
-          </button>
+            <button onclick="showTab('perfil')" class="liquid-tab-btn flex flex-col items-center justify-center h-full" data-nav="perfil" data-index="3">
+              <i data-lucide="user" class="tab-icon w-5 h-5 transition-transform duration-300"></i>
+              <span class="tab-label text-[10px] font-medium mt-1 opacity-80 transition-all duration-300">Perfil</span>
+            </button>
+          </div>
 
-          <button onclick="showTab('historial-runner'); if(typeof cargarHistorialRunner === 'function') cargarHistorialRunner();" class="nav-btn-item flex flex-col items-center justify-center gap-0.5 pt-1 text-white/75" data-nav="historial-runner">
-            <i data-lucide="history" class="w-5 h-5"></i>
-            <span class="text-[9.5px] font-semibold">Historial</span>
-            <span class="nav-dot w-1 h-1 rounded-full bg-white mt-0.5 opacity-0"></span>
-          </button>
-
-          <button onclick="showTab('perfil')" class="nav-btn-item flex flex-col items-center justify-center gap-0.5 pt-1 text-white/75" data-nav="perfil">
-            <i data-lucide="user" class="w-5 h-5"></i>
-            <span class="text-[9.5px] font-semibold">Perfil</span>
-            <span class="nav-dot w-1 h-1 rounded-full bg-white mt-0.5 opacity-0"></span>
-          </button>
         </div>
       </div>
 

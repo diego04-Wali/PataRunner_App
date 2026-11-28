@@ -1021,6 +1021,13 @@ if (logoutBtn) {
     });
 }
 
+function moverIndicadorLiquido(index) {
+  const indicator = document.getElementById('liquid-indicator');
+  if (indicator && index !== undefined) {
+    indicator.style.transform = `translateX(${Number(index) * 100}%)`;
+  }
+}
+
 function showTab(tabName) {
   const tabs = [
     'tab-inicio',
@@ -1040,29 +1047,49 @@ function showTab(tabName) {
   const target = document.getElementById(`tab-${tabName}`);
   if (target) target.classList.remove('hidden');
 
-  // Resaltar botón activo en la barra inferior
-  document.querySelectorAll('.nav-btn-item').forEach((btn) => {
-    const isMatch = btn.dataset.nav === tabName;
-    btn.classList.toggle('active', isMatch);
-    btn.classList.toggle('text-white', isMatch);
-    btn.classList.toggle('text-white/75', !isMatch);
-  });
+  // Detectar el grupo visible (Alumno o Runner) y mover la gota líquida
+  const grupoActivo = activeRole === 'runner'
+    ? document.getElementById('nav-runner-group')
+    : document.getElementById('nav-alumno-group');
+
+  if (grupoActivo) {
+    grupoActivo.querySelectorAll('.liquid-tab-btn').forEach((btn) => {
+      const isMatch = btn.dataset.nav === tabName;
+      btn.classList.toggle('active', isMatch);
+      if (isMatch) {
+        moverIndicadorLiquido(btn.dataset.index);
+      }
+    });
+  }
 
   if (window.lucide) lucide.createIcons();
 }
 
 function actualizarBarraPorRol(rol) {
-  const curveSvg = document.getElementById('nav-curve-svg');
   const navAlumno = document.getElementById('nav-alumno-group');
   const navRunner = document.getElementById('nav-runner-group');
+  const baseBar = document.getElementById('nav-base-bar');
+  const liquidFill = document.querySelector('.liquid-fill');
+  const liquidCircle = document.querySelector('.liquid-circle');
   const switcherBar = document.getElementById('role-switcher-bar');
   const btnAlumno = document.getElementById('role-btn-alumno');
   const btnRunner = document.getElementById('role-btn-runner');
 
   if (rol === 'runner') {
-    curveSvg?.classList.add('hidden');
     navAlumno?.classList.add('hidden');
     navRunner?.classList.remove('hidden');
+
+    if (baseBar) {
+      baseBar.className = 'relative w-full h-[62px] bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-500 text-white shadow-[0_-4px_14px_rgba(5,150,105,0.2)] transition-colors duration-300';
+    }
+    if (liquidFill) {
+      liquidFill.classList.remove('fill-blue-600');
+      liquidFill.classList.add('fill-emerald-600');
+    }
+    if (liquidCircle) {
+      liquidCircle.classList.remove('bg-blue-600');
+      liquidCircle.classList.add('bg-emerald-600');
+    }
     if (switcherBar) {
       switcherBar.classList.remove('bg-blue-600');
       switcherBar.classList.add('bg-emerald-600');
@@ -1073,9 +1100,20 @@ function actualizarBarraPorRol(rol) {
     }
     showTab('runner');
   } else {
-    curveSvg?.classList.remove('hidden');
     navAlumno?.classList.remove('hidden');
     navRunner?.classList.add('hidden');
+
+    if (baseBar) {
+      baseBar.className = 'relative w-full h-[62px] bg-gradient-to-r from-blue-600 via-sky-600 to-cyan-500 text-white shadow-[0_-4px_14px_rgba(37,99,235,0.2)] transition-colors duration-300';
+    }
+    if (liquidFill) {
+      liquidFill.classList.remove('fill-emerald-600');
+      liquidFill.classList.add('fill-blue-600');
+    }
+    if (liquidCircle) {
+      liquidCircle.classList.remove('bg-emerald-600');
+      liquidCircle.classList.add('bg-blue-600');
+    }
     if (switcherBar) {
       switcherBar.classList.remove('bg-emerald-600');
       switcherBar.classList.add('bg-blue-600');
