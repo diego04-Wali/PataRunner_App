@@ -6089,3 +6089,11 @@ setInterval(() => {
         window.moverCarruselDestacados(1);
     }
 }, 3500);
+
+window.abrirModalPostulacion = function() {
+    const modal = document.getElementById('postular-runner');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
+    }
+};
