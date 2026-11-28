@@ -1967,16 +1967,16 @@ async function cargarPedidosPendientes() {
             if (!contenedor.querySelector('.runner-idle-scene')) {
                 contenedor.innerHTML = `
                   <div class="runner-idle-scene flex flex-col items-center justify-center py-6 px-4 text-center">
-                    <div class="w-64 h-44 mb-3">
-                      <svg viewBox="0 0 320 210" class="w-full h-full overflow-visible" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <div class="w-64 h-48 mb-3">
+                      <svg viewBox="0 0 320 230" class="w-full h-full overflow-visible" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <style>
                           .runner-head {
-                            transform-origin: 160px 88px;
+                            transform-origin: 162px 84px;
                             animation: headBob 2.6s ease-in-out infinite;
                           }
                           @keyframes headBob {
-                            0%, 100% { transform: rotate(-4deg) translateY(0px); }
-                            50% { transform: rotate(4deg) translateY(1.5px); }
+                            0%, 100% { transform: rotate(-3.5deg) translateY(0px); }
+                            50% { transform: rotate(3.5deg) translateY(1.5px); }
                           }
                           .steam-1 { animation: steamRise 2.8s ease-in-out infinite; }
                           .steam-2 { animation: steamRise 2.8s ease-in-out 1.2s infinite; }
@@ -1987,78 +1987,144 @@ async function cargarPedidosPendientes() {
                           }
                           .phone-glow { animation: screenPulse 2.4s ease-in-out infinite; }
                           @keyframes screenPulse {
-                            0%, 100% { opacity: 0.4; }
+                            0%, 100% { opacity: 0.45; }
                             50% { opacity: 1; }
                           }
                         </style>
 
-                        <ellipse cx="160" cy="186" rx="115" ry="6" fill="#E2E8F0" />
+                        <!-- Sombra en el suelo -->
+                        <ellipse cx="160" cy="204" rx="112" ry="6" fill="#E2E8F0" />
 
                         <!-- BANCA DEL CAMPUS -->
                         <g stroke="#1E293B" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
-                          <path d="M84 148V182M236 148V182" />
-                          <rect x="68" y="88" width="184" height="16" rx="6" fill="#F8FAFC" />
-                          <rect x="68" y="112" width="184" height="16" rx="6" fill="#F1F5F9" />
-                          <rect x="56" y="138" width="208" height="11" rx="5" fill="#FFFFFF" />
-                          <path d="M72 149L68 184M248 149L252 184" />
+                          <path d="M84 162V198M236 162V198" />
+                          <rect x="66" y="102" width="188" height="15" rx="6" fill="#F8FAFC" />
+                          <rect x="66" y="124" width="188" height="15" rx="6" fill="#F1F5F9" />
+                          <rect x="54" y="150" width="212" height="12" rx="5" fill="#FFFFFF" />
+                          <path d="M70 162L66 200M250 162L254 200" />
                         </g>
 
-                        <!-- MOCHILA UNIVERSITARIA -->
+                        <!-- MOCHILA UNIVERSITARIA (Izquierda) -->
                         <g stroke="#1E293B" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
-                          <path d="M92 94C92 87 104 87 104 94" />
-                          <path d="M118 102C127 106 128 128 117 136" />
-                          <path d="M76 126C76 104 86 94 98 94C110 94 120 104 120 126C120 135 113 138 98 138C83 138 76 135 76 126Z" fill="#ECFDF5" />
-                          <path d="M81 108C88 113 108 113 115 108" />
-                          <rect x="95" y="108" width="6" height="7" rx="2" fill="#10B981" />
-                          <rect x="81" y="120" width="32" height="16" rx="6" fill="#FFFFFF" />
-                          <path d="M87 126H107" stroke-width="2.5" />
+                          <path d="M88 106C88 99 100 99 100 106" />
+                          <path d="M114 114C123 118 124 140 113 148" />
+                          <path d="M72 138C72 116 82 106 94 106C106 106 116 116 116 138C116 147 109 150 94 150C79 150 72 147 72 138Z" fill="#ECFDF5" />
+                          <path d="M77 120C84 125 104 125 111 120" />
+                          <rect x="91" y="120" width="6" height="7" rx="2" fill="#10B981" />
+                          <rect x="77" y="132" width="32" height="16" rx="6" fill="#FFFFFF" />
+                          <path d="M83 138H103" stroke-width="2.5" />
                         </g>
 
-                        <!-- VASO DE CAFÉ + VAPOR -->
+                        <!-- VASO DE CAFÉ + VAPOR (Derecha) -->
                         <g stroke="#1E293B" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
-                          <path class="steam-1" d="M222 104C217 97 227 91 222 83" stroke="#10B981" stroke-width="2.8" />
-                          <path class="steam-2" d="M231 102C227 95 236 90 232 82" stroke="#64748B" stroke-width="2.6" />
-                          <path d="M216 116H236L233 138H219L216 116Z" fill="#FFFFFF" />
-                          <path d="M217.2 123H234.8L234.1 130H217.9L217.2 123Z" fill="#A7F3D0" stroke="none" />
-                          <path d="M217.2 123H234.8M217.9 130H234.1" stroke-width="2.4" />
-                          <rect x="213" y="111" width="26" height="5" rx="2.5" fill="#10B981" />
-                          <path d="M216 111L218 108H234L236 111" fill="#ECFDF5" />
+                          <path class="steam-1" d="M225 114C220 107 230 101 225 93" stroke="#10B981" stroke-width="2.8" />
+                          <path class="steam-2" d="M234 112C230 105 239 100 235 92" stroke="#64748B" stroke-width="2.6" />
+                          <path d="M219 126H239L236 150H222L219 126Z" fill="#FFFFFF" />
+                          <path d="M220.2 133H237.8L237.1 141H220.9L220.2 133Z" fill="#A7F3D0" stroke="none" />
+                          <path d="M220.2 133H237.8M220.9 141H237.1" stroke-width="2.4" />
+                          <rect x="216" y="121" width="26" height="5" rx="2.5" fill="#10B981" />
+                          <path d="M219 121L221 118H237L239 121" fill="#ECFDF5" />
                         </g>
 
-                        <!-- ESTUDIANTE SENTADO -->
+                        <!-- ESTUDIANTE: PIERNAS Y ZAPATILLAS -->
                         <g stroke="#1E293B" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
-                          <path d="M132 132C125 134 123 144 126 174H141L145 147H175L179 174H194C197 144 195 134 188 132Z" fill="#334155" />
-                          <path d="M123 174H142V181C142 184 120 185 120 180C120 176 122 174 123 174Z" fill="#FFFFFF" />
-                          <path d="M178 174H197C198 174 200 176 200 180C200 185 178 184 178 181V174Z" fill="#FFFFFF" />
-                          <path d="M134 86C124 94 120 112 123 128C125 135 138 137 160 137C182 137 195 135 197 128C200 112 196 94 186 86Z" fill="#10B981" />
-                          <path d="M143 81C139 86 144 93 160 93C176 93 181 86 177 81" fill="#ECFDF5" />
-                          <path d="M131 98C124 112 129 124 146 121" fill="#10B981" />
-                          <path d="M189 98C196 112 191 124 174 121" fill="#10B981" />
-                          <rect x="150" y="96" width="20" height="31" rx="4.5" fill="#FFFFFF" />
-                          <circle class="phone-glow" cx="160" cy="103" r="2.2" fill="#10B981" stroke="none" />
-                          <path d="M146 109H151M146 114H151M146 119H151" stroke-width="2.8" />
-                          <path d="M169 109H174M169 114H174M169 119H174" stroke-width="2.8" />
+                          <!-- Pantalón oscuro con pliegues en rodillas -->
+                          <path d="M128 142C120 144 118 156 123 190H139L143 160H177L181 190H197C202 156 200 144 192 142Z" fill="#334155" />
+                          <path d="M124 156C131 157 137 156 142 154" stroke-width="2.3" />
+                          <path d="M196 156C189 157 183 156 178 154" stroke-width="2.3" />
+
+                          <!-- Zapatillas deportivas con suela y pasadores -->
+                          <path d="M121 190H139L138 196C138 200 115 201 115 196C115 192 118 190 121 190Z" fill="#FFFFFF" />
+                          <path d="M116 196.5H138" stroke-width="2.2" />
+                          <path d="M125 192L128 193.5" stroke-width="2" />
+
+                          <path d="M181 190H199C202 190 205 192 205 196C205 201 182 200 182 196L181 190Z" fill="#FFFFFF" />
+                          <path d="M182 196.5H204" stroke-width="2.2" />
+                          <path d="M195 192L192 193.5" stroke-width="2" />
                         </g>
 
-                        <!-- CABEZA + AUDÍFONOS -->
+                        <!-- ESTUDIANTE: TORSO ANATÓMICO, CAPUCHA Y MANOS -->
+                        <g stroke="#1E293B" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+                          <!-- Capucha caída detrás de los hombros -->
+                          <path d="M138 80C132 84 132 94 142 97H178C188 94 188 84 182 80Z" fill="#059669" />
+
+                          <!-- Cuerpo principal de la polera con cintura y hombros definidos -->
+                          <path d="M136 85C122 90 116 106 117 125C118 135 123 140 131 141L133 147H187L189 141C197 140 202 135 203 125C204 106 198 90 184 85C175 91 145 91 136 85Z" fill="#10B981" />
+
+                          <!-- Cuello interno y cordones de la polera -->
+                          <path d="M145 83C149 91 171 91 175 83" fill="#ECFDF5" />
+                          <path d="M153 89V103" stroke-width="2.5" />
+                          <path d="M167 89V101" stroke-width="2.5" />
+
+                          <!-- Bolsillo delantero tipo canguro -->
+                          <path d="M141 139L145 127H175L179 139" stroke-width="2.4" />
+
+                          <!-- Pliegues de mangas y antebrazos descansando -->
+                          <path d="M132 103C129 112 130 121 134 126" stroke-width="2.6" />
+                          <path d="M188 103C191 112 190 121 186 126" stroke-width="2.6" />
+                          <path d="M119 124C121 134 131 136 146 131" fill="#10B981" />
+                          <path d="M201 124C199 134 189 136 174 131" fill="#10B981" />
+                          <!-- Puños -->
+                          <path d="M144 121C146 125 146 129 144 132" stroke-width="2.5" />
+                          <path d="M176 121C174 125 174 129 176 132" stroke-width="2.5" />
+
+                          <!-- Celular inclinado -->
+                          <g transform="rotate(-7 161 116)">
+                            <rect x="150" y="100" width="22" height="33" rx="4.5" fill="#FFFFFF" />
+                            <circle class="phone-glow" cx="157" cy="107" r="2.2" fill="#10B981" stroke="none" />
+                          </g>
+
+                          <!-- Mano izquierda con pulgar y dedos articulados -->
+                          <path d="M144 121C148 119 153 119 155 122C155 125 151 126 148 126" fill="#FFFFFF" />
+                          <path d="M145 126H153C155 126 155 129 153 129H145" fill="#FFFFFF" />
+                          <path d="M145 129H152C154 129 154 132 152 132H145" fill="#FFFFFF" />
+
+                          <!-- Mano derecha sosteniendo el borde del celular -->
+                          <path d="M177 115C172 114 168 115 168 118C168 120 172 120 176 120" fill="#FFFFFF" />
+                          <path d="M177 120H169C167 120 167 123 169 123H177" fill="#FFFFFF" />
+                          <path d="M177 123H169C167 123 167 126 169 126H177" fill="#FFFFFF" />
+                          <path d="M176 126H170C168 126 168 129 170 129H176" fill="#FFFFFF" />
+                        </g>
+
+                        <!-- CABEZA + AUDÍFONOS DE VINCHA DEFINIDOS (Grupo animado) -->
                         <g class="runner-head" stroke="#1E293B" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
-                          <path d="M136 58C136 36 184 36 184 58" stroke-width="3.5" />
-                          <path d="M142 56C142 74 149 84 160 84C171 84 178 74 178 56C178 44 170 39 160 39C150 39 142 44 142 56Z" fill="#FFFFFF" />
-                          <path d="M142 56C144 48 148 44 148 44C151 50 158 53 163 53C161 49 160 46 160 46C167 51 174 52 178 55C178 42 169 37 160 37C150 37 142 43 142 56Z" fill="#1E293B" />
-                          <path d="M149 56C151 55 153 55 154 56" stroke-width="2.3" />
-                          <path d="M166 56C167 55 169 55 171 56" stroke-width="2.3" />
-                          <circle cx="152" cy="63" r="2" fill="#1E293B" stroke="none" />
-                          <circle cx="168" cy="63" r="2" fill="#1E293B" stroke="none" />
-                          <path d="M160 63V67L158 68" stroke-width="2.2" />
-                          <path d="M156 73C158 75 162 75 164 73" stroke-width="2.4" />
-                          <rect x="132" y="51" width="9" height="19" rx="4.5" fill="#10B981" />
-                          <rect x="179" y="51" width="9" height="19" rx="4.5" fill="#10B981" />
+                          <!-- Arco exterior e interior de la vincha acolchada -->
+                          <path d="M135 55C135 28 187 28 187 55" stroke-width="3.4" />
+                          <path d="M140 53C140 34 182 34 182 53" stroke-width="2.6" />
+                          <!-- Relleno visual de la banda superior de vincha -->
+                          <path d="M137.5 52C138.5 31.5 183.5 31.5 184.5 52" stroke="#10B981" stroke-width="4.5" />
+                          <path d="M135 55C135 28 187 28 187 55" stroke="#1E293B" stroke-width="2.8" />
+                          <path d="M140 54C140 34 182 34 182 54" stroke="#1E293B" stroke-width="2.5" />
+
+                          <!-- Rostro -->
+                          <path d="M143 55C143 74 150 84 161 84C172 84 179 74 179 55C179 43 171 38 161 38C151 38 143 43 143 55Z" fill="#FFFFFF" />
+
+                          <!-- Cabello con flequillo -->
+                          <path d="M143 55C145 47 149 43 149 43C152 49 159 52 164 52C162 48 161 45 161 45C168 50 175 51 179 54C179 41 170 36 161 36C151 36 143 42 143 55Z" fill="#1E293B" />
+
+                          <!-- Expresión relajada mirando el celular -->
+                          <path d="M150 55C152 54 154 54 156 55" stroke-width="2.2" />
+                          <path d="M167 55C169 54 171 54 173 55" stroke-width="2.2" />
+                          <circle cx="154" cy="61" r="2" fill="#1E293B" stroke="none" />
+                          <circle cx="170" cy="61" r="2" fill="#1E293B" stroke="none" />
+                          <path d="M163 61V66L161 67" stroke-width="2.2" />
+                          <path d="M159 72C161 74 165 74 167 72" stroke-width="2.4" />
+
+                          <!-- Copa izquierda de audífono (almohadilla + carcasa exterior + varilla) -->
+                          <rect x="137" y="51" width="6" height="19" rx="3" fill="#334155" />
+                          <rect x="130" y="50" width="9" height="21" rx="4.5" fill="#10B981" />
+                          <path d="M134.5 47V52" stroke-width="2.8" />
+
+                          <!-- Copa derecha de audífono (almohadilla + carcasa exterior + varilla) -->
+                          <rect x="179" y="51" width="6" height="19" rx="3" fill="#334155" />
+                          <rect x="183" y="50" width="9" height="21" rx="4.5" fill="#10B981" />
+                          <path d="M187.5 47V52" stroke-width="2.8" />
                         </g>
 
                         <!-- Detalles de pasto -->
                         <g stroke="#64748B" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-                          <path d="M52 184L55 176L59 183L63 177L65 184" />
-                          <path d="M258 184L261 176L265 183L269 178L271 184" />
+                          <path d="M50 200L53 192L57 199L61 193L63 200" />
+                          <path d="M258 200L261 192L265 199L269 194L271 200" />
                         </g>
                       </svg>
                     </div>
