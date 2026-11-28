@@ -1021,7 +1021,7 @@ if (logoutBtn) {
     });
 }
 
-  function showTab(tabName) {
+function showTab(tabName) {
   const tabs = [
     'tab-inicio',
     'tab-pedidos',
@@ -1045,7 +1045,7 @@ if (logoutBtn) {
     const isMatch = btn.dataset.nav === tabName;
     btn.classList.toggle('active', isMatch);
     btn.classList.toggle('text-white', isMatch);
-    btn.classList.toggle('text-white/70', !isMatch);
+    btn.classList.toggle('text-white/75', !isMatch);
   });
 
   if (window.lucide) lucide.createIcons();

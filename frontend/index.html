@@ -817,16 +817,16 @@
 
         <!-- MODO RUNNER: Barra esmeralda degradada limpia de 4 botones -->
         <div id="nav-runner-group" class="hidden w-full h-[64px] px-4 grid grid-cols-4 items-center bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-500 text-white shadow-[0_-4px_12px_rgba(5,150,105,0.18)]">
-          <button onclick="showTab('runner'); if(typeof cargarEntregasActivas === 'function') cargarEntregasActivas();" class="nav-btn-item active flex flex-col items-center justify-center gap-0.5 pt-1" data-nav="runner">
+          <button onclick="setActiveRole('alumno')" class="nav-btn-item flex flex-col items-center justify-center gap-0.5 pt-1 text-white/75" data-nav="inicio-runner">
             <i data-lucide="home" class="w-5 h-5"></i>
             <span class="text-[9.5px] font-semibold">Inicio</span>
-            <span class="nav-dot w-1 h-1 rounded-full bg-white mt-0.5"></span>
+            <span class="nav-dot w-1 h-1 rounded-full bg-white mt-0.5 opacity-0"></span>
           </button>
 
-          <button onclick="showTab('runner'); if(typeof cambiarVistaRunner === 'function') cambiarVistaRunner('disponibles');" class="nav-btn-item flex flex-col items-center justify-center gap-0.5 pt-1 text-white/75" data-nav="runner-pedidos">
+          <button onclick="showTab('runner'); if(typeof cambiarVistaRunner === 'function') cambiarVistaRunner('disponibles');" class="nav-btn-item active flex flex-col items-center justify-center gap-0.5 pt-1" data-nav="runner">
             <i data-lucide="bike" class="w-5 h-5"></i>
             <span class="text-[9.5px] font-semibold">Pedidos</span>
-            <span class="nav-dot w-1 h-1 rounded-full bg-white mt-0.5 opacity-0"></span>
+            <span class="nav-dot w-1 h-1 rounded-full bg-white mt-0.5"></span>
           </button>
 
           <button onclick="showTab('historial-runner'); if(typeof cargarHistorialRunner === 'function') cargarHistorialRunner();" class="nav-btn-item flex flex-col items-center justify-center gap-0.5 pt-1 text-white/75" data-nav="historial-runner">
