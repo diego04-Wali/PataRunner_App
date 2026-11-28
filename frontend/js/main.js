@@ -1087,29 +1087,37 @@ function actualizarNavSegunRol(rol) {
 function setActiveRole(role) {
     activeRole = role;
 
-    // 1. Pintar el conmutador superior según el rol activo (Azul = Alumno, Esmeralda = Runner)
+    const switcherBar = document.getElementById("role-switcher-bar");
+
+    // 1. Cambiar el fondo de la barra superior (Azul = Alumno, Esmeralda = Runner)
+    if (switcherBar) {
+        switcherBar.classList.remove("bg-blue-600", "bg-emerald-600");
+        switcherBar.classList.add(role === "runner" ? "bg-emerald-600" : "bg-blue-600");
+    }
+
+    // 2. Pintar los botones del conmutador superior
     if (roleBtnAlumno) {
-        roleBtnAlumno.classList.toggle("bg-blue-600", role === "alumno");
-        roleBtnAlumno.classList.toggle("text-white", role === "alumno");
-        roleBtnAlumno.classList.toggle("text-slate-600", role !== "alumno");
+        roleBtnAlumno.className = role === "alumno"
+            ? "py-1.5 px-4 rounded-full text-xs font-bold transition-all bg-white !text-blue-700 shadow-sm"
+            : "py-1.5 px-4 rounded-full text-xs font-bold transition-all bg-transparent !text-white hover:bg-white/10";
     }
 
     if (roleBtnRunner) {
-        roleBtnRunner.classList.toggle("bg-emerald-600", role === "runner");
-        roleBtnRunner.classList.toggle("text-white", role === "runner");
-        roleBtnRunner.classList.toggle("text-slate-600", role !== "runner");
+        roleBtnRunner.className = role === "runner"
+            ? "py-1.5 px-4 rounded-full text-xs font-bold transition-all bg-white !text-emerald-700 shadow-sm"
+            : "py-1.5 px-4 rounded-full text-xs font-bold transition-all bg-transparent !text-white hover:bg-white/10";
     }
 
-    // 2. Mantener SIEMPRE visible el botón 'Inicio' en la barra inferior
+    // 3. Mantener SIEMPRE visible el botón 'Inicio' en la barra inferior
     if (navBtnInicio) navBtnInicio.classList.remove("hidden");
 
-    // 3. Ocultar SIEMPRE el botón 'Runner' inferior (el rol se cambia arriba)
+    // 4. Ocultar SIEMPRE el botón 'Runner' inferior (el rol se cambia arriba)
     if (navBtnRunner) navBtnRunner.classList.add("hidden");
 
-    // 4. Cambiar la función del botón central (Pedidos en Alumno <-> Historial en Runner)
+    // 5. Cambiar la función del botón central (Pedidos en Alumno <-> Historial en Runner)
     actualizarNavSegunRol(role);
 
-    // 5. Cargar la vista principal correspondiente arriba
+    // 6. Cargar la vista principal correspondiente arriba
     showTab(role === "alumno" ? "inicio" : "runner");
 }
 
