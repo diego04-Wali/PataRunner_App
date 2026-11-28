@@ -1028,6 +1028,37 @@ function moverIndicadorLiquido(index) {
   }
 }
 
+function moverMuescaBarra(index, totalCols) {
+  const path = document.getElementById('nav-notch-path');
+  const puck = document.getElementById('nav-floating-puck');
+  if (!path || !puck) return;
+
+  const pct = ((Number(index) + 0.5) / totalCols) * 100;
+  puck.style.left = `${pct}%`;
+
+  // Esculpir la cuna semicircular en el viewBox 0..380
+  const cx = ((Number(index) + 0.5) / totalCols) * 380;
+  const halfW = 36; // ancho de la boca de la cuna
+  const leftStart = Math.max(0, cx - halfW);
+  const rightEnd = Math.min(380, cx + halfW);
+
+  const d = `M0,24 L${leftStart.toFixed(1)},24 C${(cx - 21).toFixed(1)},24 ${(cx - 19).toFixed(1)},56 ${cx.toFixed(1)},56 C${(cx + 19).toFixed(1)},56 ${(cx + 21).toFixed(1)},24 ${rightEnd.toFixed(1)},24 L380,24 L380,86 L0,86 Z`;
+  path.setAttribute('d', d);
+}
+
+function activarCarritoEnBarra() {
+  const grupoAlumno = document.getElementById('nav-alumno-group');
+  if (grupoAlumno) {
+    grupoAlumno.querySelectorAll('.notch-tab-btn').forEach((btn) => {
+      const isCart = btn.dataset.nav === 'carrito';
+      btn.classList.toggle('active', isCart);
+      if (isCart) moverMuescaBarra(2, 5);
+    });
+  }
+  document.getElementById('cart-btn')?.click();
+}
+window.activarCarritoEnBarra = activarCarritoEnBarra;
+
 function showTab(tabName) {
   const tabs = [
     'tab-inicio',
@@ -1047,17 +1078,18 @@ function showTab(tabName) {
   const target = document.getElementById(`tab-${tabName}`);
   if (target) target.classList.remove('hidden');
 
-  // Detectar el grupo visible (Alumno o Runner) y mover la gota líquida
-  const grupoActivo = activeRole === 'runner'
+  const esRunner = activeRole === 'runner';
+  const grupoActivo = esRunner
     ? document.getElementById('nav-runner-group')
     : document.getElementById('nav-alumno-group');
+  const totalCols = esRunner ? 4 : 5;
 
   if (grupoActivo) {
-    grupoActivo.querySelectorAll('.liquid-tab-btn').forEach((btn) => {
+    grupoActivo.querySelectorAll('.notch-tab-btn').forEach((btn) => {
       const isMatch = btn.dataset.nav === tabName;
       btn.classList.toggle('active', isMatch);
       if (isMatch) {
-        moverIndicadorLiquido(btn.dataset.index);
+        moverMuescaBarra(btn.dataset.index, totalCols);
       }
     });
   }
@@ -1068,9 +1100,8 @@ function showTab(tabName) {
 function actualizarBarraPorRol(rol) {
   const navAlumno = document.getElementById('nav-alumno-group');
   const navRunner = document.getElementById('nav-runner-group');
-  const baseBar = document.getElementById('nav-base-bar');
-  const liquidFill = document.querySelector('.liquid-fill');
-  const liquidCircle = document.querySelector('.liquid-circle');
+  const path = document.getElementById('nav-notch-path');
+  const puck = document.getElementById('nav-floating-puck');
   const switcherBar = document.getElementById('role-switcher-bar');
   const btnAlumno = document.getElementById('role-btn-alumno');
   const btnRunner = document.getElementById('role-btn-runner');
@@ -1079,16 +1110,10 @@ function actualizarBarraPorRol(rol) {
     navAlumno?.classList.add('hidden');
     navRunner?.classList.remove('hidden');
 
-    if (baseBar) {
-      baseBar.className = 'relative w-full h-[62px] bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-500 text-white shadow-[0_-4px_14px_rgba(5,150,105,0.2)] transition-colors duration-300';
-    }
-    if (liquidFill) {
-      liquidFill.classList.remove('fill-blue-600');
-      liquidFill.classList.add('fill-emerald-600');
-    }
-    if (liquidCircle) {
-      liquidCircle.classList.remove('bg-blue-600');
-      liquidCircle.classList.add('bg-emerald-600');
+    if (path) path.setAttribute('fill', 'url(#navGradRunner)');
+    if (puck) {
+      puck.classList.remove('bg-blue-600');
+      puck.classList.add('bg-emerald-600');
     }
     if (switcherBar) {
       switcherBar.classList.remove('bg-blue-600');
@@ -1103,16 +1128,10 @@ function actualizarBarraPorRol(rol) {
     navAlumno?.classList.remove('hidden');
     navRunner?.classList.add('hidden');
 
-    if (baseBar) {
-      baseBar.className = 'relative w-full h-[62px] bg-gradient-to-r from-blue-600 via-sky-600 to-cyan-500 text-white shadow-[0_-4px_14px_rgba(37,99,235,0.2)] transition-colors duration-300';
-    }
-    if (liquidFill) {
-      liquidFill.classList.remove('fill-emerald-600');
-      liquidFill.classList.add('fill-blue-600');
-    }
-    if (liquidCircle) {
-      liquidCircle.classList.remove('bg-emerald-600');
-      liquidCircle.classList.add('bg-blue-600');
+    if (path) path.setAttribute('fill', 'url(#navGradAlumno)');
+    if (puck) {
+      puck.classList.remove('bg-emerald-600');
+      puck.classList.add('bg-blue-600');
     }
     if (switcherBar) {
       switcherBar.classList.remove('bg-emerald-600');

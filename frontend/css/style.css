@@ -181,24 +181,24 @@
     .anim-destello-1 > *, .anim-destello-2 > * { animation: none; }
 }
 
-/* ===== BARRA INFERIOR LÍQUIDA (GOOEY / ELEVATED TAB) ===== */
-.liquid-tab-btn {
+/* ===== BARRA INFERIOR CON MUESCA CÓNCAVA MÓVIL ===== */
+.notch-tab-btn {
   color: rgba(255, 255, 255, 0.72);
   position: relative;
   z-index: 10;
 }
 
-.liquid-tab-btn.active {
+.notch-tab-btn.active {
   color: #ffffff;
 }
 
-.liquid-tab-btn.active .tab-icon {
-  transform: translateY(-19px) scale(1.12);
+.notch-tab-btn.active .tab-icon {
+  transform: translateY(-23px) scale(1.1);
   stroke-width: 2.4px;
 }
 
-.liquid-tab-btn.active .tab-label {
+.notch-tab-btn.active .tab-label {
   opacity: 1;
   font-weight: 700;
-  transform: translateY(-2px);
+  transform: translateY(-1px);
 }
