@@ -1021,11 +1021,13 @@ if (logoutBtn) {
         if (elTab) elTab.classList.toggle("hidden", t !== tab);
     });
     
-    // Resaltar solo el botón activo en la barra inferior
+    // Resaltar el botón activo en la barra inferior según el rol
     document.querySelectorAll(".nav-btn").forEach(b => {
         const active = b.dataset.nav === tab || (tab === "historial-runner" && b.dataset.nav === "pedidos");
-        b.classList.toggle("text-blue-600", active);
-        b.classList.toggle("text-slate-400", !active);
+        const activeColor = activeRole === "runner" ? "text-blue-600" : "text-emerald-600";
+        
+        b.classList.remove("text-blue-600", "text-emerald-600", "text-slate-400");
+        b.classList.add(active ? activeColor : "text-slate-400");
     });
 
     // Cargar misiones, pedidos e historial dinámicamente al cambiar de vista
@@ -1085,15 +1087,15 @@ function actualizarNavSegunRol(rol) {
 function setActiveRole(role) {
     activeRole = role;
 
-    // 1. Pintar en azul el conmutador superior según el rol activo
+    // 1. Pintar el conmutador superior según el rol activo (INVERTIDO)
     if (roleBtnAlumno) {
-        roleBtnAlumno.classList.toggle("bg-blue-600", role === "alumno");
+        roleBtnAlumno.classList.toggle("bg-emerald-600", role === "alumno"); // Antes: bg-blue-600
         roleBtnAlumno.classList.toggle("text-white", role === "alumno");
         roleBtnAlumno.classList.toggle("text-slate-600", role !== "alumno");
     }
 
- if (roleBtnRunner) {
-        roleBtnRunner.classList.toggle("bg-emerald-600", role === "runner");
+    if (roleBtnRunner) {
+        roleBtnRunner.classList.toggle("bg-blue-600", role === "runner"); // Antes: bg-emerald-600
         roleBtnRunner.classList.toggle("text-white", role === "runner");
         roleBtnRunner.classList.toggle("text-slate-600", role !== "runner");
     }
