@@ -197,7 +197,20 @@ setInterval(() => {
   function updateCartUI() {
     const count = getCartCount();
     const subtotal = getCartTotal();
-    cartSummaryText.textContent = count > 0 ? `${count} · S/ ${subtotal.toFixed(2)}` : "Carrito";
+    if (cartSummaryText) {
+      cartSummaryText.textContent = count > 0 ? `${count} · S/ ${subtotal.toFixed(2)}` : "Carrito";
+    }
+
+    // NUEVO: Actualizar el badge numérico del carrito flotante en la barra curva
+    const navCartBadge = document.getElementById("nav-cart-badge");
+    if (navCartBadge) {
+      if (count > 0) {
+        navCartBadge.textContent = count;
+        navCartBadge.classList.remove("hidden");
+      } else {
+        navCartBadge.classList.add("hidden");
+      }
+    }
 
     if (count > 0) {
       catalogCartBar.classList.remove("hidden");
@@ -1008,44 +1021,71 @@ if (logoutBtn) {
     });
 }
 
-  function showTab(tab) {
-    // Si el usuario presiona inicio, forzamos el cambio al rol de alumno
-    if (tab === "inicio" && activeRole !== "alumno") {
-        setActiveRole("alumno");
-        return;
-    }
+  function showTab(tabName) {
+  const tabs = [
+    'tab-inicio',
+    'tab-pedidos',
+    'tab-historial-alumno',
+    'tab-runner',
+    'tab-historial-runner',
+    'tab-admin',
+    'tab-perfil'
+  ];
 
-    // Pestañas disponibles en el HTML
-    ["inicio", "pedidos", "runner", "perfil", "historial-runner"].forEach(t => {
-        const elTab = document.getElementById("tab-" + t);
-        if (elTab) elTab.classList.toggle("hidden", t !== tab);
-    });
-    
-    // Resaltar el botón activo en la barra inferior según el rol
-    document.querySelectorAll(".nav-btn").forEach(b => {
-        const active = b.dataset.nav === tab || (tab === "historial-runner" && b.dataset.nav === "pedidos");
-        const activeColor = activeRole === "runner" ? "text-emerald-600" : "text-blue-600";
-        
-        b.classList.remove("text-blue-600", "text-emerald-600", "text-slate-400");
-        b.classList.add(active ? activeColor : "text-slate-400");
-    });
+  tabs.forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.classList.add('hidden');
+  });
 
-    // Cargar misiones, pedidos e historial dinámicamente al cambiar de vista
-    if (tab === "runner") {
-        if (typeof cargarPedidosPendientes === 'function') cargarPedidosPendientes();
-        if (typeof cargarEntregasActivas === 'function') cargarEntregasActivas();
-    } else if (tab === "historial-runner") {
-        if (typeof cargarHistorialRunner === 'function') cargarHistorialRunner();
-    } else if (tab === "inicio") {
-        if (typeof cargarMisPedidos === 'function') cargarMisPedidos();
-    } else if (tab === "perfil") {
-        if (typeof cargarDatosPerfil === 'function') cargarDatosPerfil();
+  const target = document.getElementById(`tab-${tabName}`);
+  if (target) target.classList.remove('hidden');
+
+  // Resaltar botón activo en la barra inferior
+  document.querySelectorAll('.nav-btn-item').forEach((btn) => {
+    const isMatch = btn.dataset.nav === tabName;
+    btn.classList.toggle('active', isMatch);
+    btn.classList.toggle('text-white', isMatch);
+    btn.classList.toggle('text-white/70', !isMatch);
+  });
+
+  if (window.lucide) lucide.createIcons();
+}
+
+function actualizarBarraPorRol(rol) {
+  const curveSvg = document.getElementById('nav-curve-svg');
+  const navAlumno = document.getElementById('nav-alumno-group');
+  const navRunner = document.getElementById('nav-runner-group');
+  const switcherBar = document.getElementById('role-switcher-bar');
+  const btnAlumno = document.getElementById('role-btn-alumno');
+  const btnRunner = document.getElementById('role-btn-runner');
+
+  if (rol === 'runner') {
+    curveSvg?.classList.add('hidden');
+    navAlumno?.classList.add('hidden');
+    navRunner?.classList.remove('hidden');
+    if (switcherBar) {
+      switcherBar.classList.remove('bg-blue-600');
+      switcherBar.classList.add('bg-emerald-600');
     }
-    // Ocultar el conmutador superior de rol únicamente en la vista de Perfil
-    const topSelector = document.getElementById('role-switcher-bar'); 
-    if (topSelector) {
-        topSelector.classList.toggle('hidden', tab === 'perfil');
+    if (btnRunner && btnAlumno) {
+      btnRunner.className = 'py-1.5 px-4 rounded-full text-xs font-bold transition-all bg-white !text-emerald-700 shadow-sm';
+      btnAlumno.className = 'py-1.5 px-4 rounded-full text-xs font-bold transition-all text-white hover:bg-white/10';
     }
+    showTab('runner');
+  } else {
+    curveSvg?.classList.remove('hidden');
+    navAlumno?.classList.remove('hidden');
+    navRunner?.classList.add('hidden');
+    if (switcherBar) {
+      switcherBar.classList.remove('bg-emerald-600');
+      switcherBar.classList.add('bg-blue-600');
+    }
+    if (btnAlumno && btnRunner) {
+      btnAlumno.className = 'py-1.5 px-4 rounded-full text-xs font-bold transition-all bg-white !text-blue-700 shadow-sm';
+      btnRunner.className = 'py-1.5 px-4 rounded-full text-xs font-bold transition-all text-white hover:bg-white/10';
+    }
+    showTab('inicio');
+  }
 }
 
 
@@ -1054,86 +1094,28 @@ if (logoutBtn) {
   var activeRole = "alumno";
   const roleBtnAlumno = document.getElementById("role-btn-alumno");
   const roleBtnRunner = document.getElementById("role-btn-runner");
-  const navBtnInicio = document.querySelector('.nav-btn[data-nav="inicio"]');
-  const navBtnPedidos = document.querySelector('.nav-btn[data-nav="pedidos"]');
-  const navBtnRunner = document.querySelector('.nav-btn[data-nav="runner"]');
-  const navBtnHistorial = document.getElementById('nav-btn-historial');
-// --- FUNCIÓN PARA CAMBIAR EL BOTÓN CENTRAL DE LA BARRA INFERIOR ---
-function actualizarNavSegunRol(rol) {
-    const navBtnPedidos = document.querySelector('.nav-btn[data-nav="pedidos"]');
-    if (!navBtnPedidos) return;
 
-    if (rol === 'runner') {
-        // En Runner, el botón central es Historial del Runner
-        navBtnPedidos.innerHTML = `
-            <i data-lucide="history" class="w-5 h-5"></i>
-            <span class="text-[9.5px] font-medium">Historial</span>
-        `;
-        navBtnPedidos.setAttribute('onclick', "showTab('historial-runner'); if(typeof cargarHistorialRunner === 'function') cargarHistorialRunner();");
-    } else {
-        // En Alumno, el botón central es Mis Pedidos
-        navBtnPedidos.innerHTML = `
-            <i data-lucide="package" class="w-5 h-5"></i>
-            <span class="text-[9.5px] font-medium">Pedidos</span>
-        `;
-        navBtnPedidos.setAttribute('onclick', "showTab('pedidos'); if(typeof cargarMisPedidos === 'function') cargarMisPedidos();");
-    }
-
-    if (window.lucide && typeof lucide.createIcons === 'function') {
-        lucide.createIcons();
-    }
-}
-
-function setActiveRole(role) {
+  function setActiveRole(role) {
     activeRole = role;
+    actualizarBarraPorRol(role);
 
-    const switcherBar = document.getElementById("role-switcher-bar");
-
-    // 1. Cambiar el fondo de la barra superior (Azul = Alumno, Esmeralda = Runner)
-    if (switcherBar) {
-        switcherBar.classList.remove("bg-blue-600", "bg-emerald-600");
-        switcherBar.classList.add(role === "runner" ? "bg-emerald-600" : "bg-blue-600");
+    if (role === "alumno") {
+      if (typeof cargarMisPedidos === "function") cargarMisPedidos();
+    } else if (role === "runner") {
+      if (typeof cargarEntregasActivas === "function") cargarEntregasActivas();
+      if (typeof cargarPedidosPendientes === "function") cargarPedidosPendientes();
     }
+  }
 
-    // 2. Pintar los botones del conmutador superior
-    if (roleBtnAlumno) {
-        roleBtnAlumno.className = role === "alumno"
-            ? "py-1.5 px-4 rounded-full text-xs font-bold transition-all bg-white !text-blue-700 shadow-sm"
-            : "py-1.5 px-4 rounded-full text-xs font-bold transition-all bg-transparent !text-white hover:bg-white/10";
-    }
+  // Exponemos funciones clave al objeto window para que auth.js pueda usarlas
+  window.setActiveRole = setActiveRole;
+  window.showTab = showTab;
 
-    if (roleBtnRunner) {
-        roleBtnRunner.className = role === "runner"
-            ? "py-1.5 px-4 rounded-full text-xs font-bold transition-all bg-white !text-emerald-700 shadow-sm"
-            : "py-1.5 px-4 rounded-full text-xs font-bold transition-all bg-transparent !text-white hover:bg-white/10";
-    }
+  if (roleBtnAlumno) roleBtnAlumno.addEventListener("click", () => setActiveRole("alumno"));
+  if (roleBtnRunner) roleBtnRunner.addEventListener("click", () => setActiveRole("runner"));
 
-    // 3. Mantener SIEMPRE visible el botón 'Inicio' en la barra inferior
-    if (navBtnInicio) navBtnInicio.classList.remove("hidden");
+  setActiveRole("alumno");
 
-    // 4. Ocultar SIEMPRE el botón 'Runner' inferior (el rol se cambia arriba)
-    if (navBtnRunner) navBtnRunner.classList.add("hidden");
-
-    // 5. Cambiar la función del botón central (Pedidos en Alumno <-> Historial en Runner)
-    actualizarNavSegunRol(role);
-
-    // 6. Cargar la vista principal correspondiente arriba
-    showTab(role === "alumno" ? "inicio" : "runner");
-}
-
-
-  // Exponemos funciones clave al objeto window para que auth.js (módulo) pueda usarlas
-window.setActiveRole = setActiveRole;
-window.showTab = showTab;
-
-  roleBtnAlumno.addEventListener("click", () => setActiveRole("alumno"));
-roleBtnRunner.addEventListener("click", () => setActiveRole("runner"));
-
-if (navBtnInicio) {
-    navBtnInicio.addEventListener("click", () => setActiveRole("alumno"));
-}
-
-setActiveRole("alumno");
   const btnPublicar = document.getElementById("cart-publish-btn");
 
 if (btnPublicar) {
@@ -1491,10 +1473,10 @@ async function cargarMisPedidos() {
         // Filtramos para mostrar solo los que están "Pendiente" o "En Camino"
         const pedidosActivos = misPedidos.filter(p => p.estado === 'Pendiente' || p.estado === 'En Camino');
 
-        // === ¡NUEVO!: ACTUALIZAR EL NÚMERO EN EL BOTÓN ===
-        const btnActivos = document.getElementById('filter-activos-btn');
-        if (btnActivos) {
-            btnActivos.textContent = `Activos (${pedidosActivos.length})`;
+        // === ACTUALIZAR EL CONTADOR EN LA CABECERA DE PEDIDOS ACTIVOS ===
+        const badgeActivos = document.getElementById('badge-activos-count');
+        if (badgeActivos) {
+            badgeActivos.textContent = `${pedidosActivos.length} activo${pedidosActivos.length === 1 ? '' : 's'}`;
         }
         // ================================================
 
@@ -3506,7 +3488,7 @@ lucide.createIcons();
 }
 
 // Ejecutar la función cuando el usuario hace clic en la pestaña "Historial"
-document.getElementById('btn-tab-historial').addEventListener('click', cargarHistorial);
+document.getElementById('btn-tab-historial')?.addEventListener('click', cargarHistorial);
 
 function togglePassword() {
     const passwordInput = document.getElementById('login-password');
@@ -5789,6 +5771,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
 async function cargarHistorialPedidos() {
     try {
         const userStr = sessionStorage.getItem('usuario') || localStorage.getItem('usuario');
@@ -5802,23 +5785,45 @@ async function cargarHistorialPedidos() {
 
         const historial = await res.json();
         const contenedor = document.getElementById('contenedor-historial');
-
         if (!contenedor) return;
 
-        if (!historial || historial.length === 0) {
+        // Filtrar últimos 5 días
+        const cincoDiasMs = 5 * 24 * 60 * 60 * 1000;
+        const ahora = Date.now();
+        const historialReciente = (historial || []).filter((p) => {
+            const rawFecha = p.fecha_pedido || p.fecha_creacion || p.createdAt;
+            if (!rawFecha) return true; // Si el backend ya lo filtró, lo dejamos pasar
+            const fechaMs = new Date(rawFecha).getTime();
+            return !isNaN(fechaMs) && (ahora - fechaMs) <= cincoDiasMs;
+        });
+
+        if (historialReciente.length === 0) {
             contenedor.innerHTML = `
                 <p class="text-[12.5px] text-slate-400 text-center py-8">
-                    No tienes pedidos finalizados o cancelados en tu historial.
+                    No tienes pedidos finalizados o cancelados en los últimos 5 días.
                 </p>`;
             return;
         }
 
         contenedor.innerHTML = '';
 
-        historial.forEach(pedido => {
+        historialReciente.forEach(pedido => {
             const estadoLimpio = (pedido.estado || '').trim().toLowerCase();
-            const esEntregado = estadoLimpio === 'entregado';
+            const esEntregado = estadoLimpio === 'entregado' || estadoLimpio === 'finalizado';
             const esCancelado = estadoLimpio === 'cancelado';
+
+            let botonCalificar = '';
+            if (esEntregado) {
+                if (pedido.calificacion) {
+                    botonCalificar = `<span class="text-[11px] font-semibold text-amber-500 px-2">★ ${pedido.calificacion} calificado</span>`;
+                } else if (pedido.id_runner) {
+                    const runnerSafe = (pedido.nombre_runner || 'Runner').replace(/'/g, "\\'");
+                    botonCalificar = `
+                        <button onclick="abrirModalCalificacion(${pedido.id_pedido}, ${pedido.id_runner}, '${runnerSafe}')" class="flex-1 py-1.5 px-3 rounded-xl bg-amber-50 text-amber-700 text-[11px] font-semibold hover:bg-amber-100 transition-colors flex items-center justify-center gap-1">
+                            ⭐ Calificar Runner
+                        </button>`;
+                }
+            }
 
             const card = document.createElement('div');
             card.className = "rounded-2xl border border-slate-100 bg-white p-4 mb-3 shadow-sm";
@@ -5840,15 +5845,11 @@ async function cargarHistorialPedidos() {
                     Runner: <span class="text-slate-600 font-medium">${pedido.nombre_runner || 'Sin asignar'}</span>
                 </p>
 
-                <div class="flex items-center gap-2 mt-3 pt-3 border-t border-slate-50">
-                    <button onclick="repetirPedido(${pedido.id_pedido})" class="flex-1 py-1.5 px-3 rounded-xl border border-slate-200 text-blue-600 text-[11px] font-semibold hover:bg-blue-50 transition-colors flex items-center justify-center gap-1">
+                <div class="flex items-center justify-between gap-2 mt-3 pt-3 border-t border-slate-50">
+                    <button onclick="showTab('inicio')" class="flex-1 py-1.5 px-3 rounded-xl border border-slate-200 text-blue-600 text-[11px] font-semibold hover:bg-blue-50 transition-colors flex items-center justify-center gap-1">
                         <i data-lucide="rotate-ccw" class="w-3 h-3"></i> Volver a pedir
                     </button>
-                    ${esEntregado ? `
-                        <button onclick="abrirModalCalificarRunner(${pedido.id_pedido}, '${pedido.nombre_runner || 'Runner'}')" class="flex-1 py-1.5 px-3 rounded-xl bg-amber-50 text-amber-700 text-[11px] font-semibold hover:bg-amber-100 transition-colors flex items-center justify-center gap-1">
-                            ⭐ Calificar Runner
-                        </button>
-                    ` : ''}
+                    ${botonCalificar}
                 </div>
             `;
             contenedor.appendChild(card);
@@ -5862,6 +5863,9 @@ async function cargarHistorialPedidos() {
         console.error("Error al cargar historial del alumno:", error);
     }
 }
+window.cargarHistorialPedidos = cargarHistorialPedidos;
+
+
 // ==========================================
 // RECUPERACIÓN DE CONTRASEÑA
 // ==========================================
