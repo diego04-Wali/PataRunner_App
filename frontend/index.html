@@ -601,10 +601,16 @@
             <p class="text-[13px] text-emerald-100 mt-1.5 leading-snug">Entrega pedidos entre tus clases y gana sin desviarte de tu ruta.</p>
 
             <!-- Pestañas Pedidos / Tiendas integradas -->
-            <div class="mt-4 flex gap-2 bg-black/15 p-1 rounded-full backdrop-blur-sm" id="runner-view-group">
-              <button onclick="cambiarVistaRunner('disponibles')" id="btn-vista-pedidos" class="flex-1 text-[12px] font-bold py-2 rounded-full bg-white text-emerald-800 shadow-sm transition-all">Pedidos disponibles</button>
-              <button onclick="cambiarVistaRunner('tiendas')" id="btn-vista-tiendas" class="flex-1 text-[12px] font-bold py-2 rounded-full text-emerald-100 hover:text-white transition-all">Directorio Tiendas</button>
-            </div>
+            <div class="bg-emerald-900/30 p-1 rounded-full grid grid-cols-2 gap-1 mt-5">
+  <button id="btn-tab-pedidos" type="button"
+    class="runner-subtab py-2 px-4 rounded-full text-xs font-bold transition-all bg-white text-emerald-800 shadow-sm">
+    Pedidos disponibles
+  </button>
+  <button id="btn-tab-tiendas" type="button"
+    class="runner-subtab py-2 px-4 rounded-full text-xs font-bold transition-all bg-transparent text-white hover:bg-white/10">
+    Directorio Tiendas
+  </button>
+</div>
           </div>
 
           <!-- Contenedores Dinámicos -->
